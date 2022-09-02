@@ -1,0 +1,24 @@
+Drill report for C:\Users\Michael\Documents\Robots\STM32Quadcopter\STM32_SMD_Quadcopter_PCB\STM32_SMD_Quadcopter\STM32_SMD_Quadcopter.kicad_pcb
+Created on 4/17/2020 11:24:22 AM
+
+Copper Layer Stackup:
+    =============================================================
+    L1 :  F.Cu                      front
+    L2 :  B.Cu                      back
+
+
+Drill file 'STM32_SMD_Quadcopter-PTH.drl' contains
+    plated through holes:
+    =============================================================
+    T1  0.40mm  0.016"  (82 holes)
+    T2  0.80mm  0.031"  (8 holes)
+    T3  1.00mm  0.039"  (5 holes)
+
+    Total plated holes count 95
+
+
+Drill file 'STM32_SMD_Quadcopter-NPTH.drl' contains
+    unplated through holes:
+    =============================================================
+
+    Total unplated holes count 0
