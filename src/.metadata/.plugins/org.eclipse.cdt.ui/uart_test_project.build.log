@@ -1,6 +1,0 @@
-10:01:40 **** Incremental Build of configuration Debug for project uart_test_project ****
-make -j8 all 
-make: Nothing to be done for 'all'.
-
-10:01:41 Build Finished (took 1s.72ms)
-

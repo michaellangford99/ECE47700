@@ -21,13 +21,13 @@ int seroffset = 0;
 
 #define USB_USART USART1
 
-void enable_tty_interrupt()
+void enable_USB_usart_tty_interrupt()
 {
 	USB_USART->CR1 |= USART_CR1_RXNEIE;
 	USB_USART->CR3 |= USART_CR3_DMAR;
 
 	//USART1 is interrupt 37
-	//NVIC->ISER[0] |= 1 << 37;
+	NVIC->ISER[1] |= 1 << (37-32);
 
 	//Set up DMA2
 	RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
@@ -82,8 +82,9 @@ int __io_getchar(void) {
 void USART1_IRQHandler(void)
 {
 	while(DMA2_Stream2->NDTR != sizeof serfifo - seroffset) {
-		if (!fifo_full(&input_fifo))
-			insert_echo_char(serfifo[seroffset]);
+		if (fifo_full(&input_fifo))
+			fifo_remove(&input_fifo);
+		insert_echo_char(serfifo[seroffset]);
 		seroffset = (seroffset + 1) % sizeof serfifo;
 	}
 }
@@ -120,11 +121,9 @@ int main(void)
 	//select alternate function mode for PB6 and PB7
 	GPIOB->MODER |= (10 << 12);
 
-	//enable_tty_interrupt();
 
 	//Enable USART1
 	RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
-
 
 	USB_USART->CR1 &= ~USART_CR1_UE;
 	USB_USART->CR1 &= ~(1 << 12);	//set bit 12, 0 for word size 8 bits
@@ -143,21 +142,23 @@ int main(void)
 
 	USB_USART->CR1 |= USART_CR1_UE;				//enable USART
 
+	enable_USB_usart_tty_interrupt();
+
 	setbuf(stdin,0);
 	setbuf(stdout,0);
 	setbuf(stderr,0);
 
 	for(;;) {
 
-		/*for (volatile int i = 999999/2; i > 0; i--)
+		for (volatile int i = 999999/2; i > 0; i--)
 		{
 			__asm("NOP");
-		}*/
+		}
 		GPIOC->ODR ^= 0x1 << LED_PIN;
 
 		//char chr = __io_getchar();
 		//printf("You entered %c.", chr);
 
-		printf("Enter your name: %d\r\n", 42069);
+		//printf("Enter your name: %d\r\n", 42069);
 	}
 }
