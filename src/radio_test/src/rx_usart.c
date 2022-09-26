@@ -90,7 +90,31 @@ void check_packet(void)
 
 }
 
-int packet_count;
+void shift_packet(void)
+{
+
+}
+
+typedef struct
+{
+    unsigned ch0 : 11;
+    unsigned ch1 : 11;
+    unsigned ch2 : 11;
+    unsigned ch3 : 11;
+    unsigned ch4 : 11;
+    unsigned ch5 : 11;
+    unsigned ch6 : 11;
+    unsigned ch7 : 11;
+    unsigned ch8 : 11;
+    unsigned ch9 : 11;
+    unsigned ch10 : 11;
+    unsigned ch11 : 11;
+    unsigned ch12 : 11;
+    unsigned ch13 : 11;
+    unsigned ch14 : 11;
+    unsigned ch15 : 11;
+} __attribute__ ((packed)) crsf_channels_t;
+
 
 void RX_USART_INTERRUPT_HANDLE(void)
 {
@@ -118,16 +142,26 @@ void RX_USART_INTERRUPT_HANDLE(void)
 			}
 			else */if ((active_packet_offset > 2) && active_packet_offset >= (active_packet[1] + 2))
 			{
+
+				crsf_channels_t* channel_data;
+
+				channel_data = (crsf_channels_t*)(active_packet + 3);
+
+				if (active_packet_offset > 24)
+				{
+					printf("%d,\t", channel_data->ch0);
+					printf("%d,\t", channel_data->ch1);
+					printf("%d,\t", channel_data->ch2);
+					printf("%d,\t", channel_data->ch3);
+					printf("%d,\t", channel_data->ch4);
+					printf("%d,\t", channel_data->ch5);
+					printf("%d,\t", channel_data->ch6);
+					printf("%d\n", channel_data->ch7);
+				}
+
 				//we done
 				is_packet_active = 0;
 				active_packet_offset = 0;
-
-				int ch0 = 0x3FF & *((uint16_t*)(active_packet + 3));
-
-				printf("%d,\t", ch0);
-				printf("%d,\t", active_packet[4]);
-				printf("%d,\t", active_packet[5]);
-				printf("%d\n", active_packet[6]);
 			}
 		}
 

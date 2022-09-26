@@ -1,0 +1,5 @@
+(fp_lib_table
+  (lib (name CustomRandom)(type Github)(uri https://github.com/Tinkerforge/kicad-libraries)(options "")(descr "")(disabled))
+  (lib (name STM32_SMD_Quadcopter)(type KiCad)(uri ${KIPRJMOD}/STM32_SMD_Quadcopter.pretty)(options "")(descr ""))
+  (lib (name Digikey)(type Github)(uri https://github.com/Digi-Key/digikey-kicad-library)(options "")(descr ""))
+)
