@@ -9,9 +9,9 @@
 #define PWM_GPIO	GPIOA
 #define PWM_TIMR	TIM1
 #define PWM_CH1_PIN	8
-#define PWM_CH2_PIN 9
-#define PWM_CH3_PIN 9
-#define PWM_CH4_PIN 9
+#define PWM_CH2_PIN 11
+#define PWM_CH3_PIN 11
+#define PWM_CH4_PIN 11
 #define PWM_TIMR_AFR	1
 
 // GPIOA is in this register
@@ -28,11 +28,17 @@
 #define UPPERBOUNDCRRX 			((PWM_ARR*10)/100)
 #define RANGE					(UPPERBOUNDCRRX-LOWERBOUNDCRRX)
 
+//consider moving towards DMA based system where timer interrupt
+//causes transfer from main loop motor outputs to here
+
+//or set the motor outputs in main loop as pointers, so they automatically affect these.
+//though have to be careful as they take instantaneous effect
+
 void set_PWM_duty_cycle() {
-	PWM_TIMR->CCR1 = LOWERBOUNDCRRX + (RANGE*saved_channel_data.ch0)/1810;
-	PWM_TIMR->CCR2 = LOWERBOUNDCRRX + (RANGE*saved_channel_data.ch1)/1810;
-	PWM_TIMR->CCR3 = LOWERBOUNDCRRX + (RANGE*saved_channel_data.ch2)/1810;
-	PWM_TIMR->CCR4 = LOWERBOUNDCRRX + (RANGE*saved_channel_data.ch3)/1810;
+	PWM_TIMR->CCR1 = LOWERBOUNDCRRX + (RANGE*saved_channel_data.ch2)/1810;
+	//PWM_TIMR->CCR2 = LOWERBOUNDCRRX + (RANGE*saved_channel_data.ch1)/1810;
+	//PWM_TIMR->CCR3 = LOWERBOUNDCRRX + (RANGE*saved_channel_data.ch2)/1810;
+	//PWM_TIMR->CCR4 = LOWERBOUNDCRRX + (RANGE*saved_channel_data.ch3)/1810;
 }
 
 void init_PWM(void)

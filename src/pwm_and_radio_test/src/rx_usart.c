@@ -105,17 +105,16 @@ void shift_packet(void)
 uint8_t rx_buffer[BUFFER_SIZE];
 uint8_t* rx_buffer_start = rx_buffer;
 
-void process_packet_buffer(uint8_t new)
+/*void process_packet_buffer(uint8_t new)
 {
 	//first, add the byte and shift the
 	*rx_buffer_start = new;
 	rx_buffer_start++;
 	if (rx_buffer_start > BUFFER_SIZE-1)
-	{
+		rx_buffer_start = 0;
 
-	}
-
-}
+	if (*rx_buffer_start == )
+}*/
 
 
 void RX_USART_INTERRUPT_HANDLE(void)
