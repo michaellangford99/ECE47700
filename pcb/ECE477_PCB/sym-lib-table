@@ -1,4 +1,5 @@
 (sym_lib_table
-  (lib (name STM32_SMD_Quadcopter-rescue)(type Legacy)(uri ${KIPRJMOD}/STM32_SMD_Quadcopter-rescue.lib)(options "")(descr ""))
-  (lib (name DigiKey)(type Legacy)(uri https://github.com/Digi-Key/digikey-kicad-library/)(options "")(descr ""))
+  (lib (name "STM32_SMD_Quadcopter-rescue")(type "Legacy")(uri "${KIPRJMOD}/STM32_SMD_Quadcopter-rescue.lib")(options "")(descr ""))
+  (lib (name "DigiKey")(type "Legacy")(uri "https://github.com/Digi-Key/digikey-kicad-library/")(options "")(descr ""))
+  (lib (name "ECE477_PCB-rescue")(type "Legacy")(uri "${KIPRJMOD}/ECE477_PCB-rescue.lib")(options "")(descr ""))
 )
