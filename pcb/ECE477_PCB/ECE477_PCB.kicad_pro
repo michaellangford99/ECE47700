@@ -428,7 +428,7 @@
       "netlist": "STM32_SMD_Quadcopter.net",
       "specctra_dsn": "",
       "step": "",
-      "vrml": ""
+      "vrml": "ECE477_PCB.wrl"
     },
     "page_layout_descr_file": ""
   },
