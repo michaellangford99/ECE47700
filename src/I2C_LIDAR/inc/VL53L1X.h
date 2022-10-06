@@ -1,10 +1,10 @@
 #pragma once
 
 #include <stdint.h>
-
+#include <stdbool.h>
 
 // register addresses from API vl53l1x_register_map.h
-enum regAddr : uint16_t
+enum regAddr
 {
   SOFT_RESET                                                                 = 0x0000,
   I2C_SLAVE__DEVICE_ADDRESS                                                  = 0x0001,
@@ -1194,9 +1194,9 @@ enum regAddr : uint16_t
   SHADOW_PHASECAL_RESULT__REFERENCE_PHASE_LO                                 = 0x0FFF,
 };
 
-enum DistanceMode { Short, Medium, Long, Unknown };
+typedef enum { Short, Medium, Long, Unknown } DistanceMode;
 
-enum RangeStatus : uint8_t
+typedef enum
 {
   RangeValid                =   0,
 
@@ -1252,15 +1252,15 @@ enum RangeStatus : uint8_t
 
   // "No Update."
   None                      = 255,
-};
+} RangeStatus;
 
-struct RangingData
+typedef struct
 {
   uint16_t range_mm;
-  RangeStatus range_status;
+  uint8_t range_status;
   float peak_signal_count_rate_MCPS;
   float ambient_count_rate_MCPS;
-};
+} RangingData ;
 
 
 // The Arduino two-wire interface uses a 7-bit number for the address,
@@ -1285,7 +1285,7 @@ static const uint16_t TargetRate = 0x0A00;
 // for storing values read from RESULT__RANGE_STATUS (0x0089)
 // through RESULT__PEAK_SIGNAL_COUNT_RATE_CROSSTALK_CORRECTED_MCPS_SD0_LOW
 // (0x0099)
-struct ResultBuffer
+typedef struct
 {
   uint8_t range_status;
 // uint8_t report_status: not used
@@ -1297,33 +1297,52 @@ struct ResultBuffer
 // uint16_t phase_sd0: not used
   uint16_t final_crosstalk_corrected_range_mm_sd0;
   uint16_t peak_signal_count_rate_crosstalk_corrected_mcps_sd0;
-};
+} ResultBuffer;
 
 
 //=======================================================
 
-RangingData ranging_data;
-uint8_t last_status; // status of last I2C transmission
+typedef struct {
 
-// making this static would save RAM for multiple instances as long as there
-// aren't multiple sensors being read at the same time (e.g. on separate
-// I2C buses)
-ResultBuffer results;
+  RangingData dev_ranging_data;
+  uint8_t dev_last_status; // status of last I2C transmission
 
-uint8_t address;
+  // making this static would save RAM for multiple instances as long as there
+  // aren't multiple sensors being read at the same time (e.g. on separate
+  // I2C buses)
+  ResultBuffer dev_results;
+  
+  uint8_t dev_address;
 
-uint16_t io_timeout;
-bool did_timeout;
-uint16_t timeout_start_ms;
+  uint16_t dev_io_timeout;
+  bool dev_did_timeout;
+  uint16_t dev_timeout_start_ms;
 
-uint16_t fast_osc_frequency;
-uint16_t osc_calibrate_val;
+  uint16_t dev_fast_osc_frequency;
+  uint16_t dev_osc_calibrate_val;
 
-bool calibrated;
-uint8_t saved_vhv_init;
-uint8_t saved_vhv_timeout;
+  bool dev_calibrated;
+  uint8_t dev_saved_vhv_init;
+  uint8_t dev_saved_vhv_timeout;
 
-DistanceMode distance_mode;
+  DistanceMode dev_distance_mode;
+} VL53L1X;
+
+VL53L1X* active_device;
+
+#define ranging_data (active_device->dev_ranging_data)
+#define last_status (active_device->dev_last_status)
+#define results (active_device->dev_results)
+#define address (active_device->dev_address)
+#define io_timeout (active_device->dev_io_timeout)
+#define did_timeout (active_device->dev_did_timeout)
+#define timeout_start_ms (active_device->dev_timeout_start_ms)
+#define fast_osc_frequency (active_device->dev_fast_osc_frequency)
+#define osc_calibrate_val (active_device->dev_osc_calibrate_val)
+#define calibrated (active_device->dev_calibrated)
+#define saved_vhv_init (active_device->dev_saved_vhv_init)
+#define saved_vhv_timeout (active_device->dev_saved_vhv_timeout)
+#define distance_mode (active_device->dev_distance_mode)
 
 //=======================================================
 
@@ -1335,7 +1354,7 @@ bool init(bool io_2v8 = true);
 void writeReg(uint16_t reg, uint8_t value);
 void writeReg16Bit(uint16_t reg, uint16_t value);
 void writeReg32Bit(uint16_t reg, uint32_t value);
-uint8_t readReg(regAddr reg);
+uint8_t readReg(uint16_t reg);
 uint16_t readReg16Bit(uint16_t reg);
 uint32_t readReg32Bit(uint16_t reg);
 
@@ -1352,10 +1371,10 @@ uint8_t getROICenter();
 
 void startContinuous(uint32_t period_ms);
 void stopContinuous();
-uint16_t read(bool blocking = true);
-uint16_t readRangeContinuousMillimeters(bool blocking = true) { return read(blocking); } // alias of read()
-uint16_t readSingle(bool blocking = true);
-uint16_t readRangeSingleMillimeters(bool blocking = true) { return readSingle(blocking); } // alias of readSingle()
+uint16_t read();
+uint16_t readRangeContinuousMillimeters() { return read(); } // alias of read()
+uint16_t readSingle();
+uint16_t readRangeSingleMillimeters() { return readSingle(); } // alias of readSingle()
 
 // check if sensor has new reading available
 // assumes interrupt is active low (GPIO_HV_MUX__CTRL bit 4 is 1)

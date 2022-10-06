@@ -8,15 +8,22 @@
 
 // Constructors ////////////////////////////////////////////////////////////////
 
-void init_VL53L1X()
+void init_VL53L1X(VL53L1X* device)
 {
-  address(AddressDefault)
-  io_timeout(0) // no timeout
-  did_timeout(false)
-  calibrated(false)
-  saved_vhv_init(0)
-  saved_vhv_timeout(0)
-  distance_mode(Unknown)
+  active_device = device;
+
+  address = AddressDefault;
+  io_timeout = 0; // no timeout
+  did_timeout = false;
+  calibrated = false;
+  saved_vhv_init = 0;
+  saved_vhv_timeout = 0;
+  distance_mode = Unknown;
+}
+
+void set_device(VL53L1X* device)
+{
+  active_device = device;
 }
 
 // Public Methods //////////////////////////////////////////////////////////////
@@ -189,7 +196,7 @@ void writeReg32Bit(uint16_t reg, uint32_t value)
 }
 
 // Read an 8-bit register
-uint8_t readReg(regAddr reg)
+uint8_t readReg(uint16_t reg)
 {
   uint8_t value;
 
@@ -527,18 +534,16 @@ void stopContinuous()
 // be available. If blocking is false, it will try to return data immediately.
 // (readSingle() also calls this function after starting a single-shot range
 // measurement)
-uint16_t read(bool blocking)
+uint16_t read()
 {
-  if (blocking)
+  
+  startTimeout();
+  while (!dataReady())
   {
-    startTimeout();
-    while (!dataReady())
+    if (checkTimeoutExpired())
     {
-      if (checkTimeoutExpired())
-      {
-        did_timeout = true;
-        return 0;
-      }
+      did_timeout = true;
+      return 0;
     }
   }
 
@@ -562,19 +567,12 @@ uint16_t read(bool blocking)
 // Starts a single-shot range measurement. If blocking is true (the default),
 // this function waits for the measurement to finish and returns the reading.
 // Otherwise, it returns 0 immediately.
-uint16_t readSingle(bool blocking)
+uint16_t readSingle()
 {
   writeReg(SYSTEM__INTERRUPT_CLEAR, 0x01); // sys_interrupt_clear_range
   writeReg(SYSTEM__MODE_START, 0x10); // mode_range__single_shot
 
-  if (blocking)
-  {
-    return read(true);
-  }
-  else
-  {
-    return 0;
-  }
+  return read();
 }
 
 // convert a RangeStatus to a readable string
