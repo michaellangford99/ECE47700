@@ -1,3 +1,4 @@
+//
 // Most of the functionality of this library is based on the VL53L1X API
 // provided by ST (STSW-IMG007), and some of the explanatory comments are quoted
 // or paraphrased from the API source code, API user manual (UM2356), and
@@ -7,25 +8,20 @@
 
 // Constructors ////////////////////////////////////////////////////////////////
 
-VL53L1X::VL53L1X()
-#if !defined(NO_GLOBAL_INSTANCES) && !defined(NO_GLOBAL_TWOWIRE)
-  : bus(&Wire)
-#else
-  : bus(nullptr)
-#endif
-  , address(AddressDefault)
-  , io_timeout(0) // no timeout
-  , did_timeout(false)
-  , calibrated(false)
-  , saved_vhv_init(0)
-  , saved_vhv_timeout(0)
-  , distance_mode(Unknown)
+void init_VL53L1X()
 {
+  address(AddressDefault)
+  io_timeout(0) // no timeout
+  did_timeout(false)
+  calibrated(false)
+  saved_vhv_init(0)
+  saved_vhv_timeout(0)
+  distance_mode(Unknown)
 }
 
 // Public Methods //////////////////////////////////////////////////////////////
 
-void VL53L1X::setAddress(uint8_t new_addr)
+void setAddress(uint8_t new_addr)
 {
   writeReg(I2C_SLAVE__DEVICE_ADDRESS, new_addr & 0x7F);
   address = new_addr;
@@ -35,7 +31,7 @@ void VL53L1X::setAddress(uint8_t new_addr)
 // VL53L1_StaticInit().
 // If io_2v8 (optional) is true or not given, the sensor is configured for 2V8
 // mode.
-bool VL53L1X::init(bool io_2v8)
+bool init(bool io_2v8)
 {
   // check model ID and module type registers (values specified in datasheet)
   if (readReg16Bit(IDENTIFICATION__MODEL_ID) != 0xEACC) { return false; }
@@ -159,7 +155,7 @@ bool VL53L1X::init(bool io_2v8)
 }
 
 // Write an 8-bit register
-void VL53L1X::writeReg(uint16_t reg, uint8_t value)
+void writeReg(uint16_t reg, uint8_t value)
 {
   bus->beginTransmission(address);
   bus->write((uint8_t)(reg >> 8)); // reg high byte
@@ -169,7 +165,7 @@ void VL53L1X::writeReg(uint16_t reg, uint8_t value)
 }
 
 // Write a 16-bit register
-void VL53L1X::writeReg16Bit(uint16_t reg, uint16_t value)
+void writeReg16Bit(uint16_t reg, uint16_t value)
 {
   bus->beginTransmission(address);
   bus->write((uint8_t)(reg >> 8)); // reg high byte
@@ -180,7 +176,7 @@ void VL53L1X::writeReg16Bit(uint16_t reg, uint16_t value)
 }
 
 // Write a 32-bit register
-void VL53L1X::writeReg32Bit(uint16_t reg, uint32_t value)
+void writeReg32Bit(uint16_t reg, uint32_t value)
 {
   bus->beginTransmission(address);
   bus->write((uint8_t)(reg >> 8)); // reg high byte
@@ -193,7 +189,7 @@ void VL53L1X::writeReg32Bit(uint16_t reg, uint32_t value)
 }
 
 // Read an 8-bit register
-uint8_t VL53L1X::readReg(regAddr reg)
+uint8_t readReg(regAddr reg)
 {
   uint8_t value;
 
@@ -209,7 +205,7 @@ uint8_t VL53L1X::readReg(regAddr reg)
 }
 
 // Read a 16-bit register
-uint16_t VL53L1X::readReg16Bit(uint16_t reg)
+uint16_t readReg16Bit(uint16_t reg)
 {
   uint16_t value;
 
@@ -226,7 +222,7 @@ uint16_t VL53L1X::readReg16Bit(uint16_t reg)
 }
 
 // Read a 32-bit register
-uint32_t VL53L1X::readReg32Bit(uint16_t reg)
+uint32_t readReg32Bit(uint16_t reg)
 {
   uint32_t value;
 
@@ -246,7 +242,7 @@ uint32_t VL53L1X::readReg32Bit(uint16_t reg)
 
 // set distance mode to Short, Medium, or Long
 // based on VL53L1_SetDistanceMode()
-bool VL53L1X::setDistanceMode(DistanceMode mode)
+bool setDistanceMode(DistanceMode mode)
 {
   // save existing timing budget
   uint32_t budget_us = getMeasurementTimingBudget();
@@ -319,7 +315,7 @@ bool VL53L1X::setDistanceMode(DistanceMode mode)
 // for one measurement. A longer timing budget allows for more accurate
 // measurements.
 // based on VL53L1_SetMeasurementTimingBudgetMicroSeconds()
-bool VL53L1X::setMeasurementTimingBudget(uint32_t budget_us)
+bool setMeasurementTimingBudget(uint32_t budget_us)
 {
   // assumes PresetMode is LOWPOWER_AUTONOMOUS
 
@@ -377,7 +373,7 @@ bool VL53L1X::setMeasurementTimingBudget(uint32_t budget_us)
 
 // Get the measurement timing budget in microseconds
 // based on VL53L1_SetMeasurementTimingBudgetMicroSeconds()
-uint32_t VL53L1X::getMeasurementTimingBudget()
+uint32_t getMeasurementTimingBudget()
 {
   // assumes PresetMode is LOWPOWER_AUTONOMOUS and these sequence steps are
   // enabled: VHV, PHASECAL, DSS1, RANGE
@@ -402,7 +398,7 @@ uint32_t VL53L1X::getMeasurementTimingBudget()
 //
 // ST user manual UM2555 explains ROI selection in detail, so we recommend
 // reading that document carefully.
-void VL53L1X::setROISize(uint8_t width, uint8_t height)
+void setROISize(uint8_t width, uint8_t height)
 {
   if ( width > 16) {  width = 16; }
   if (height > 16) { height = 16; }
@@ -421,7 +417,7 @@ void VL53L1X::setROISize(uint8_t width, uint8_t height)
 
 // Get the width and height of the region of interest (ROI)
 // based on VL53L1X_GetROI_XY() from STSW-IMG009 Ultra Lite Driver
-void VL53L1X::getROISize(uint8_t * width, uint8_t * height)
+void getROISize(uint8_t * width, uint8_t * height)
 {
   uint8_t reg_val = readReg(ROI_CONFIG__USER_ROI_REQUESTED_GLOBAL_XY_SIZE);
   *width = (reg_val & 0xF) + 1;
@@ -477,21 +473,21 @@ void VL53L1X::getROISize(uint8_t * width, uint8_t * height)
 // (like the way a camera works). So for example, to shift the sensor's FOV to
 // sense objects toward the upper left, you should pick a center SPAD in the
 // lower right.
-void VL53L1X::setROICenter(uint8_t spadNumber)
+void setROICenter(uint8_t spadNumber)
 {
   writeReg(ROI_CONFIG__USER_ROI_CENTRE_SPAD, spadNumber);
 }
 
 // Get the center SPAD of the region of interest
 // based on VL53L1X_GetROICenter() from STSW-IMG009 Ultra Lite Driver
-uint8_t VL53L1X::getROICenter()
+uint8_t getROICenter()
 {
   return readReg(ROI_CONFIG__USER_ROI_CENTRE_SPAD);
 }
 
 // Start continuous ranging measurements, with the given inter-measurement
 // period in milliseconds determining how often the sensor takes a measurement.
-void VL53L1X::startContinuous(uint32_t period_ms)
+void startContinuous(uint32_t period_ms)
 {
   // from VL53L1_set_inter_measurement_period_ms()
   writeReg32Bit(SYSTEM__INTERMEASUREMENT_PERIOD, period_ms * osc_calibrate_val);
@@ -502,7 +498,7 @@ void VL53L1X::startContinuous(uint32_t period_ms)
 
 // Stop continuous measurements
 // based on VL53L1_stop_range()
-void VL53L1X::stopContinuous()
+void stopContinuous()
 {
   writeReg(SYSTEM__MODE_START, 0x80); // mode_range__abort
 
@@ -531,7 +527,7 @@ void VL53L1X::stopContinuous()
 // be available. If blocking is false, it will try to return data immediately.
 // (readSingle() also calls this function after starting a single-shot range
 // measurement)
-uint16_t VL53L1X::read(bool blocking)
+uint16_t read(bool blocking)
 {
   if (blocking)
   {
@@ -566,7 +562,7 @@ uint16_t VL53L1X::read(bool blocking)
 // Starts a single-shot range measurement. If blocking is true (the default),
 // this function waits for the measurement to finish and returns the reading.
 // Otherwise, it returns 0 immediately.
-uint16_t VL53L1X::readSingle(bool blocking)
+uint16_t readSingle(bool blocking)
 {
   writeReg(SYSTEM__INTERRUPT_CLEAR, 0x01); // sys_interrupt_clear_range
   writeReg(SYSTEM__MODE_START, 0x10); // mode_range__single_shot
@@ -586,7 +582,7 @@ uint16_t VL53L1X::readSingle(bool blocking)
 // makes working with them easier but uses up 200+ bytes of RAM (many AVR-based
 // Arduinos only have about 2000 bytes of RAM). You can avoid this memory usage
 // if you do not call this function in your sketch.
-const char * VL53L1X::rangeStatusToString(RangeStatus status)
+const char * rangeStatusToString(RangeStatus status)
 {
   switch (status)
   {
@@ -633,7 +629,7 @@ const char * VL53L1X::rangeStatusToString(RangeStatus status)
 
 // Did a timeout occur in one of the read functions since the last call to
 // timeoutOccurred()?
-bool VL53L1X::timeoutOccurred()
+bool timeoutOccurred()
 {
   bool tmp = did_timeout;
   did_timeout = false;
@@ -645,7 +641,7 @@ bool VL53L1X::timeoutOccurred()
 // "Setup ranges after the first one in low power auto mode by turning off
 // FW calibration steps and programming static values"
 // based on VL53L1_low_power_auto_setup_manual_calibration()
-void VL53L1X::setupManualCalibration()
+void setupManualCalibration()
 {
   // "save original vhv configs"
   saved_vhv_init = readReg(VHV_CONFIG__INIT);
@@ -664,7 +660,7 @@ void VL53L1X::setupManualCalibration()
 }
 
 // read measurement results into buffer
-void VL53L1X::readResults()
+void readResults()
 {
   bus->beginTransmission(address);
   bus->write((uint8_t)(RESULT__RANGE_STATUS >> 8)); // reg high byte
@@ -703,7 +699,7 @@ void VL53L1X::readResults()
 
 // perform Dynamic SPAD Selection calculation/update
 // based on VL53L1_low_power_auto_update_DSS()
-void VL53L1X::updateDSS()
+void updateDSS()
 {
   uint16_t spadCount = results.dss_actual_effective_spads_sd0;
 
@@ -749,7 +745,7 @@ void VL53L1X::updateDSS()
 
 // get range, status, rates from results buffer
 // based on VL53L1_GetRangingMeasurementData()
-void VL53L1X::getRangingData()
+void getRangingData()
 {
   // VL53L1_copy_sys_and_core_results_to_range_results() begin
 
@@ -833,14 +829,14 @@ void VL53L1X::getRangingData()
 
 // Decode sequence step timeout in MCLKs from register value
 // based on VL53L1_decode_timeout()
-uint32_t VL53L1X::decodeTimeout(uint16_t reg_val)
+uint32_t decodeTimeout(uint16_t reg_val)
 {
   return ((uint32_t)(reg_val & 0xFF) << (reg_val >> 8)) + 1;
 }
 
 // Encode sequence step timeout register value from timeout in MCLKs
 // based on VL53L1_encode_timeout()
-uint16_t VL53L1X::encodeTimeout(uint32_t timeout_mclks)
+uint16_t encodeTimeout(uint32_t timeout_mclks)
 {
   // encoded format: "(LSByte * 2^MSByte) + 1"
 
@@ -865,7 +861,7 @@ uint16_t VL53L1X::encodeTimeout(uint32_t timeout_mclks)
 // Convert sequence step timeout from macro periods to microseconds with given
 // macro period in microseconds (12.12 format)
 // based on VL53L1_calc_timeout_us()
-uint32_t VL53L1X::timeoutMclksToMicroseconds(uint32_t timeout_mclks, uint32_t macro_period_us)
+uint32_t timeoutMclksToMicroseconds(uint32_t timeout_mclks, uint32_t macro_period_us)
 {
   return ((uint64_t)timeout_mclks * macro_period_us + 0x800) >> 12;
 }
@@ -873,7 +869,7 @@ uint32_t VL53L1X::timeoutMclksToMicroseconds(uint32_t timeout_mclks, uint32_t ma
 // Convert sequence step timeout from microseconds to macro periods with given
 // macro period in microseconds (12.12 format)
 // based on VL53L1_calc_timeout_mclks()
-uint32_t VL53L1X::timeoutMicrosecondsToMclks(uint32_t timeout_us, uint32_t macro_period_us)
+uint32_t timeoutMicrosecondsToMclks(uint32_t timeout_us, uint32_t macro_period_us)
 {
   return (((uint32_t)timeout_us << 12) + (macro_period_us >> 1)) / macro_period_us;
 }
@@ -881,7 +877,7 @@ uint32_t VL53L1X::timeoutMicrosecondsToMclks(uint32_t timeout_us, uint32_t macro
 // Calculate macro period in microseconds (12.12 format) with given VCSEL period
 // assumes fast_osc_frequency has been read and stored
 // based on VL53L1_calc_macro_period_us()
-uint32_t VL53L1X::calcMacroPeriod(uint8_t vcsel_period)
+uint32_t calcMacroPeriod(uint8_t vcsel_period)
 {
   // from VL53L1_calc_pll_period_us()
   // fast osc frequency in 4.12 format; PLL period in 0.24 format
