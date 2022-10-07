@@ -1,7 +1,9 @@
 #include "stm32f4xx.h"
 
+#include <string.h>
 #include <stdio.h>
-
+#include <stdlib.h>
+#include "crc8.h"
 #include "RX_usart.h"
 #include "fifo.h"
 #include "tty.h"
@@ -9,12 +11,6 @@
 #define FIFOSIZE 26
 char rx_serfifo[FIFOSIZE];
 int rx_seroffset = 0;
-
-#define ELRS_PACKET_START_BYTE	0xC8
-#define ELRS_PACKET_MAX_SIZE 	40
-char active_packet[ELRS_PACKET_MAX_SIZE];
-int  active_packet_offset;
-int  is_packet_active;
 
 #define RX_USART 					USART1
 #define RX_USART_GPIO 				GPIOA
@@ -59,126 +55,83 @@ void enable_rx_usart_interrupt()
 	RX_USART_DMA_STREAM->CR |= DMA_SxCR_EN;
 }
 
-/*int __io_putchar(int c) {
-	if (c == '\n') __io_putchar('\r');
-
-	while(!(RX_USART->SR & USART_SR_TXE)) { }
-	RX_USART->DR = c;
-	return c;
-}
-*/
-
-/*
-int interrupt_getchar()
-{
-	// Wait for a newline to complete the buffer.
-	while(!fifo_newline(&input_fifo))
-			asm volatile ("wfi"); // wait for an interrupt
-	// Return a character from the line buffer.
-	char ch = fifo_remove(&input_fifo);
-	return ch;
-}
-
-int __io_getchar(void) {
-	char c = interrupt_getchar();
-
-	return c;
-}*/
-
-void check_packet(void)
-{
-
-}
-
-void shift_packet(void)
-{
-
-}
-
-//Start out wioth some psuedo code
+//Start out with some psuedocode
 //using a circular buffer, new bytes get written
 //to the buffer one after another, until length is met.
 //then old bytes are overwritten from the beginning.
 //a pointer / index exists indicating the starting byte
 //everytime a new byte arrives, the pointer is incremented, and the corresponding byte overwritten.
-#define BUFFER_SIZE ELRS_PACKET_MAX_SIZE*2
-uint8_t rx_buffer[BUFFER_SIZE];
+
+#define ELRS_PACKET_MAX_SIZE 	40
+#define BUFFER_SIZE ELRS_PACKET_MAX_SIZE
+uint8_t rx_buffer[BUFFER_SIZE*2];
 uint8_t* rx_buffer_start = rx_buffer;
 
-/*void process_packet_buffer(uint8_t new)
+uint8_t process_packet_buffer(uint8_t new)
 {
 	//first, add the byte and shift the
 	*rx_buffer_start = new;
 	rx_buffer_start++;
-	if (rx_buffer_start > BUFFER_SIZE-1)
-		rx_buffer_start = 0;
+	if ((uint32_t)(rx_buffer_start-rx_buffer) > BUFFER_SIZE-1)
+		rx_buffer_start = rx_buffer;
 
-	if (*rx_buffer_start == )
-}*/
+	if ((crsf_addr_e)(*rx_buffer_start) == CRSF_ADDRESS_FLIGHT_CONTROLLER)
+	{
+		//go through and attempt to parse
+		//place the data struct at this location and see if it passes
+		//first task is to verify the length is within bounds, and
+		//that the message type is what we're looking for
+		//Then verify it has a valid CRC
+		//move everything from the beginning of memory to
+
+		crsf_packet_t* crsf_packet = (crsf_packet_t*)rx_buffer_start;
+
+		if (crsf_packet->header.type == CRSF_FRAMETYPE_RC_CHANNELS_PACKED)
+		{
+			if (crsf_packet->header.frame_size == sizeof(crsf_channels_t)+2/*type, crc, and payload*/)
+			{
+				//validate CRC
+
+				//copy everything from bottom to the rx_buffer_start point into the upper half of the array to make it contiguous
+				memcpy(rx_buffer + BUFFER_SIZE, rx_buffer, rx_buffer_start-rx_buffer);
+
+				uint8_t calculated_crc = calc_crc(&(crsf_packet->header.type), sizeof(crsf_channels_t)+1/*don't include the CRC in the CRC calc haha*/);
+				uint8_t rx_crc = crsf_packet->crc;
+
+				if (rx_crc == calculated_crc)
+				{
+					//valid packet
+					//TODO save the last 30 or so channel packets for filtering if needed
+					memcpy((void*)&saved_channel_data, (void*)&(crsf_packet->channels), sizeof(crsf_channels_t));
+					return 1;
+				}
+			}
+		}
+	}
+	//if any check here is false, the data gets shifted until a valid packet is detected
+	return 0;
+}
 
 
 void RX_USART_INTERRUPT_HANDLE(void)
 {
 	while(RX_USART_DMA_STREAM->NDTR != sizeof rx_serfifo - rx_seroffset) {
 
-		if (is_packet_active == 0)
+		uint8_t parse_status = process_packet_buffer(rx_serfifo[rx_seroffset]);
+
+		if (parse_status)
 		{
-			if (rx_serfifo[rx_seroffset] == 0xC8)
-			{
-				is_packet_active = 1;
-				active_packet_offset = 0;
-				active_packet[active_packet_offset] = rx_serfifo[rx_seroffset];
-				active_packet_offset++;
-			}
+			crsf_channels_t* channel_data = &saved_channel_data;
+
+			/*printf("%d,\t", channel_data->ch0);
+			printf("%d,\t", channel_data->ch1);
+			printf("%d,\t", channel_data->ch2);
+			printf("%d,\t", channel_data->ch3);
+			printf("%d,\t", channel_data->ch4);
+			printf("%d,\t", channel_data->ch5);
+			printf("%d,\t", channel_data->ch6);
+			printf("%d\n", channel_data->ch7);*/
 		}
-		else
-		{
-			active_packet[active_packet_offset] = rx_serfifo[rx_seroffset];
-			active_packet_offset++;
-
-			/*if (active_packet[1] < 23 && (active_packet_offset > 2))
-			{
-				is_packet_active = 1;
-				active_packet_offset = 0;
-			}
-			else */if ((active_packet_offset > 2) && active_packet_offset >= (active_packet[1] + 2))
-			{
-
-				crsf_channels_t* channel_data;
-
-				channel_data = (crsf_channels_t*)(active_packet + 3);
-
-				if (active_packet_offset > 24)
-				{
-
-					//saved_channel_data.ch0 = channel_data->ch0;
-					//saved_channel_data.ch1 = channel_data->ch1;
-					//saved_channel_data.ch2 = channel_data->ch2;
-
-					memcpy(&saved_channel_data, channel_data, sizeof(crsf_channels_t));
-
-					printf("%d,\t", channel_data->ch0);
-					printf("%d,\t", channel_data->ch1);
-					printf("%d,\t", channel_data->ch2);
-					printf("%d,\t", channel_data->ch3);
-					printf("%d,\t", channel_data->ch4);
-					printf("%d,\t", channel_data->ch5);
-					printf("%d,\t", channel_data->ch6);
-					printf("%d\n", channel_data->ch7);
-				}
-
-				//we done
-				is_packet_active = 0;
-				active_packet_offset = 0;
-			}
-		}
-
-
-		/*if (rx_serfifo[rx_seroffset] == 0xC8)
-		{
-			packet_count++;
-			printf("packet - count=%d, NDTR=%d\n", packet_count, RX_USART_DMA_STREAM->NDTR);
-		}*/
 
 		rx_seroffset = (rx_seroffset + 1) % sizeof rx_serfifo;
 	}
@@ -186,6 +139,8 @@ void RX_USART_INTERRUPT_HANDLE(void)
 
 void init_RX_USART(void)
 {
+	init_crc8(0xd5);
+
 	//USART1
 	//PB6, PB7
 
