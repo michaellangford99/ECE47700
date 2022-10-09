@@ -164,49 +164,55 @@ bool init(bool io_2v8)
 // Write an 8-bit register
 void writeReg(uint16_t reg, uint8_t value)
 {
-  bus->beginTransmission(address);
-  bus->write((uint8_t)(reg >> 8)); // reg high byte
-  bus->write((uint8_t)(reg));      // reg low byte
-  bus->write(value);
-  last_status = bus->endTransmission();
+  I2C1start();
+  beginTransmissionI2C1(address);
+  I2C1write((uint8_t)(reg >> 8)); // reg high byte
+  I2C1write((uint8_t)(reg));      // reg low byte
+  I2C1write(value);
+  I2C1stop();
+  //last_status = bus->endTransmission();
 }
 
 // Write a 16-bit register
 void writeReg16Bit(uint16_t reg, uint16_t value)
 {
-  bus->beginTransmission(address);
-  bus->write((uint8_t)(reg >> 8)); // reg high byte
-  bus->write((uint8_t)(reg));      // reg low byte
-  bus->write((uint8_t)(value >> 8)); // value high byte
-  bus->write((uint8_t)(value));      // value low byte
-  last_status = bus->endTransmission();
+  I2C1start();
+  beginTransmissionI2C1(address);
+  I2C1write((uint8_t)(reg >> 8)); // reg high byte
+  I2C1write((uint8_t)(reg));      // reg low byte
+  I2C1write((uint8_t)(value >> 8));
+  I2C1write((uint8_t)(value));
+  I2C1stop();
+  //last_status = bus->endTransmission();
 }
 
 // Write a 32-bit register
 void writeReg32Bit(uint16_t reg, uint32_t value)
 {
-  bus->beginTransmission(address);
-  bus->write((uint8_t)(reg >> 8)); // reg high byte
-  bus->write((uint8_t)(reg));      // reg low byte
-  bus->write((uint8_t)(value >> 24)); // value highest byte
-  bus->write((uint8_t)(value >> 16));
-  bus->write((uint8_t)(value >>  8));
-  bus->write((uint8_t)(value));       // value lowest byte
-  last_status = bus->endTransmission();
+  I2C1start();
+  beginTransmissionI2C1(address);
+  I2C1write((uint8_t)(reg >> 8)); // reg high byte
+  I2C1write((uint8_t)(reg));
+  I2C1write((uint8_t)(value >> 24)); // value highest byte
+  I2C1write((uint8_t)(value >> 16));
+  I2C1write((uint8_t)(value >> 8));
+  I2C1write((uint8_t)(value));
+  I2C1stop();
 }
 
 // Read an 8-bit register
 uint8_t readReg(uint16_t reg)
 {
   uint8_t value;
+  I2C1start();
+  beginTransmissionI2C1(address);
+  I2C1write((uint8_t)(reg >> 8)); // reg high byte
+  I2C1write((uint8_t)(reg));
+  I2C1stop();
 
-  bus->beginTransmission(address);
-  bus->write((uint8_t)(reg >> 8)); // reg high byte
-  bus->write((uint8_t)(reg));      // reg low byte
-  last_status = bus->endTransmission();
-
-  bus->requestFrom(address, (uint8_t)1);
-  value = bus->read();
+  uint8_t buffer[1];
+  I2CrequestFrom(address, buffer, (uint8_t)1);
+  value = buffer[1];
 
   return value;
 }
@@ -216,14 +222,15 @@ uint16_t readReg16Bit(uint16_t reg)
 {
   uint16_t value;
 
-  bus->beginTransmission(address);
-  bus->write((uint8_t)(reg >> 8)); // reg high byte
-  bus->write((uint8_t)(reg));      // reg low byte
-  last_status = bus->endTransmission();
+  I2C1start();
+  beginTransmissionI2C1(address);
+  I2C1write((uint8_t)(reg >> 8)); // reg high byte
+  I2C1write((uint8_t)(reg));
+  I2C1stop();
 
-  bus->requestFrom(address, (uint8_t)2);
-  value  = (uint16_t)bus->read() << 8; // value high byte
-  value |=           bus->read();      // value low byte
+  uint8_t buffer[2];
+  I2CrequestFrom(address, buffer, (uint8_t)2);
+  value = (uint16_t)(buffer[0] <<8) | (uint16_t)buffer[1];      // All value
 
   return value;
 }
@@ -233,16 +240,15 @@ uint32_t readReg32Bit(uint16_t reg)
 {
   uint32_t value;
 
-  bus->beginTransmission(address);
-  bus->write((uint8_t)(reg >> 8)); // reg high byte
-  bus->write((uint8_t)(reg));      // reg low byte
-  last_status = bus->endTransmission();
+  I2C1start();
+  beginTransmissionI2C1(address);
+  I2C1write((uint8_t)(reg >> 8)); // reg high byte
+  I2C1write((uint8_t)(reg));
+  I2C1stop();
 
-  bus->requestFrom(address, (uint8_t)4);
-  value  = (uint32_t)bus->read() << 24; // value highest byte
-  value |= (uint32_t)bus->read() << 16;
-  value |= (uint16_t)bus->read() <<  8;
-  value |=           bus->read();       // value lowest byte
+  uint8_t buffer[2];
+  I2CrequestFrom(address, buffer, (uint8_t)4);
+  value = (uint32_t)(buffer[0] << 24)| (uint32_t)(buffer[1] << 16) | (uint16_t)(buffer[2] <<8) | (uint16_t)buffer[3];      // All value
 
   return value;
 }
@@ -660,39 +666,41 @@ void setupManualCalibration()
 // read measurement results into buffer
 void readResults()
 {
-  bus->beginTransmission(address);
-  bus->write((uint8_t)(RESULT__RANGE_STATUS >> 8)); // reg high byte
-  bus->write((uint8_t)(RESULT__RANGE_STATUS));      // reg low byte
-  last_status = bus->endTransmission();
+  I2Cstart();
+  I2Caddress (address);
+  I2Cwrite((uint8_t)(RESULT__RANGE_STATUS >> 8)); // reg high byte
+  I2Cwrite((uint8_t)(RESULT__RANGE_STATUS));      // reg low byte
+  I2Cstop();
+  uint8_t buffer[17];
+  I2CrequestFrom(address, buffer, (uint8_t) 17);
+//  bus->requestFrom(address, buffer, (uint8_t)17);
 
-  bus->requestFrom(address, (uint8_t)17);
+  results.range_status = buffer[16];
 
-  results.range_status = bus->read();
+ // bus->read(); // report_status: not used
 
-  bus->read(); // report_status: not used
+  results.stream_count = buffer[14];
 
-  results.stream_count = bus->read();
+  results.dss_actual_effective_spads_sd0  = (uint16_t)(buffer[13]<< 8); // high byte
+  results.dss_actual_effective_spads_sd0 |=           buffer[12];      // low byte
 
-  results.dss_actual_effective_spads_sd0  = (uint16_t)bus->read() << 8; // high byte
-  results.dss_actual_effective_spads_sd0 |=           bus->read();      // low byte
+//  bus->read(); // peak_signal_count_rate_mcps_sd0: not used
+//  bus->read();
 
-  bus->read(); // peak_signal_count_rate_mcps_sd0: not used
-  bus->read();
+  results.ambient_count_rate_mcps_sd0  = (uint16_t)(buffer[9] << 8); // high byte
+  results.ambient_count_rate_mcps_sd0 |=           (buffer[8]);      // low byte
 
-  results.ambient_count_rate_mcps_sd0  = (uint16_t)bus->read() << 8; // high byte
-  results.ambient_count_rate_mcps_sd0 |=           bus->read();      // low byte
+//  bus->read(); // sigma_sd0: not used
+//  bus->read();
 
-  bus->read(); // sigma_sd0: not used
-  bus->read();
+//  bus->read(); // phase_sd0: not used
+//  bus->read();
 
-  bus->read(); // phase_sd0: not used
-  bus->read();
+  results.final_crosstalk_corrected_range_mm_sd0  = (uint16_t)(buffer[3] << 8); // high byte
+  results.final_crosstalk_corrected_range_mm_sd0 |=           (buffer[2] << 8);      // low byte
 
-  results.final_crosstalk_corrected_range_mm_sd0  = (uint16_t)bus->read() << 8; // high byte
-  results.final_crosstalk_corrected_range_mm_sd0 |=           bus->read();      // low byte
-
-  results.peak_signal_count_rate_crosstalk_corrected_mcps_sd0  = (uint16_t)bus->read() << 8; // high byte
-  results.peak_signal_count_rate_crosstalk_corrected_mcps_sd0 |=           bus->read();      // low byte
+  results.peak_signal_count_rate_crosstalk_corrected_mcps_sd0  = (uint16_t)(buffer[1]<< 8); // high byte
+  results.peak_signal_count_rate_crosstalk_corrected_mcps_sd0 |=           (buffer[0]));      // low byte
 }
 
 // perform Dynamic SPAD Selection calculation/update
