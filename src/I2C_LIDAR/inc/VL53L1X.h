@@ -1349,7 +1349,7 @@ VL53L1X* active_device;
 void setAddress(uint8_t new_addr);
 uint8_t getAddress() { return address; }
 
-bool init(bool io_2v8 = true);
+//bool init(bool io_2v8 = true);
 
 void writeReg(uint16_t reg, uint8_t value);
 void writeReg16Bit(uint16_t reg, uint16_t value);
