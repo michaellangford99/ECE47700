@@ -5,40 +5,47 @@
 // VL53L1X datasheet.
 
 #include "VL53L1X.h"
+#include "i2c.h"
 
 // Constructors ////////////////////////////////////////////////////////////////
 
-void init_VL53L1X(VL53L1X* device)
+bool init();
+
+bool VL53L1X_init(VL53L1X_t* device)
 {
   active_device = device;
 
-  address = AddressDefault;
-  io_timeout = 0; // no timeout
-  did_timeout = false;
-  calibrated = false;
-  saved_vhv_init = 0;
-  saved_vhv_timeout = 0;
-  distance_mode = Unknown;
+  active_device->dev_address = AddressDefault;
+  active_device->dev_io_timeout = 0; // no timeout
+  active_device->dev_did_timeout = false;
+  active_device->dev_calibrated = false;
+  active_device->dev_saved_vhv_init = 0;
+  active_device->dev_saved_vhv_timeout = 0;
+  active_device->dev_distance_mode = Unknown;
+
+  VL53L1X_setTimeout(500);
+
+  return init();
 }
 
-void set_device(VL53L1X* device)
+void VL53L1X_setDevice(VL53L1X_t* device)
 {
   active_device = device;
 }
 
 // Public Methods //////////////////////////////////////////////////////////////
 
-void setAddress(uint8_t new_addr)
+void VL53L1X_setAddress(uint8_t new_addr)
 {
   writeReg(I2C_SLAVE__DEVICE_ADDRESS, new_addr & 0x7F);
-  address = new_addr;
+  active_device->dev_address = new_addr;
 }
 
 // Initialize sensor using settings taken mostly from VL53L1_DataInit() and
 // VL53L1_StaticInit().
 // If io_2v8 (optional) is true or not given, the sensor is configured for 2V8
 // mode.
-bool init(bool io_2v8)
+bool init()
 {
   // check model ID and module type registers (values specified in datasheet)
   if (readReg16Bit(IDENTIFICATION__MODEL_ID) != 0xEACC) { return false; }
@@ -58,11 +65,11 @@ bool init(bool io_2v8)
   startTimeout();
 
   // check last_status in case we still get a NACK to try to deal with it correctly
-  while ((readReg(FIRMWARE__SYSTEM_STATUS) & 0x01) == 0 || last_status != 0)
+  while ((readReg(FIRMWARE__SYSTEM_STATUS) & 0x01) == 0 || active_device->dev_last_status != 0)
   {
     if (checkTimeoutExpired())
     {
-      did_timeout = true;
+      active_device->dev_did_timeout = true;
       return false;
     }
   }
@@ -73,15 +80,15 @@ bool init(bool io_2v8)
   // VL53L1_DataInit() begin
 
   // sensor uses 1V8 mode for I/O by default; switch to 2V8 mode if necessary
-  if (io_2v8)
-  {
+  
+  
     writeReg(PAD_I2C_HV__EXTSUP_CONFIG,
       readReg(PAD_I2C_HV__EXTSUP_CONFIG) | 0x01);
-  }
+  
 
   // store oscillator info for later use
-  fast_osc_frequency = readReg16Bit(OSC_MEASURED__FAST_OSC__FREQUENCY);
-  osc_calibrate_val = readReg16Bit(RESULT__OSC_CALIBRATE_VAL);
+  active_device->dev_fast_osc_frequency = readReg16Bit(OSC_MEASURED__FAST_OSC__FREQUENCY);
+  active_device->dev_osc_calibrate_val = readReg16Bit(RESULT__OSC_CALIBRATE_VAL);
 
   // VL53L1_DataInit() end
 
@@ -148,7 +155,7 @@ bool init(bool io_2v8)
 
   // default to long range, 50 ms timing budget
   // note that this is different than what the API defaults to
-  setDistanceMode(Long);
+  VL53L1X_setDistanceMode(Long);
   setMeasurementTimingBudget(50000);
 
   // VL53L1_StaticInit() end
@@ -164,54 +171,54 @@ bool init(bool io_2v8)
 // Write an 8-bit register
 void writeReg(uint16_t reg, uint8_t value)
 {
-  I2C1start();
-  beginTransmissionI2C1(address);
-  I2C1write((uint8_t)(reg >> 8)); // reg high byte
-  I2C1write((uint8_t)(reg));      // reg low byte
-  I2C1write(value);
-  I2C1stop();
-  //last_status = bus->endTransmission();
+  I2Cstart();
+  beginTransmissionI2C(active_device->dev_address);
+  I2Cwrite((uint8_t)(reg >> 8)); // reg high byte
+  I2Cwrite((uint8_t)(reg));      // reg low byte
+  I2Cwrite(value);
+  I2Cstop();
+  //active_device->dev_last_status = bus->endTransmission();
 }
 
 // Write a 16-bit register
 void writeReg16Bit(uint16_t reg, uint16_t value)
 {
-  I2C1start();
-  beginTransmissionI2C1(address);
-  I2C1write((uint8_t)(reg >> 8)); // reg high byte
-  I2C1write((uint8_t)(reg));      // reg low byte
-  I2C1write((uint8_t)(value >> 8));
-  I2C1write((uint8_t)(value));
-  I2C1stop();
-  //last_status = bus->endTransmission();
+  I2Cstart();
+  beginTransmissionI2C(active_device->dev_address);
+  I2Cwrite((uint8_t)(reg >> 8)); // reg high byte
+  I2Cwrite((uint8_t)(reg));      // reg low byte
+  I2Cwrite((uint8_t)(value >> 8));
+  I2Cwrite((uint8_t)(value));
+  I2Cstop();
+  //active_device->dev_last_status = bus->endTransmission();
 }
 
 // Write a 32-bit register
 void writeReg32Bit(uint16_t reg, uint32_t value)
 {
-  I2C1start();
-  beginTransmissionI2C1(address);
-  I2C1write((uint8_t)(reg >> 8)); // reg high byte
-  I2C1write((uint8_t)(reg));
-  I2C1write((uint8_t)(value >> 24)); // value highest byte
-  I2C1write((uint8_t)(value >> 16));
-  I2C1write((uint8_t)(value >> 8));
-  I2C1write((uint8_t)(value));
-  I2C1stop();
+  I2Cstart();
+  beginTransmissionI2C(active_device->dev_address);
+  I2Cwrite((uint8_t)(reg >> 8)); // reg high byte
+  I2Cwrite((uint8_t)(reg));
+  I2Cwrite((uint8_t)(value >> 24)); // value highest byte
+  I2Cwrite((uint8_t)(value >> 16));
+  I2Cwrite((uint8_t)(value >> 8));
+  I2Cwrite((uint8_t)(value));
+  I2Cstop();
 }
 
 // Read an 8-bit register
 uint8_t readReg(uint16_t reg)
 {
   uint8_t value;
-  I2C1start();
-  beginTransmissionI2C1(address);
-  I2C1write((uint8_t)(reg >> 8)); // reg high byte
-  I2C1write((uint8_t)(reg));
-  I2C1stop();
+  I2Cstart();
+  beginTransmissionI2C(active_device->dev_address);
+  I2Cwrite((uint8_t)(reg >> 8)); // reg high byte
+  I2Cwrite((uint8_t)(reg));
+  I2Cstop();
 
   uint8_t buffer[1];
-  I2CrequestFrom(address, buffer, (uint8_t)1);
+  I2CrequestFrom(active_device->dev_address, buffer, (uint8_t)1);
   value = buffer[1];
 
   return value;
@@ -222,14 +229,14 @@ uint16_t readReg16Bit(uint16_t reg)
 {
   uint16_t value;
 
-  I2C1start();
-  beginTransmissionI2C1(address);
-  I2C1write((uint8_t)(reg >> 8)); // reg high byte
-  I2C1write((uint8_t)(reg));
-  I2C1stop();
+  I2Cstart();
+  beginTransmissionI2C(active_device->dev_address);
+  I2Cwrite((uint8_t)(reg >> 8)); // reg high byte
+  I2Cwrite((uint8_t)(reg));
+  I2Cstop();
 
   uint8_t buffer[2];
-  I2CrequestFrom(address, buffer, (uint8_t)2);
+  I2CrequestFrom(active_device->dev_address, buffer, (uint8_t)2);
   value = (uint16_t)(buffer[0] <<8) | (uint16_t)buffer[1];      // All value
 
   return value;
@@ -240,14 +247,14 @@ uint32_t readReg32Bit(uint16_t reg)
 {
   uint32_t value;
 
-  I2C1start();
-  beginTransmissionI2C1(address);
-  I2C1write((uint8_t)(reg >> 8)); // reg high byte
-  I2C1write((uint8_t)(reg));
-  I2C1stop();
+  I2Cstart();
+  beginTransmissionI2C(active_device->dev_address);
+  I2Cwrite((uint8_t)(reg >> 8)); // reg high byte
+  I2Cwrite((uint8_t)(reg));
+  I2Cstop();
 
   uint8_t buffer[2];
-  I2CrequestFrom(address, buffer, (uint8_t)4);
+  I2CrequestFrom(active_device->dev_address, buffer, (uint8_t)4);
   value = (uint32_t)(buffer[0] << 24)| (uint32_t)(buffer[1] << 16) | (uint16_t)(buffer[2] <<8) | (uint16_t)buffer[3];      // All value
 
   return value;
@@ -255,7 +262,7 @@ uint32_t readReg32Bit(uint16_t reg)
 
 // set distance mode to Short, Medium, or Long
 // based on VL53L1_SetDistanceMode()
-bool setDistanceMode(DistanceMode mode)
+bool VL53L1X_setDistanceMode(DistanceMode_t mode)
 {
   // save existing timing budget
   uint32_t budget_us = getMeasurementTimingBudget();
@@ -319,7 +326,7 @@ bool setDistanceMode(DistanceMode mode)
   setMeasurementTimingBudget(budget_us);
 
   // save mode so it can be returned by getDistanceMode()
-  distance_mode = mode;
+  active_device->dev_distance_mode = mode;
 
   return true;
 }
@@ -500,10 +507,10 @@ uint8_t getROICenter()
 
 // Start continuous ranging measurements, with the given inter-measurement
 // period in milliseconds determining how often the sensor takes a measurement.
-void startContinuous(uint32_t period_ms)
+void VL53L1X_startContinuous(uint32_t period_ms)
 {
   // from VL53L1_set_inter_measurement_period_ms()
-  writeReg32Bit(SYSTEM__INTERMEASUREMENT_PERIOD, period_ms * osc_calibrate_val);
+  writeReg32Bit(SYSTEM__INTERMEASUREMENT_PERIOD, period_ms * active_device->dev_osc_calibrate_val);
 
   writeReg(SYSTEM__INTERRUPT_CLEAR, 0x01); // sys_interrupt_clear_range
   writeReg(SYSTEM__MODE_START, 0x40); // mode_range__timed
@@ -511,22 +518,22 @@ void startContinuous(uint32_t period_ms)
 
 // Stop continuous measurements
 // based on VL53L1_stop_range()
-void stopContinuous()
+void VL53L1X_stopContinuous()
 {
   writeReg(SYSTEM__MODE_START, 0x80); // mode_range__abort
 
   // VL53L1_low_power_auto_data_stop_range() begin
 
-  calibrated = false;
+  active_device->dev_calibrated = false;
 
   // "restore vhv configs"
-  if (saved_vhv_init != 0)
+  if (active_device->dev_saved_vhv_init != 0)
   {
-    writeReg(VHV_CONFIG__INIT, saved_vhv_init);
+    writeReg(VHV_CONFIG__INIT, active_device->dev_saved_vhv_init);
   }
-  if (saved_vhv_timeout != 0)
+  if (active_device->dev_saved_vhv_timeout != 0)
   {
-     writeReg(VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND, saved_vhv_timeout);
+     writeReg(VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND, active_device->dev_saved_vhv_timeout);
   }
 
   // "remove phasecal override"
@@ -538,27 +545,27 @@ void stopContinuous()
 // Returns a range reading in millimeters when continuous mode is active. If
 // blocking is true (the default), this function waits for a new measurement to
 // be available. If blocking is false, it will try to return data immediately.
-// (readSingle() also calls this function after starting a single-shot range
+// (VL53L1X_readSingle() also calls this function after starting a single-shot range
 // measurement)
-uint16_t read()
+uint16_t VL53L1X_read()
 {
   
   startTimeout();
-  while (!dataReady())
+  while (!VL53L1X_dataReady())
   {
     if (checkTimeoutExpired())
     {
-      did_timeout = true;
+      active_device->dev_did_timeout = true;
       return 0;
     }
   }
 
   readResults();
 
-  if (!calibrated)
+  if (!active_device->dev_calibrated)
   {
     setupManualCalibration();
-    calibrated = true;
+    active_device->dev_calibrated = true;
   }
 
   updateDSS();
@@ -567,26 +574,26 @@ uint16_t read()
 
   writeReg(SYSTEM__INTERRUPT_CLEAR, 0x01); // sys_interrupt_clear_range
 
-  return ranging_data.range_mm;
+  return active_device->dev_ranging_data.range_mm;
 }
 
 // Starts a single-shot range measurement. If blocking is true (the default),
 // this function waits for the measurement to finish and returns the reading.
 // Otherwise, it returns 0 immediately.
-uint16_t readSingle()
+uint16_t VL53L1X_readSingle()
 {
   writeReg(SYSTEM__INTERRUPT_CLEAR, 0x01); // sys_interrupt_clear_range
   writeReg(SYSTEM__MODE_START, 0x10); // mode_range__single_shot
 
-  return read();
+  return VL53L1X_read();
 }
 
-// convert a RangeStatus to a readable string
+// convert a RangeStatus_t to a readable string
 // Note that on an AVR, these strings are stored in RAM (dynamic memory), which
 // makes working with them easier but uses up 200+ bytes of RAM (many AVR-based
 // Arduinos only have about 2000 bytes of RAM). You can avoid this memory usage
 // if you do not call this function in your sketch.
-const char * rangeStatusToString(RangeStatus status)
+const char * VL53L1X_rangeStatusToString(RangeStatus_t status)
 {
   switch (status)
   {
@@ -633,10 +640,10 @@ const char * rangeStatusToString(RangeStatus status)
 
 // Did a timeout occur in one of the read functions since the last call to
 // timeoutOccurred()?
-bool timeoutOccurred()
+bool VL53L1X_timeoutOccurred()
 {
-  bool tmp = did_timeout;
-  did_timeout = false;
+  bool tmp = active_device->dev_did_timeout;
+  active_device->dev_did_timeout = false;
   return tmp;
 }
 
@@ -648,15 +655,15 @@ bool timeoutOccurred()
 void setupManualCalibration()
 {
   // "save original vhv configs"
-  saved_vhv_init = readReg(VHV_CONFIG__INIT);
-  saved_vhv_timeout = readReg(VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND);
+  active_device->dev_saved_vhv_init = readReg(VHV_CONFIG__INIT);
+  active_device->dev_saved_vhv_timeout = readReg(VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND);
 
   // "disable VHV init"
-  writeReg(VHV_CONFIG__INIT, saved_vhv_init & 0x7F);
+  writeReg(VHV_CONFIG__INIT, active_device->dev_saved_vhv_init & 0x7F);
 
   // "set loop bound to tuning param"
   writeReg(VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND,
-    (saved_vhv_timeout & 0x03) + (3 << 2)); // tuning parm default (LOWPOWERAUTO_VHV_LOOP_BOUND_DEFAULT)
+    (active_device->dev_saved_vhv_timeout & 0x03) + (3 << 2)); // tuning parm default (LOWPOWERAUTO_VHV_LOOP_BOUND_DEFAULT)
 
   // "override phasecal"
   writeReg(PHASECAL_CONFIG__OVERRIDE, 0x01);
@@ -667,28 +674,28 @@ void setupManualCalibration()
 void readResults()
 {
   I2Cstart();
-  I2Caddress (address);
+  I2Caddress (active_device->dev_address);
   I2Cwrite((uint8_t)(RESULT__RANGE_STATUS >> 8)); // reg high byte
   I2Cwrite((uint8_t)(RESULT__RANGE_STATUS));      // reg low byte
   I2Cstop();
   uint8_t buffer[17];
-  I2CrequestFrom(address, buffer, (uint8_t) 17);
-//  bus->requestFrom(address, buffer, (uint8_t)17);
+  I2CrequestFrom(active_device->dev_address, buffer, (uint8_t) 17);
+//  bus->requestFrom(active_device->dev_address, buffer, (uint8_t)17);
 
-  results.range_status = buffer[16];
+  active_device->dev_results.range_status = buffer[16];
 
  // bus->read(); // report_status: not used
 
-  results.stream_count = buffer[14];
+  active_device->dev_results.stream_count = buffer[14];
 
-  results.dss_actual_effective_spads_sd0  = (uint16_t)(buffer[13]<< 8); // high byte
-  results.dss_actual_effective_spads_sd0 |=           buffer[12];      // low byte
+  active_device->dev_results.dss_actual_effective_spads_sd0  = (uint16_t)(buffer[13]<< 8); // high byte
+  active_device->dev_results.dss_actual_effective_spads_sd0 |=           buffer[12];      // low byte
 
 //  bus->read(); // peak_signal_count_rate_mcps_sd0: not used
 //  bus->read();
 
-  results.ambient_count_rate_mcps_sd0  = (uint16_t)(buffer[9] << 8); // high byte
-  results.ambient_count_rate_mcps_sd0 |=           (buffer[8]);      // low byte
+  active_device->dev_results.ambient_count_rate_mcps_sd0  = (uint16_t)(buffer[9] << 8); // high byte
+  active_device->dev_results.ambient_count_rate_mcps_sd0 |=           (buffer[8]);      // low byte
 
 //  bus->read(); // sigma_sd0: not used
 //  bus->read();
@@ -696,26 +703,26 @@ void readResults()
 //  bus->read(); // phase_sd0: not used
 //  bus->read();
 
-  results.final_crosstalk_corrected_range_mm_sd0  = (uint16_t)(buffer[3] << 8); // high byte
-  results.final_crosstalk_corrected_range_mm_sd0 |=           (buffer[2] << 8);      // low byte
+  active_device->dev_results.final_crosstalk_corrected_range_mm_sd0  = (uint16_t)(buffer[3] << 8); // high byte
+  active_device->dev_results.final_crosstalk_corrected_range_mm_sd0 |=           (buffer[2] << 8);      // low byte
 
-  results.peak_signal_count_rate_crosstalk_corrected_mcps_sd0  = (uint16_t)(buffer[1]<< 8); // high byte
-  results.peak_signal_count_rate_crosstalk_corrected_mcps_sd0 |=           (buffer[0]));      // low byte
+  active_device->dev_results.peak_signal_count_rate_crosstalk_corrected_mcps_sd0  = (uint16_t)(buffer[1]<< 8); // high byte
+  active_device->dev_results.peak_signal_count_rate_crosstalk_corrected_mcps_sd0 |=           (buffer[0]);      // low byte
 }
 
 // perform Dynamic SPAD Selection calculation/update
 // based on VL53L1_low_power_auto_update_DSS()
 void updateDSS()
 {
-  uint16_t spadCount = results.dss_actual_effective_spads_sd0;
+  uint16_t spadCount = active_device->dev_results.dss_actual_effective_spads_sd0;
 
   if (spadCount != 0)
   {
     // "Calc total rate per spad"
 
     uint32_t totalRatePerSpad =
-      (uint32_t)results.peak_signal_count_rate_crosstalk_corrected_mcps_sd0 +
-      results.ambient_count_rate_mcps_sd0;
+      (uint32_t)active_device->dev_results.peak_signal_count_rate_crosstalk_corrected_mcps_sd0 +
+      active_device->dev_results.ambient_count_rate_mcps_sd0;
 
     // "clip to 16 bits"
     if (totalRatePerSpad > 0xFFFF) { totalRatePerSpad = 0xFFFF; }
@@ -755,82 +762,82 @@ void getRangingData()
 {
   // VL53L1_copy_sys_and_core_results_to_range_results() begin
 
-  uint16_t range = results.final_crosstalk_corrected_range_mm_sd0;
+  uint16_t range = active_device->dev_results.final_crosstalk_corrected_range_mm_sd0;
 
   // "apply correction gain"
   // gain factor of 2011 is tuning parm default (VL53L1_TUNINGPARM_LITE_RANGING_GAIN_FACTOR_DEFAULT)
   // Basically, this appears to scale the result by 2011/2048, or about 98%
   // (with the 1024 added for proper rounding).
-  ranging_data.range_mm = ((uint32_t)range * 2011 + 0x0400) / 0x0800;
+  active_device->dev_ranging_data.range_mm = ((uint32_t)range * 2011 + 0x0400) / 0x0800;
 
   // VL53L1_copy_sys_and_core_results_to_range_results() end
 
   // set range_status in ranging_data based on value of RESULT__RANGE_STATUS register
   // mostly based on ConvertStatusLite()
-  switch(results.range_status)
+  switch(active_device->dev_results.range_status)
   {
     case 17: // MULTCLIPFAIL
     case 2: // VCSELWATCHDOGTESTFAILURE
     case 1: // VCSELCONTINUITYTESTFAILURE
     case 3: // NOVHVVALUEFOUND
       // from SetSimpleData()
-      ranging_data.range_status = HardwareFail;
+      active_device->dev_ranging_data.range_status = HardwareFail;
       break;
 
     case 13: // USERROICLIP
      // from SetSimpleData()
-      ranging_data.range_status = MinRangeFail;
+      active_device->dev_ranging_data.range_status = MinRangeFail;
       break;
 
     case 18: // GPHSTREAMCOUNT0READY
-      ranging_data.range_status = SynchronizationInt;
+      active_device->dev_ranging_data.range_status = SynchronizationInt;
       break;
 
     case 5: // RANGEPHASECHECK
-      ranging_data.range_status =  OutOfBoundsFail;
+      active_device->dev_ranging_data.range_status =  OutOfBoundsFail;
       break;
 
     case 4: // MSRCNOTARGET
-      ranging_data.range_status = SignalFail;
+      active_device->dev_ranging_data.range_status = SignalFail;
       break;
 
     case 6: // SIGMATHRESHOLDCHECK
-      ranging_data.range_status = SigmaFail;
+      active_device->dev_ranging_data.range_status = SigmaFail;
       break;
 
     case 7: // PHASECONSISTENCY
-      ranging_data.range_status = WrapTargetFail;
+      active_device->dev_ranging_data.range_status = WrapTargetFail;
       break;
 
     case 12: // RANGEIGNORETHRESHOLD
-      ranging_data.range_status = XtalkSignalFail;
+      active_device->dev_ranging_data.range_status = XtalkSignalFail;
       break;
 
     case 8: // MINCLIP
-      ranging_data.range_status = RangeValidMinRangeClipped;
+      active_device->dev_ranging_data.range_status = RangeValidMinRangeClipped;
       break;
 
     case 9: // RANGECOMPLETE
       // from VL53L1_copy_sys_and_core_results_to_range_results()
-      if (results.stream_count == 0)
+      if (active_device->dev_results.stream_count == 0)
       {
-        ranging_data.range_status = RangeValidNoWrapCheckFail;
+        active_device->dev_ranging_data.range_status = RangeValidNoWrapCheckFail;
       }
       else
       {
-        ranging_data.range_status = RangeValid;
+        active_device->dev_ranging_data.range_status = RangeValid;
       }
       break;
 
     default:
-      ranging_data.range_status = None;
+      active_device->dev_ranging_data.range_status = None;
   }
 
   // from SetSimpleData()
-  ranging_data.peak_signal_count_rate_MCPS =
-    countRateFixedToFloat(results.peak_signal_count_rate_crosstalk_corrected_mcps_sd0);
-  ranging_data.ambient_count_rate_MCPS =
-    countRateFixedToFloat(results.ambient_count_rate_mcps_sd0);
+  active_device->dev_ranging_data.peak_signal_count_rate_MCPS =
+    countRateFixedToFloat(active_device->dev_results.peak_signal_count_rate_crosstalk_corrected_mcps_sd0);
+  active_device->dev_ranging_data.ambient_count_rate_MCPS =
+    countRateFixedToFloat(active_device->dev_results.ambient_count_rate_mcps_sd0);
 }
 
 // Decode sequence step timeout in MCLKs from register value
@@ -887,7 +894,7 @@ uint32_t calcMacroPeriod(uint8_t vcsel_period)
 {
   // from VL53L1_calc_pll_period_us()
   // fast osc frequency in 4.12 format; PLL period in 0.24 format
-  uint32_t pll_period_us = ((uint32_t)0x01 << 30) / fast_osc_frequency;
+  uint32_t pll_period_us = ((uint32_t)0x01 << 30) / active_device->dev_fast_osc_frequency;
 
   // from VL53L1_decode_vcsel_period()
   uint8_t vcsel_period_pclks = (vcsel_period + 1) << 1;

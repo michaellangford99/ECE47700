@@ -1194,9 +1194,9 @@ enum regAddr
   SHADOW_PHASECAL_RESULT__REFERENCE_PHASE_LO                                 = 0x0FFF,
 };
 
-typedef enum { Short, Medium, Long, Unknown } DistanceMode;
+typedef enum DistanceMode_s { Short, Medium, Long, Unknown } DistanceMode_t;
 
-typedef enum
+typedef enum RangeStatus_t
 {
   RangeValid                =   0,
 
@@ -1252,15 +1252,15 @@ typedef enum
 
   // "No Update."
   None                      = 255,
-} RangeStatus;
+} RangeStatus_t;
 
-typedef struct
+typedef struct RangingData_s
 {
   uint16_t range_mm;
   uint8_t range_status;
   float peak_signal_count_rate_MCPS;
   float ambient_count_rate_MCPS;
-} RangingData ;
+} RangingData_t;
 
 
 // The Arduino two-wire interface uses a 7-bit number for the address,
@@ -1285,7 +1285,7 @@ static const uint16_t TargetRate = 0x0A00;
 // for storing values read from RESULT__RANGE_STATUS (0x0089)
 // through RESULT__PEAK_SIGNAL_COUNT_RATE_CROSSTALK_CORRECTED_MCPS_SD0_LOW
 // (0x0099)
-typedef struct
+typedef struct ResultBuffer_s
 {
   uint8_t range_status;
 // uint8_t report_status: not used
@@ -1297,20 +1297,20 @@ typedef struct
 // uint16_t phase_sd0: not used
   uint16_t final_crosstalk_corrected_range_mm_sd0;
   uint16_t peak_signal_count_rate_crosstalk_corrected_mcps_sd0;
-} ResultBuffer;
+} ResultBuffer_t;
 
 
 //=======================================================
 
-typedef struct {
+typedef struct VL53L1X_s{
 
-  RangingData dev_ranging_data;
+  RangingData_t dev_ranging_data;
   uint8_t dev_last_status; // status of last I2C transmission
 
   // making this static would save RAM for multiple instances as long as there
   // aren't multiple sensors being read at the same time (e.g. on separate
   // I2C buses)
-  ResultBuffer dev_results;
+  ResultBuffer_t dev_results;
   
   uint8_t dev_address;
 
@@ -1325,31 +1325,19 @@ typedef struct {
   uint8_t dev_saved_vhv_init;
   uint8_t dev_saved_vhv_timeout;
 
-  DistanceMode dev_distance_mode;
-} VL53L1X;
+  DistanceMode_t dev_distance_mode;
+} VL53L1X_t;
 
-VL53L1X* active_device;
-
-#define ranging_data (active_device->dev_ranging_data)
-#define last_status (active_device->dev_last_status)
-#define results (active_device->dev_results)
-#define address (active_device->dev_address)
-#define io_timeout (active_device->dev_io_timeout)
-#define did_timeout (active_device->dev_did_timeout)
-#define timeout_start_ms (active_device->dev_timeout_start_ms)
-#define fast_osc_frequency (active_device->dev_fast_osc_frequency)
-#define osc_calibrate_val (active_device->dev_osc_calibrate_val)
-#define calibrated (active_device->dev_calibrated)
-#define saved_vhv_init (active_device->dev_saved_vhv_init)
-#define saved_vhv_timeout (active_device->dev_saved_vhv_timeout)
-#define distance_mode (active_device->dev_distance_mode)
+VL53L1X_t* active_device;
 
 //=======================================================
 
-void setAddress(uint8_t new_addr);
-uint8_t getAddress() { return address; }
+void VL53L1X_setDevice(VL53L1X_t* device);
 
-//bool init(bool io_2v8 = true);
+void VL53L1X_setAddress(uint8_t new_addr);
+uint8_t VL53L1X_getAddress() { return active_device->dev_address; }
+
+bool VL53L1X_init(VL53L1X_t* device);
 
 void writeReg(uint16_t reg, uint8_t value);
 void writeReg16Bit(uint16_t reg, uint16_t value);
@@ -1358,8 +1346,8 @@ uint8_t readReg(uint16_t reg);
 uint16_t readReg16Bit(uint16_t reg);
 uint32_t readReg32Bit(uint16_t reg);
 
-bool setDistanceMode(DistanceMode mode);
-DistanceMode getDistanceMode() { return distance_mode; }
+bool VL53L1X_setDistanceMode(DistanceMode_t mode);
+DistanceMode_t VL53L1X_getDistanceMode() { return active_device->dev_distance_mode; }
 
 bool setMeasurementTimingBudget(uint32_t budget_us);
 uint32_t getMeasurementTimingBudget();
@@ -1369,28 +1357,28 @@ void getROISize(uint8_t * width, uint8_t * height);
 void setROICenter(uint8_t spadNum);
 uint8_t getROICenter();
 
-void startContinuous(uint32_t period_ms);
-void stopContinuous();
-uint16_t read();
-uint16_t readRangeContinuousMillimeters() { return read(); } // alias of read()
-uint16_t readSingle();
-uint16_t readRangeSingleMillimeters() { return readSingle(); } // alias of readSingle()
+void VL53L1X_startContinuous(uint32_t period_ms);
+void VL53L1X_stopContinuous();
+uint16_t VL53L1X_read();
+uint16_t VL53L1X_readRangeContinuousMillimeters() { return VL53L1X_read(); } // alias of read()
+uint16_t VL53L1X_readSingle();
+uint16_t VL53L1X_readRangeSingleMillimeters() { return VL53L1X_readSingle(); } // alias of VL53L1X_readSingle()
 
 // check if sensor has new reading available
 // assumes interrupt is active low (GPIO_HV_MUX__CTRL bit 4 is 1)
-bool dataReady() { return (readReg(GPIO__TIO_HV_STATUS) & 0x01) == 0; }
+bool VL53L1X_dataReady() { return (readReg(GPIO__TIO_HV_STATUS) & 0x01) == 0; }
 
-static const char * rangeStatusToString(RangeStatus status);
+static const char * VL53L1X_rangeStatusToString(RangeStatus_t status);
 
-void setTimeout(uint16_t timeout) { io_timeout = timeout; }
-uint16_t getTimeout() { return io_timeout; }
-bool timeoutOccurred();
+void VL53L1X_setTimeout(uint16_t timeout) { active_device->io_timeout = timeout; }
+uint16_t VL53L1X_getTimeout() { return active_device->io_timeout; }
+bool VL53L1X_timeoutOccurred();
 
 // Record the current time to check an upcoming timeout against
-void startTimeout() { timeout_start_ms = millis(); }
+void startTimeout() { active_device->timeout_start_ms = millis(); }
 
 // Check if timeout is enabled (set to nonzero value) and has expired
-bool checkTimeoutExpired() {return (io_timeout > 0) && ((uint16_t)(millis() - timeout_start_ms) > io_timeout); }
+bool checkTimeoutExpired() {return (active_device->io_timeout > 0) && ((uint16_t)(millis() - active_device->timeout_start_ms) > active_device->io_timeout); }
 
 void setupManualCalibration();
 void readResults();

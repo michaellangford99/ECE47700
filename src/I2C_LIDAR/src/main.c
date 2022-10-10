@@ -34,6 +34,8 @@ const char font[];
 #define PLL_P 0
 
 #include "stm32f4xx.h"
+#include "i2c.h"
+#include "VL53L1X.h"
 
 /*void config (void) {
 	// Enable HSE
@@ -134,8 +136,28 @@ void i2c_waitidle(void) {
     while((I2C1 -> SR2 & I2C_SR2_BUSY) == I2C_SR2_BUSY);
 }*/
 
+
+
+
+
 int main(void)
 {
+
+
+    //init I2C
+    //init device descriptor
+    //call init
+    I2Cinit();
+    VL53L1X_t device_descriptor;
+    VL53L1X_init(&device_descriptor);
+    //setAddress(0x2A + i);
+    VL53L1X_startContinuous(50);
+
+    while(1)
+    {
+        printf("data!: %d\n", VL53L1X_read());
+    }
+
 
 	uint16_t registerToRead = 0x00E7;
 	uint8_t address = 0x29;
