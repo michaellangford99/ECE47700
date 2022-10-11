@@ -48,6 +48,13 @@ int main(void)
     VL53L1X_t device_descriptor;
     VL53L1X_init(&device_descriptor);
     //setAddress(0x2A + i);
+    /*while(1)
+    {
+    	if(SysTick->CTRL & (1<<16))
+    	{
+    		GPIOA -> ODR ^=(1<<5);
+    	}
+    }*/
     VL53L1X_startContinuous(50);
     uint16_t hold;
     while(1)

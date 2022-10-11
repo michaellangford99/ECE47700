@@ -4,6 +4,7 @@
 // or paraphrased from the API source code, API user manual (UM2356), and
 // VL53L1X datasheet.
 
+#include "stm32f4xx.h"
 #include "VL53L1X.h"
 #include "i2c.h"
 
@@ -13,6 +14,30 @@ bool init();
 
 bool VL53L1X_init(VL53L1X_t* device)
 {
+#define LED_GPIO GPIOA
+#define LED_PIN 5
+
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+
+	//PC13 is the LED on test board
+	//PA5 is the LED on the Nucleo
+	LED_GPIO->MODER |= 0x1 << (LED_PIN * 2);
+	LED_GPIO->MODER &= ~(0x2 << (LED_PIN * 2));
+
+	//LED_GPIO->ODR |= 0x1 << LED_PIN;
+
+	//SysTick->LOAD = 500 * (16000 - 1);
+	SysTick->LOAD = 10*(10000 - 1);
+	SysTick->VAL = 0;
+	SysTick->CTRL |= (1<<0);
+
+	SysTick->CTRL |= (SysTick_CTRL_TICKINT_Msk
+			| SysTick_CTRL_ENABLE_Msk |
+			SysTick_CTRL_CLKSOURCE_Msk);
+
+
+
+
   active_device = device;
 
   active_device->dev_address = AddressDefault;
@@ -31,6 +56,19 @@ bool VL53L1X_init(VL53L1X_t* device)
 void VL53L1X_setDevice(VL53L1X_t* device)
 {
   active_device = device;
+}
+
+uint32_t ticks = 0;
+void SysTick_Handler(void)
+{
+	ticks++;
+	LED_GPIO->ODR ^= 0x1 << LED_PIN;
+	//LED_GPIO->ODR ^= 0x1 << LED_PIN;
+}
+
+uint32_t millis()
+{
+	return ticks;
 }
 
 // Public Methods //////////////////////////////////////////////////////////////
@@ -226,7 +264,7 @@ uint8_t readReg(uint16_t reg)
   I2CstartRead();
   uint8_t buffer[1];
   I2CrequestFrom(active_device->dev_address, buffer, (uint8_t)1);
-  value = buffer[1];
+  value = buffer[0];
   I2Cstop();
 
   return value;
@@ -568,14 +606,14 @@ uint16_t VL53L1X_read()
 {
   
   startTimeout();
-  /*while (!VL53L1X_dataReady())
+  while (!VL53L1X_dataReady())
   {
     if (checkTimeoutExpired())
     {
       active_device->dev_did_timeout = true;
       return 0;
     }
-  }*/
+  }
 
   readResults();
 
@@ -690,12 +728,12 @@ bool VL53L1X_timeoutOccurred()
 
 void startTimeout()
 {
-//	active_device->dev_timeout_start_ms = millis();
+	active_device->dev_timeout_start_ms = millis();
 }
 
 bool checkTimeoutExpired()
 {
-	return (active_device->dev_io_timeout > 0)/* && ((uint16_t)(millis() - active_device->dev_timeout_start_ms) > active_device->dev_io_timeout)*/;
+	return (active_device->dev_io_timeout > 0) && ((uint16_t)(millis() - active_device->dev_timeout_start_ms) > active_device->dev_io_timeout);
 }
 
 // Private Methods /////////////////////////////////////////////////////////////
