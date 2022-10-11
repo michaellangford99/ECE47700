@@ -51,3 +51,5 @@ Module.symvers
 Mkfile.old
 dkms.conf
 src/.metadata/
+pcb/STM32_SMD_Quadcopter_PCB*
+docs/install_sw4stm32_linux_64bits-v2.9.run
