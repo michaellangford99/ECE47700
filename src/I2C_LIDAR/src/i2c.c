@@ -75,7 +75,12 @@ void I2Cinit (void) {
     I2C1->CR1 |= I2C_CR1_PE;
 }
 
-void I2Cstart (void) {
+void I2CstartWrite (void) {
+    I2C1->CR1 |= I2C_CR1_START;
+    while (!(I2C1->SR1 & I2C_SR1_SB));
+}
+
+void I2CstartRead (void) {
     I2C1->CR1 |= I2C_CR1_START;
 	I2C1->CR1 |= I2C_CR1_ACK;
     while (!(I2C1->SR1 & I2C_SR1_SB));
@@ -155,6 +160,13 @@ void I2CrequestFrom(uint8_t address,uint8_t *buffer, uint8_t numOfBytes) {
 	}
     //while (!(I2C1->SR1 & I2C_SR1_BTF));
 }
+
+void nano_wait(unsigned int n) {
+    asm(    "        mov r0,%0\n"
+            "repeat: sub r0,#83\n"
+            "        bgt repeat\n" : : "r"(n) : "r0", "cc");
+}
+
 
 
 void init_I2C(void)
