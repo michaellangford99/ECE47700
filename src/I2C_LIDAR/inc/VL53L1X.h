@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __VL_H__
+#define __VL_H__
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -1194,9 +1195,9 @@ enum regAddr
   SHADOW_PHASECAL_RESULT__REFERENCE_PHASE_LO                                 = 0x0FFF,
 };
 
-typedef enum DistanceMode_s { Short, Medium, Long, Unknown } DistanceMode_t;
+typedef enum { Short, Medium, Long, Unknown } DistanceMode_t;
 
-typedef enum RangeStatus_t
+typedef enum
 {
   RangeValid                =   0,
 
@@ -1254,7 +1255,7 @@ typedef enum RangeStatus_t
   None                      = 255,
 } RangeStatus_t;
 
-typedef struct RangingData_s
+typedef struct
 {
   uint16_t range_mm;
   uint8_t range_status;
@@ -1285,7 +1286,7 @@ static const uint16_t TargetRate = 0x0A00;
 // for storing values read from RESULT__RANGE_STATUS (0x0089)
 // through RESULT__PEAK_SIGNAL_COUNT_RATE_CROSSTALK_CORRECTED_MCPS_SD0_LOW
 // (0x0099)
-typedef struct ResultBuffer_s
+typedef struct
 {
   uint8_t range_status;
 // uint8_t report_status: not used
@@ -1302,7 +1303,7 @@ typedef struct ResultBuffer_s
 
 //=======================================================
 
-typedef struct VL53L1X_s{
+typedef struct{
 
   RangingData_t dev_ranging_data;
   uint8_t dev_last_status; // status of last I2C transmission
@@ -1335,7 +1336,7 @@ VL53L1X_t* active_device;
 void VL53L1X_setDevice(VL53L1X_t* device);
 
 void VL53L1X_setAddress(uint8_t new_addr);
-uint8_t VL53L1X_getAddress() { return active_device->dev_address; }
+uint8_t VL53L1X_getAddress(); // { return active_device->dev_address; }
 
 bool VL53L1X_init(VL53L1X_t* device);
 
@@ -1347,7 +1348,7 @@ uint16_t readReg16Bit(uint16_t reg);
 uint32_t readReg32Bit(uint16_t reg);
 
 bool VL53L1X_setDistanceMode(DistanceMode_t mode);
-DistanceMode_t VL53L1X_getDistanceMode() { return active_device->dev_distance_mode; }
+DistanceMode_t VL53L1X_getDistanceMode(); // { return active_device->dev_distance_mode; }
 
 bool setMeasurementTimingBudget(uint32_t budget_us);
 uint32_t getMeasurementTimingBudget();
@@ -1360,25 +1361,25 @@ uint8_t getROICenter();
 void VL53L1X_startContinuous(uint32_t period_ms);
 void VL53L1X_stopContinuous();
 uint16_t VL53L1X_read();
-uint16_t VL53L1X_readRangeContinuousMillimeters() { return VL53L1X_read(); } // alias of read()
+uint16_t VL53L1X_readRangeContinuousMillimeters();// { return VL53L1X_read(); } // alias of read()
 uint16_t VL53L1X_readSingle();
-uint16_t VL53L1X_readRangeSingleMillimeters() { return VL53L1X_readSingle(); } // alias of VL53L1X_readSingle()
+uint16_t VL53L1X_readRangeSingleMillimeters(); //{ return VL53L1X_readSingle(); } // alias of VL53L1X_readSingle()
 
 // check if sensor has new reading available
 // assumes interrupt is active low (GPIO_HV_MUX__CTRL bit 4 is 1)
-bool VL53L1X_dataReady() { return (readReg(GPIO__TIO_HV_STATUS) & 0x01) == 0; }
+bool VL53L1X_dataReady(); // { return (readReg(GPIO__TIO_HV_STATUS) & 0x01) == 0; }
 
 static const char * VL53L1X_rangeStatusToString(RangeStatus_t status);
 
-void VL53L1X_setTimeout(uint16_t timeout) { active_device->io_timeout = timeout; }
-uint16_t VL53L1X_getTimeout() { return active_device->io_timeout; }
+void VL53L1X_setTimeout(uint16_t timeout); // { active_device->dev_io_timeout = timeout; }
+uint16_t VL53L1X_getTimeout(); // { return active_device->dev_io_timeout; }
 bool VL53L1X_timeoutOccurred();
 
 // Record the current time to check an upcoming timeout against
-void startTimeout() { active_device->timeout_start_ms = millis(); }
+void startTimeout(); // { /*active_device->dev_timeout_start_ms = millis();*/ }
 
 // Check if timeout is enabled (set to nonzero value) and has expired
-bool checkTimeoutExpired() {return (active_device->io_timeout > 0) && ((uint16_t)(millis() - active_device->timeout_start_ms) > active_device->io_timeout); }
+bool checkTimeoutExpired(); // {return (active_device->dev_io_timeout > 0)/* && ((uint16_t)(millis() - active_device->dev_timeout_start_ms) > active_device->dev_io_timeout)*/; }
 
 void setupManualCalibration();
 void readResults();
@@ -1392,4 +1393,6 @@ static uint32_t timeoutMicrosecondsToMclks(uint32_t timeout_us, uint32_t macro_p
 uint32_t calcMacroPeriod(uint8_t vcsel_period);
 
 // Convert count rate from fixed point 9.7 format to float
-float countRateFixedToFloat(uint16_t count_rate_fixed) { return (float)count_rate_fixed / (1 << 7); }
+float countRateFixedToFloat(uint16_t count_rate_fixed); // { return (float)count_rate_fixed / (1 << 7); }
+
+#endif

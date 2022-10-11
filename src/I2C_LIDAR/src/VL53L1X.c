@@ -41,6 +41,11 @@ void VL53L1X_setAddress(uint8_t new_addr)
   active_device->dev_address = new_addr;
 }
 
+uint8_t VL53L1X_getAddress()
+{
+	return active_device->dev_address;
+}
+
 // Initialize sensor using settings taken mostly from VL53L1_DataInit() and
 // VL53L1_StaticInit().
 // If io_2v8 (optional) is true or not given, the sensor is configured for 2V8
@@ -53,12 +58,12 @@ bool init()
   // VL53L1_software_reset() begin
 
   writeReg(SOFT_RESET, 0x00);
-  delayMicroseconds(100);
+  nano_wait(10000);
   writeReg(SOFT_RESET, 0x01);
 
   // give it some time to boot; otherwise the sensor NACKs during the readReg()
   // call below and the Arduino 101 doesn't seem to handle that well
-  delay(1);
+  nano_wait(10000);
 
   // VL53L1_poll_for_boot_completion() begin
 
@@ -168,11 +173,12 @@ bool init()
   return true;
 }
 
+
 // Write an 8-bit register
 void writeReg(uint16_t reg, uint8_t value)
 {
-  I2Cstart();
-  beginTransmissionI2C(active_device->dev_address);
+  I2CstartWrite();
+  I2CbeginTransmission(active_device->dev_address);
   I2Cwrite((uint8_t)(reg >> 8)); // reg high byte
   I2Cwrite((uint8_t)(reg));      // reg low byte
   I2Cwrite(value);
@@ -183,8 +189,8 @@ void writeReg(uint16_t reg, uint8_t value)
 // Write a 16-bit register
 void writeReg16Bit(uint16_t reg, uint16_t value)
 {
-  I2Cstart();
-  beginTransmissionI2C(active_device->dev_address);
+  I2CstartWrite();
+  I2CbeginTransmission(active_device->dev_address);
   I2Cwrite((uint8_t)(reg >> 8)); // reg high byte
   I2Cwrite((uint8_t)(reg));      // reg low byte
   I2Cwrite((uint8_t)(value >> 8));
@@ -196,8 +202,8 @@ void writeReg16Bit(uint16_t reg, uint16_t value)
 // Write a 32-bit register
 void writeReg32Bit(uint16_t reg, uint32_t value)
 {
-  I2Cstart();
-  beginTransmissionI2C(active_device->dev_address);
+  I2CstartWrite();
+  I2CbeginTransmission(active_device->dev_address);
   I2Cwrite((uint8_t)(reg >> 8)); // reg high byte
   I2Cwrite((uint8_t)(reg));
   I2Cwrite((uint8_t)(value >> 24)); // value highest byte
@@ -211,15 +217,17 @@ void writeReg32Bit(uint16_t reg, uint32_t value)
 uint8_t readReg(uint16_t reg)
 {
   uint8_t value;
-  I2Cstart();
-  beginTransmissionI2C(active_device->dev_address);
+  I2CstartWrite();
+  I2CbeginTransmission(active_device->dev_address);
   I2Cwrite((uint8_t)(reg >> 8)); // reg high byte
   I2Cwrite((uint8_t)(reg));
   I2Cstop();
 
+  I2CstartRead();
   uint8_t buffer[1];
   I2CrequestFrom(active_device->dev_address, buffer, (uint8_t)1);
   value = buffer[1];
+  I2Cstop();
 
   return value;
 }
@@ -229,15 +237,17 @@ uint16_t readReg16Bit(uint16_t reg)
 {
   uint16_t value;
 
-  I2Cstart();
-  beginTransmissionI2C(active_device->dev_address);
+  I2CstartWrite();
+  I2Caddress(active_device->dev_address);
   I2Cwrite((uint8_t)(reg >> 8)); // reg high byte
   I2Cwrite((uint8_t)(reg));
   I2Cstop();
 
   uint8_t buffer[2];
+  I2CstartRead();
   I2CrequestFrom(active_device->dev_address, buffer, (uint8_t)2);
   value = (uint16_t)(buffer[0] <<8) | (uint16_t)buffer[1];      // All value
+  I2Cstop();
 
   return value;
 }
@@ -247,15 +257,17 @@ uint32_t readReg32Bit(uint16_t reg)
 {
   uint32_t value;
 
-  I2Cstart();
-  beginTransmissionI2C(active_device->dev_address);
+  I2CstartWrite();
+  I2CbeginTransmission(active_device->dev_address);
   I2Cwrite((uint8_t)(reg >> 8)); // reg high byte
   I2Cwrite((uint8_t)(reg));
   I2Cstop();
 
-  uint8_t buffer[2];
+  uint8_t buffer[4];
+  I2CstartRead();
   I2CrequestFrom(active_device->dev_address, buffer, (uint8_t)4);
   value = (uint32_t)(buffer[0] << 24)| (uint32_t)(buffer[1] << 16) | (uint16_t)(buffer[2] <<8) | (uint16_t)buffer[3];      // All value
+  I2Cstop();
 
   return value;
 }
@@ -329,6 +341,11 @@ bool VL53L1X_setDistanceMode(DistanceMode_t mode)
   active_device->dev_distance_mode = mode;
 
   return true;
+}
+
+DistanceMode_t VL53L1X_getDistanceMode()
+{
+	return active_device->dev_distance_mode;
 }
 
 // Set the measurement timing budget in microseconds, which is the time allowed
@@ -551,14 +568,14 @@ uint16_t VL53L1X_read()
 {
   
   startTimeout();
-  while (!VL53L1X_dataReady())
+  /*while (!VL53L1X_dataReady())
   {
     if (checkTimeoutExpired())
     {
       active_device->dev_did_timeout = true;
       return 0;
     }
-  }
+  }*/
 
   readResults();
 
@@ -577,6 +594,11 @@ uint16_t VL53L1X_read()
   return active_device->dev_ranging_data.range_mm;
 }
 
+uint16_t VL53L1X_readRangeContinuousMillimeters()
+{
+	return VL53L1X_read();
+}
+
 // Starts a single-shot range measurement. If blocking is true (the default),
 // this function waits for the measurement to finish and returns the reading.
 // Otherwise, it returns 0 immediately.
@@ -588,6 +610,15 @@ uint16_t VL53L1X_readSingle()
   return VL53L1X_read();
 }
 
+uint16_t VL53L1X_readRangeSingleMillimeters()
+{
+	return VL53L1X_readSingle();
+}
+
+bool VL53L1X_dataReady()
+{
+	return (readReg(GPIO__TIO_HV_STATUS) & 0x01) == 0;
+}
 // convert a RangeStatus_t to a readable string
 // Note that on an AVR, these strings are stored in RAM (dynamic memory), which
 // makes working with them easier but uses up 200+ bytes of RAM (many AVR-based
@@ -638,6 +669,16 @@ const char * VL53L1X_rangeStatusToString(RangeStatus_t status)
   }
 }
 
+void VL53L1X_setTimeout(uint16_t timeout)
+{
+	active_device->dev_io_timeout = timeout;
+}
+
+uint16_t VL53L1X_getTimeout()
+{
+	return active_device->dev_io_timeout;
+}
+
 // Did a timeout occur in one of the read functions since the last call to
 // timeoutOccurred()?
 bool VL53L1X_timeoutOccurred()
@@ -645,6 +686,16 @@ bool VL53L1X_timeoutOccurred()
   bool tmp = active_device->dev_did_timeout;
   active_device->dev_did_timeout = false;
   return tmp;
+}
+
+void startTimeout()
+{
+//	active_device->dev_timeout_start_ms = millis();
+}
+
+bool checkTimeoutExpired()
+{
+	return (active_device->dev_io_timeout > 0)/* && ((uint16_t)(millis() - active_device->dev_timeout_start_ms) > active_device->dev_io_timeout)*/;
 }
 
 // Private Methods /////////////////////////////////////////////////////////////
@@ -673,12 +724,13 @@ void setupManualCalibration()
 // read measurement results into buffer
 void readResults()
 {
-  I2Cstart();
+  I2CstartWrite();
   I2Caddress (active_device->dev_address);
   I2Cwrite((uint8_t)(RESULT__RANGE_STATUS >> 8)); // reg high byte
   I2Cwrite((uint8_t)(RESULT__RANGE_STATUS));      // reg low byte
   I2Cstop();
   uint8_t buffer[17];
+  I2CstartRead();
   I2CrequestFrom(active_device->dev_address, buffer, (uint8_t) 17);
 //  bus->requestFrom(active_device->dev_address, buffer, (uint8_t)17);
 
@@ -708,6 +760,7 @@ void readResults()
 
   active_device->dev_results.peak_signal_count_rate_crosstalk_corrected_mcps_sd0  = (uint16_t)(buffer[1]<< 8); // high byte
   active_device->dev_results.peak_signal_count_rate_crosstalk_corrected_mcps_sd0 |=           (buffer[0]);      // low byte
+  I2Cstop();
 }
 
 // perform Dynamic SPAD Selection calculation/update
@@ -907,3 +960,9 @@ uint32_t calcMacroPeriod(uint8_t vcsel_period)
 
   return macro_period_us;
 }
+
+float countRateFixedToFloat(uint16_t count_rate_fixed)
+{
+	return (float)count_rate_fixed / (1 << 7);
+}
+
