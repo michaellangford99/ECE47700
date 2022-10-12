@@ -20,13 +20,17 @@
 #define RCCAPB2ENR (RCC->APB2ENR)
 
 #define FCLK					16000000
-#define PWM_REPETITION_RATE_HZ	50
-#define	PWM_PSC 				15
+#define PWM_REPETITION_RATE_HZ	50*8 //Oneshot125 pulse frequency
+#define	PWM_PSC 				1
 #define PWM_ARR 				(FCLK/((PWM_PSC+1) * PWM_REPETITION_RATE_HZ) - 1)
 
 #define LOWERBOUNDCRRX 			((PWM_ARR*5)/100)
 #define UPPERBOUNDCRRX 			((PWM_ARR*10)/100)
 #define RANGE					(UPPERBOUNDCRRX-LOWERBOUNDCRRX)
+
+#define FIR_LENGTH 400
+uint32_t last[FIR_LENGTH];
+
 
 //consider moving towards DMA based system where timer interrupt
 //causes transfer from main loop motor outputs to here
@@ -34,15 +38,45 @@
 //or set the motor outputs in main loop as pointers, so they automatically affect these.
 //though have to be careful as they take instantaneous effect
 
-void set_PWM_duty_cycle() {
-	PWM_TIMR->CCR1 = LOWERBOUNDCRRX + (RANGE*saved_channel_data.ch2)/1810;
+uint32_t set_PWM_duty_cycle() {
+
+	if (saved_channel_data.ch2 >= 172)
+	{
+		uint32_t sum = 0;
+		for (int i = 0; i < FIR_LENGTH-1; i++)
+		{
+			last[i] = last[i+1];
+			sum = sum + last[i];
+		}
+
+		last[FIR_LENGTH-1] = RANGE*(saved_channel_data.ch2-172)/((1810-172));
+		sum = sum + last[FIR_LENGTH-1];
+
+		uint32_t output = sum/FIR_LENGTH;
+
+		if (output<=1000);
+			PWM_TIMR->CCR1 = LOWERBOUNDCRRX + output;
+
+		return output;
+	}
+	else
+	{
+		PWM_TIMR->CCR1 = LOWERBOUNDCRRX;
+	}
 	//PWM_TIMR->CCR2 = LOWERBOUNDCRRX + (RANGE*saved_channel_data.ch1)/1810;
 	//PWM_TIMR->CCR3 = LOWERBOUNDCRRX + (RANGE*saved_channel_data.ch2)/1810;
 	//PWM_TIMR->CCR4 = LOWERBOUNDCRRX + (RANGE*saved_channel_data.ch3)/1810;
+
+	return 0;
 }
 
 void init_PWM(void)
 {
+	for (int i = 0; i < FIR_LENGTH; i++)
+	{
+		last[i] = 0;
+	}
+
 	// Enable TIM1 and GPIOA
 	(RCC->AHB1ENR) |= RCC_AHB1ENR_GPIOAEN;
 	RCC -> APB2ENR |= RCC_APB2ENR_TIM1EN;
@@ -86,5 +120,5 @@ void init_PWM(void)
 	// Enable the timer
 	PWM_TIMR -> CR1 |= 0x0001;
 
-	set_PWM_duty_cycle();
+	//set_PWM_duty_cycle();
 }

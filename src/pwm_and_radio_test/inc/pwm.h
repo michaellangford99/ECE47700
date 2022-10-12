@@ -3,6 +3,6 @@
 
 void init_PWM(void);
 
-void set_PWM_duty_cycle();
+uint32_t set_PWM_duty_cycle();
 
 #endif /* __PWM_H__ */

@@ -42,13 +42,13 @@ int main(void)
 
 	for(;;) {
 
-		for (volatile int i = 9999; i > 0; i--)
+		for (volatile int i = 99; i > 0; i--)
 		{
 			__asm("NOP");
 		}
 		LED_GPIO->ODR ^= 0x1 << LED_PIN;
 
-		set_PWM_duty_cycle();
+		printf("%d, \t", set_PWM_duty_cycle());
 
 		printf("%d,\t", saved_channel_data.ch0);
 		printf("%d,\t", saved_channel_data.ch1);
