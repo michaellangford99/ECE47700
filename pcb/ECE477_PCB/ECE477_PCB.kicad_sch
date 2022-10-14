@@ -6160,7 +6160,7 @@
     (property "Reference" "R11" (id 0) (at 132.588 129.6416 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Value" "10K" (id 1) (at 132.588 131.953 0)
+    (property "Value" "100K" (id 1) (at 132.588 131.953 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Footprint" "Resistor_SMD:R_0603_1608Metric" (id 2) (at 129.032 130.81 90)
@@ -6185,7 +6185,7 @@
     (property "Reference" "R13" (id 0) (at 132.588 139.8016 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Value" "100K" (id 1) (at 132.588 142.113 0)
+    (property "Value" "10K" (id 1) (at 132.588 142.113 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Footprint" "Resistor_SMD:R_0603_1608Metric" (id 2) (at 129.032 140.97 90)
@@ -6639,7 +6639,7 @@
     (property "Reference" "R12" (id 0) (at 138.5316 134.112 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Value" "220" (id 1) (at 140.843 134.112 0)
+    (property "Value" "1K" (id 1) (at 140.843 134.112 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Footprint" "Resistor_SMD:R_0603_1608Metric" (id 2) (at 139.7 137.668 90)
@@ -8068,13 +8068,13 @@
       (reference "R10") (unit 1) (value "4.7k") (footprint "Resistor_SMD:R_0603_1608Metric")
     )
     (path "/00000000-0000-0000-0000-00005ea7f42d"
-      (reference "R11") (unit 1) (value "10K") (footprint "Resistor_SMD:R_0603_1608Metric")
+      (reference "R11") (unit 1) (value "100K") (footprint "Resistor_SMD:R_0603_1608Metric")
     )
     (path "/00000000-0000-0000-0000-0000635e4af8"
-      (reference "R12") (unit 1) (value "220") (footprint "Resistor_SMD:R_0603_1608Metric")
+      (reference "R12") (unit 1) (value "1K") (footprint "Resistor_SMD:R_0603_1608Metric")
     )
     (path "/00000000-0000-0000-0000-00005ea7f4c7"
-      (reference "R13") (unit 1) (value "100K") (footprint "Resistor_SMD:R_0603_1608Metric")
+      (reference "R13") (unit 1) (value "10K") (footprint "Resistor_SMD:R_0603_1608Metric")
     )
     (path "/00000000-0000-0000-0000-00005d1e662b"
       (reference "R14") (unit 1) (value "33") (footprint "Resistor_SMD:R_0603_1608Metric")
