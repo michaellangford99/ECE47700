@@ -42,8 +42,8 @@
 #define OUTZ_L_A 0x2c; //read only
 #define OUTZ_H_A 0x2d; //read only
 
-#define G_GAIN 0.00875; //gyroscope gain to convert to degrees per second
-#define A_GAIN 0.00061; //accelerometer gain to convert to g's??
+#define G_GAIN 1//0.00875; //gyroscope gain to convert to degrees per second
+#define A_GAIN 1//0.00061; //accelerometer gain to convert to g's??
 //USART Defines
 /*#define USB_USART               USART2
 /#define USB_USART_GPIO          GPIOA
@@ -54,7 +54,7 @@
 #define USB_USART_DMA_CHANNEL   4
 #define USB_USART_INTERRUPT_HANDLE  USART2_IRQHandler*/
 
-uint16_t data[6] = {0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000};
+int16_t data[6] = {0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000};
 
 #include "fifo.h"
 #include "tty.h"
@@ -380,22 +380,50 @@ int main(void)
     uint8_t zaccelH = OUTZ_H_A;
 
     /*while(1){
-        uint8_t inte = readReg(xgyroL);
+        int8_t inte = readReg(xgyroH);
         printf("%d\n", inte);
         //printf("%d\n", data[1]);
         //printf("%d\n", data[2]);
         //printf("%d\n", data[3]);
         //printf("%d\n", data[4]);
         //printf("%d\n", data[5]);
+
+        for(int i = 0; i < 10000; i++){
+            	    __asm("NOP");
+        }
     }*/
 
     while(1){
-        data[0] = (readReg(xgyroH) | readReg(xgyroL) << 8) * G_GAIN;
-        data[1] = (readReg(ygyroH) | readReg(ygyroL) << 8) * G_GAIN;
-        data[2] = (readReg(zgyroH) | readReg(zgyroL) << 8) * G_GAIN;
-        data[3] = (readReg(xaccelH) | readReg(xaccelL) << 8) * A_GAIN;
-        data[4] = (readReg(yaccelH) | readReg(yaccelL) << 8) * A_GAIN;
-        data[5] = (readReg(zaccelH) | readReg(zaccelL) << 8) * A_GAIN;
+
+    	uint8_t data_buf[12];
+    	for (int i = 0; i < 12; i++)
+    	{
+    		data_buf[i] = readReg(xgyroL+i);
+    		data_buf[i] = readReg(xgyroL+i);
+    		data_buf[i] = readReg(xgyroL+i);
+    	}
+
+    	data[0] = ((int16_t)data_buf[0] | ((int16_t)data_buf[1] << 8)) * G_GAIN;
+		data[1] = ((int16_t)data_buf[2] | ((int16_t)data_buf[3] << 8)) * G_GAIN;
+		data[2] = ((int16_t)data_buf[4] | ((int16_t)data_buf[5] << 8)) * G_GAIN;
+		data[3] = ((int16_t)data_buf[6] | ((int16_t)data_buf[7] << 8)) * A_GAIN;
+		data[4] = ((int16_t)data_buf[8] | ((int16_t)data_buf[9] << 8)) * A_GAIN;
+		data[5] = ((int16_t)data_buf[10] | ((int16_t)data_buf[11] << 8)) * A_GAIN;
+
+        //data[0] = ((int16_t)readReg(xgyroL) | ((int16_t)readReg(xgyroH) << 8)) * G_GAIN;
+        //data[0] = ((int16_t)readReg(xgyroL) | ((int16_t)readReg(xgyroH) << 8)) * G_GAIN;
+        //data[1] = (/*readReg(ygyroL) | */((int16_t)readReg(ygyroH) << 8)) * G_GAIN;
+        //data[1] = (/*readReg(ygyroL) | */((int16_t)readReg(ygyroH) << 8)) * G_GAIN;
+        //data[2] = (/*readReg(zgyroL) | */((int16_t)readReg(zgyroH) << 8)) * G_GAIN;
+        //data[2] = (/*readReg(zgyroL) | */((int16_t)readReg(zgyroH) << 8)) * G_GAIN;
+        //data[3] = (/*readReg(xaccelL) | */((int16_t)readReg(xaccelH) << 8)) * A_GAIN;
+        //data[3] = (/*readReg(xaccelL) | */((int16_t)readReg(xaccelH) << 8)) * A_GAIN;
+        //data[4] = (/*readReg(yaccelL) | */((int16_t)readReg(yaccelH) << 8)) * A_GAIN;
+        //data[4] = (/*readReg(yaccelL) | */((int16_t)readReg(yaccelH) << 8)) * A_GAIN;
+        //data[5] = (/*readReg(zaccelL) |*/ ((int16_t)readReg(zaccelH) << 8)) * A_GAIN;
+        //data[5] = (/*readReg(zaccelL) |*/ ((int16_t)readReg(zaccelH) << 8)) * A_GAIN;
+
+
 
         /*data[0] = (readReg(xgyroH) << 8);
     	data[0] |= readReg(xgyroL);
@@ -417,10 +445,12 @@ int main(void)
     	//printf("%d\n", data[4]);
     	//printf("%d\n", data[5]);
 
-    	printf("Gyro Values: X=%d Y=%d Z=%d\n", data[0], data[1], data[2]);
-    	printf("Accel Values: X=%d Y=%d Z=%d\n", data[3], data[4], data[5]);
+    	//printf("Gyro Values: X=%d Y=%d Z=%d\n", data[0], data[1], data[2]);
+    	//printf("Accel Values: X=%d Y=%d Z=%d\n", data[3], data[4], data[5]);
 
-    	for(int i = 0; i < 100000; i++){
+        printf("%d, %d, %d, %d, %d, %d\n", data[0], data[1], data[2], data[3], data[4], data[5]);
+
+    	for(int i = 0; i < 10000; i++){
     	    __asm("NOP");
     	}
 
