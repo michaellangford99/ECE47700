@@ -12,6 +12,7 @@
 #include "string.h"
 #include "spi.h"
 #include "lsm6ds3.h"
+#include "systick.h"
 
 //LSM6DSO definitions for register addresses and pins in the register
 #define FUNC_CFG_ACCESS 0x01
@@ -63,7 +64,7 @@
 
 int16_t data[6] = {0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000};
 
-void initLSM(){
+void init_LSM6DS3(){
 	//register addresses (see define statements)
 	//uint8_t addr0 = FUNC_CFG_ACCESS;
 	uint8_t addr1 = CTRL1_XL;
@@ -122,10 +123,10 @@ void read_axes()
 	data[5] = ((int16_t)data_buf[10] | ((int16_t)data_buf[11] << 8)) * A_GAIN;
 }
 
-int NOTmain(void)
+void test_LSM6DS3(void)
 {
-    init_spi1();
-    initLSM();
+    //init_spi1();
+    //initLSM();
     //init_UART();
     /*while(1){
     	uint8_t whoami = OUTX_L_G;
@@ -191,12 +192,14 @@ int NOTmain(void)
     cal[2] = cal[2] / CAL_LENGTH;
 
     int p = 0;
-    int32_t xyz[3];
+    float xyz[3];
 
     xyz[0] = 0;
     xyz[1] = 0;
     xyz[2] = 0;
 
+    float last_time = 0.0f;
+    float current_time = 0.0f;
     while(1){
 
     	uint8_t data_buf[12];
@@ -218,9 +221,19 @@ int NOTmain(void)
 		data[1] -= cal[1];
 		data[2] -= cal[2];
 
-		xyz[0] += data[0];
-		xyz[1] += data[1];
-		xyz[2] += data[2];
+		//245 DPS full scale
+		//so dps = raw * 245 / (2^15-1)
+
+		last_time = current_time;
+		current_time = ftime();
+		float delta_t = current_time-last_time;
+
+		if (delta_t < 0.01f)
+		{
+			xyz[0] += ((float)data[0]) * delta_t * 245.0f / 32768.0f;
+			xyz[1] += ((float)data[1]) * delta_t * 245.0f / 32768.0f;
+			xyz[2] += ((float)data[2]) * delta_t * 245.0f / 32768.0f;
+		}
 
         //data[0] = ((int16_t)readReg(xgyroL) | ((int16_t)readReg(xgyroH) << 8)) * G_GAIN;
         //data[0] = ((int16_t)readReg(xgyroL) | ((int16_t)readReg(xgyroH) << 8)) * G_GAIN;
@@ -260,9 +273,9 @@ int NOTmain(void)
     	//printf("Gyro Values: X=%d Y=%d Z=%d\n", data[0], data[1], data[2]);
     	//printf("Accel Values: X=%d Y=%d Z=%d\n", data[3], data[4], data[5]);
 
-		if (p++ > 4)
+		if (p++ > 8)
 		{
-			printf("%d, %d, %d, %d, %d, %d, %d, %d, %d\n", data[0], data[1], data[2], data[3], data[4], data[5], xyz[0], xyz[1], xyz[2]);
+			printf("%d, %d, %d, %d, %d, %d, %f, %f, %f, %f\n", data[0], data[1], data[2], data[3], data[4], data[5], xyz[0], xyz[1], xyz[2], 1.0f/delta_t);
 			p=0;
 		}
 

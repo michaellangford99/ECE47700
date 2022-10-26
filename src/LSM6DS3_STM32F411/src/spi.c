@@ -49,7 +49,7 @@ void enable_dma(void){
     //DMA2_Stream3 -> CR |= DMA_SxCR_EN;
 }*/
 
-void init_spi1(void){
+void init_SPI1(void){
 	RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
     RCC -> APB2ENR |= RCC_APB2ENR_SPI1EN;
 
@@ -70,7 +70,7 @@ void init_spi1(void){
     SPI1 -> CR1 &= ~SPI_CR1_SPE;
 
     //Setting Baud Rate (SPI clock) to the lowest possible just for testing
-    SPI1 -> CR1 |= SPI_CR1_BR_0 | SPI_CR1_BR_1 | SPI_CR1_BR_2;
+    SPI1 -> CR1 |= SPI_CR1_BR_0 | SPI_CR1_BR_1/* | SPI_CR1_BR_2*/;
     //Make microcontroller master
     SPI1 -> CR1 |= SPI_CR1_MSTR;
     //8bit data frame format

@@ -39,40 +39,13 @@ int main(void)
 	//init_RX_USART();
 	//init_PWM();
 	init_SYSTICK();
-	//init_SPI1();
-	//init_LSM6DS3();
+	init_SPI1();
+	init_LSM6DS3();
+
+	test_LSM6DS3();
 
 	for (;;)
 	{
-		wait(0.00001f);
-		LED_GPIO->ODR ^= 0x1 << LED_PIN;
-		wait(0.00002f);
-		LED_GPIO->ODR ^= 0x1 << LED_PIN;
-		//printf("millis: %d, ftime:%f\n", millis()+1, ftime());
+
 	}
-
-	/*for(;;) {
-
-		for (volatile int i = 99; i > 0; i--)
-		{
-			__asm("NOP");
-		}
-		LED_GPIO->ODR ^= 0x1 << LED_PIN;
-
-		printf("%d, \t", set_PWM_duty_cycle());
-
-		printf("%d,\t", saved_channel_data.ch0);
-		printf("%d,\t", saved_channel_data.ch1);
-		printf("%d,\t", saved_channel_data.ch2);
-		printf("%d,\t", saved_channel_data.ch3);
-		printf("%d,\t", saved_channel_data.ch4);
-		printf("%d,\t", saved_channel_data.ch5);
-		printf("%d,\t", saved_channel_data.ch6);
-		printf("%d\n",  saved_channel_data.ch7);
-
-		//char chr = __io_getchar();
-		//printf("You entered %c.", chr);
-
-		//printf("Enter your name: %d\r\n", 42069);
-	}*/
 }

@@ -3,8 +3,8 @@
 #include "string.h"
 #include "systick.h"
 
-#define AHB_CLOCK 		100000000		//48 MHz
-#define AHB_CLOCK_DIV_8 (AHB_CLOCK/8)	//6 MHz
+#define AHB_CLOCK 		100000000		//100  MHz
+#define AHB_CLOCK_DIV_8 (AHB_CLOCK/8)	//12.5 MHz
 #define SYSTICK_INT_FREQ 1000			//1KHz desired interrupt frequency
 #define SYSTICK_LOAD	((AHB_CLOCK_DIV_8/SYSTICK_INT_FREQ)-1)
 
@@ -48,6 +48,12 @@ void nano_wait(uint32_t count)
 		__asm("NOP");
 	}
 }
+
+/*void wait_nanos(int nanoseconds)
+{
+	int ticks_per_nanosecond
+	int nano_ticks = nanoseconds * ticks_per_nanosecond;
+}*/
 
 void wait(float seconds)
 {
