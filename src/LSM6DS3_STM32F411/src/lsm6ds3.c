@@ -175,10 +175,10 @@ void test_LSM6DS3(void)
         		__asm("NOP");
     		}
 
-#define CAL_LENGTH 1024
+#define CAL_LENGTH 4096
     for (int i = 0; i < CAL_LENGTH; i++)
     {
-    	for(int i = 0; i < 1000; i++){
+    	for(int i = 0; i < 10000; i++){
     		__asm("NOP");
 		}
     	read_axes();
@@ -194,9 +194,9 @@ void test_LSM6DS3(void)
     int p = 0;
     float xyz[3];
 
-    xyz[0] = 0;
-    xyz[1] = 0;
-    xyz[2] = 0;
+    xyz[0] = 0.0f;
+    xyz[1] = 0.0f;
+    xyz[2] = 0.0f;
 
     float last_time = 0.0f;
     float current_time = 0.0f;
