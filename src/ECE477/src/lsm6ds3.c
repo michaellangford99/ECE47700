@@ -13,39 +13,7 @@
 #include "spi.h"
 #include "lsm6ds3.h"
 
-//LSM6DSO definitions for register addresses and pins in the register
-#define FUNC_CFG_ACCESS 0x01
-#define WHO_AM_I 0x0f //read only
-#define FIFO_CTRL1 0x07
-#define FIFO_CTRL2 0x08
-#define FIFO_CTRL3 0x09
-#define FIFO_CTRL4 0x0a
-#define CTRL1_XL 0x10
-#define CTRL2_G 0x11
-#define CTRL3_G 0x12
-#define CTRL4_G 0x13
-#define CTRL5_G 0x14
-#define CTRL6_G 0x15
-#define CTRL7_G 0x16
-#define CTRL8_XL 0x17
-#define CTRL9_XL 0x18
-#define CTRL10_C 0x19
-#define OUT_TEMP_L 0x20 //read only
-#define OUT_TEMP_H 0x21 //read only
-#define OUTX_L_G 0x22 //read only
-#define OUTX_H_G 0x23 //read only
-#define OUTY_L_G 0x24 //read only
-#define OUTY_H_G 0x25 //read only
-#define OUTZ_L_G 0x26 //read only
-#define OUTZ_H_G 0x27 //read only
-#define OUTX_L_A 0x28 //read only
-#define OUTX_H_A 0x29 //read only
-#define OUTY_L_A 0x2a //read only
-#define OUTY_H_A 0x2b //read only
-#define OUTZ_L_A 0x2c //read only
-#define OUTZ_H_A 0x2d //read only'
-
-//Register definitions for control registers
+int16_t data[6] = {0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000};
 
 //first off, we want to figure out if we are doing fixed point or what
 //2 g max means +/- 32768 covers the range +/- 2g
@@ -53,19 +21,14 @@
 //so a raw  number->
 //converted_to_gs = (raw / 32768.0f)*(2.0f)*(9.81f)
 
+//CHECK A_GAIN TABLE TO NOT HAVE TO DO ABOVE CALCULATION TO CONVERT TO G'S
+
 //degrees per second
 //first of all, systick needs to have high precision
 //not sure what the range on this is.
 
-
-#define G_GAIN 1//0.00875; //gyroscope gain to convert to degrees per second
-#define A_GAIN 1//0.00061; //accelerometer gain to convert to g's??
-
-int16_t data[6] = {0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000};
-
 void initLSM(){
-	//register addresses (see define statements)
-	//uint8_t addr0 = FUNC_CFG_ACCESS;
+	//register addresses
 	uint8_t addr1 = CTRL1_XL;
 	uint8_t addr2 = CTRL2_G;
 	uint8_t addr3 = CTRL3_G;
@@ -77,21 +40,22 @@ void initLSM(){
 	uint8_t addr9 = CTRL9_XL;
 	uint8_t addr10 = CTRL10_C;
 
-	//inital LSM6DSO parameters (see LSM6DSO reference manual (https://www.st.com/en/mems-and-sensors/lsm6dsr.html))
-	//uint8_t ctrl0 = 0b10000000;
-	uint8_t ctrl1 = 0b01100000;
-	uint8_t ctrl2 = 0b01100000;
-	uint8_t ctrl3 = 0b00000000;
-	uint8_t ctrl4 = 0b00000100;
-	uint8_t ctrl5 = 0b00000000;
-	uint8_t ctrl6 = 0b00000000;
-	uint8_t ctrl7 = 0b00000000;
-	uint8_t ctrl8 = 0b00000000;
-	uint8_t ctrl9 = 0b11100010;
-	uint8_t ctrl10 = 0b00000000;
+	//inital LSM6DSO parameters (see LSM6DSO reference manual (https://www.st.com/en/mems-and-sensors/lsm6dsl.html))
+	uint8_t ctrl1 = CTRL1_DEF; //0b01100000
+	ctrl1 |= ODR_XL2 | ODR_XL1;
+	uint8_t ctrl2 = CTRL2_DEF; //0b01100000
+	ctrl2 |= ODR_G2 | ODR_G1;
+	uint8_t ctrl3 = CTRL3_DEF; //0b00000100
+	uint8_t ctrl4 = CTRL4_DEF; //0b00000100
+	ctrl4 |= I2C_disable;
+	uint8_t ctrl5 = CTRL5_DEF; //0b00000000
+	uint8_t ctrl6 = CTRL6_DEF; //0b10000000
+	uint8_t ctrl7 = CTRL7_DEF; //0b00000000
+	uint8_t ctrl8 = CTRL8_DEF; //0b00000000
+	uint8_t ctrl9 = CTRL9_DEF; //0b11100000
+	uint8_t ctrl10 = CTRL10_DEF; //0b00000000
 
 	//ctrl register writing
-	//writeReg(addr0, ctrl0);
 	writeReg(addr1, ctrl1);
 	writeReg(addr2, ctrl2);
 	writeReg(addr3, ctrl3);
@@ -104,14 +68,12 @@ void initLSM(){
 	writeReg(addr10, ctrl10);
 }
 
-void read_axes()
-{
+void read_axes(){
 	uint8_t data_buf[12];
 	for (int i = 0; i < 12; i++)
 	{
 		data_buf[i] = readReg(OUTX_L_G+i);
 		data_buf[i] = readReg(OUTX_L_G+i);
-		//data_buf[i] = readReg(xgyroL+i);
 	}
 
 	data[0] = ((int16_t)data_buf[0] | ((int16_t)data_buf[1] << 8)) * G_GAIN;
@@ -122,20 +84,9 @@ void read_axes()
 	data[5] = ((int16_t)data_buf[10] | ((int16_t)data_buf[11] << 8)) * A_GAIN;
 }
 
-int main(void)
-{
-    init_spi1();
+void LSMRead(void){
+    init_spi();
     initLSM();
-    init_UART();
-    /*while(1){
-    	uint8_t whoami = OUTX_L_G;
-    	uint8_t read;
-    	read = readReg(whoami);
-        printf("Hello");
-    	for(int i = 0; i < 10000; i++){
-    	    asm("NOP");
-    	}
-    }*/
     uint8_t xgyroL = OUTX_L_G;
     uint8_t xgyroH = OUTX_H_G;
     uint8_t ygyroL = OUTY_L_G;
@@ -171,10 +122,9 @@ int main(void)
     cal[2] = 0;
 
     for(int i = 0; i < 100000; i++){
-        		__asm("NOP");
-    		}
+        __asm("NOP");
+    }
 
-#define CAL_LENGTH 1024
     for (int i = 0; i < CAL_LENGTH; i++)
     {
     	for(int i = 0; i < 1000; i++){
@@ -204,7 +154,6 @@ int main(void)
     	{
     		data_buf[i] = readReg(xgyroL+i);
     		data_buf[i] = readReg(xgyroL+i);
-    		//data_buf[i] = readReg(xgyroL+i);
     	}
 
     	data[0] = ((int16_t)data_buf[0] | ((int16_t)data_buf[1] << 8)) * G_GAIN;
@@ -265,12 +214,5 @@ int main(void)
 			printf("%d, %d, %d, %d, %d, %d, %d, %d, %d\n", data[0], data[1], data[2], data[3], data[4], data[5], xyz[0], xyz[1], xyz[2]);
 			p=0;
 		}
-
-    	/*for(int i = 0; i < 1000; i++){
-    	    __asm("NOP");
-    	}*/
-
-
     }
-    return 0;
 }

@@ -13,96 +13,60 @@
 #include "spi.h"
 #include <stdio.h>
 
-/*void setup_dma(void){
-    //Need DMA2 Channel 3 for streams 2 and 3 (might only need the RX DMA (Stream 2))
-    RCC -> AHB1ENR |= RCC_AHB1ENR_DMA2EN;
-
-    //Disable DMA
-    DMA2_Stream2 -> CR &= ~DMA_SxCR_EN;
-    //DMA2_Stream3 -> CR &= ~DMA_SxCR_EN;
-
-    //Need to setup for both of them
-    DMA2_Stream2 -> CR |= DMA_SxCR_CHSEL_1 | DMA_SxCR_CHSEL_0;
-    //DMA2_Stream3 -> CR |= DMA_SxCR_CHSEL_1 | DMA_SxCR_CHSEL_0;
-
-    //16 bit word size
-    DMA2_Stream2 -> CR |= DMA_SxCR_MSIZE_0;
-    //DMA2_Stream3 -> CR |= DMA_SxCR_MSIZE_0;
-    DMA2_Stream2 -> CR |= DMA_SxCR_PSIZE_0;
-    //DMA2_Stream3 -> CR |= DMA_SxCR_PSIZE_0;
-    DMA2_Stream2 -> CR |= DMA_SxCR_MINC;
-
-    //set up peripheral address and memory storage address
-    DMA2_Stream2 -> PAR = (uint32_t) (&(SPI1 -> DR));
-    DMA2_Stream2 -> M0AR = (uint16_t) (data);
-    //DMA2_Stream3 -> PAR = (uint16_t) (&(SPI1 -> DR));
-    //DMA2_Stream3 -> M0AR = (uint16_t) (data);
-
-    //Circular mode
-    DMA2_Stream2 -> CR |= DMA_SxCR_CIRC;
-    //DMA2_Stream3 -> CR |= DMA_SxCR_CIRC;
-}
-
-void enable_dma(void){
-    //enable dma
-    DMA2_Stream2 -> CR |= DMA_SxCR_EN;
-    //DMA2_Stream3 -> CR |= DMA_SxCR_EN;
-}*/
-
-void init_spi1(void){
+void init_spi(void){
 	RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
     RCC -> APB2ENR |= RCC_APB2ENR_SPI1EN;
 
     //using pins PA4-PA7
-    GPIOA -> MODER &= ~0x0000ff00;
-    GPIOA -> MODER |= 0x0000a900;
+    LSM_SPI_GPIO -> MODER &= ~((0b11 << (LSM_SPI_NSS_PIN*2)) | (0b11 << (LSM_SPI_SCK_PIN*2)) | (0b11 << (LSM_SPI_MOSI_PIN*2)) | (0b11 << (LSM_SPI_MISO_PIN*2)));//~0x0000ff00;
+    LSM_SPI_GPIO -> MODER |= (1 << (LSM_SPI_NSS_PIN*2)) | (2 << (LSM_SPI_SCK_PIN*2)) | (2 << (LSM_SPI_MOSI_PIN*2)) | (2 << (LSM_SPI_MISO_PIN*2));//0x0000a900;
 
-    //SPI1 is AFR5 for all functions (NSS, SCK, MOSI, MISO) except for the stupid face NSS
-    GPIOA -> AFR[0] &= ~0xfff00000;
-    GPIOA -> AFR[0] |= 0x55500000;
+    //LSM_SPI is AFR5 for all functions (NSS, SCK, MOSI, MISO) except for the stupid face NSS
+    LSM_SPI_GPIO -> AFR[0] &= ~((0xf << (LSM_SPI_SCK_PIN*4)));
+    LSM_SPI_GPIO -> AFR[0] &= ~((0xf << (LSM_SPI_MOSI_PIN*4)));
+    LSM_SPI_GPIO -> AFR[0] &= ~((0xf << (LSM_SPI_MISO_PIN*4)));
+    LSM_SPI_GPIO -> AFR[0] |= (5 << (LSM_SPI_SCK_PIN*4)) | (5 << (LSM_SPI_MOSI_PIN*4)) | (5 << (LSM_SPI_MISO_PIN*4));//0x55500000;
 
     //Very high speed GPIO PA4 with a pullup resistor for CS
-    //GPIOA -> OSPEEDR |= 0x0000ff00;
-    GPIOA -> PUPDR |= 0x00000200;
-    GPIOA -> ODR |= (1 << 4);
+    //LSM_SPI_GPIO -> OSPEEDR |= 0x0000ff00;
+    LSM_SPI_GPIO -> PUPDR |= (2 << (LSM_SPI_NSS_PIN*2));//0x00000200;
+    LSM_SPI_GPIO -> ODR |= (1 << LSM_SPI_NSS_PIN);
 
-    //Disable SPI1 to configure settings
-    SPI1 -> CR1 &= ~SPI_CR1_SPE;
+    //Disable LSM_SPI to configure settings
+    LSM_SPI -> CR1 &= ~SPI_CR1_SPE;
 
     //Setting Baud Rate (SPI clock) to the lowest possible just for testing
-    SPI1 -> CR1 |= SPI_CR1_BR_0 | SPI_CR1_BR_1 | SPI_CR1_BR_2;
+    LSM_SPI -> CR1 |= SPI_CR1_BR_0 | SPI_CR1_BR_1 | SPI_CR1_BR_2;
     //Make microcontroller master
-    SPI1 -> CR1 |= SPI_CR1_MSTR;
+    LSM_SPI -> CR1 |= SPI_CR1_MSTR;
     //8bit data frame format
-    SPI1 -> CR1 &= ~SPI_CR1_DFF;
+    LSM_SPI -> CR1 &= ~SPI_CR1_DFF;
     //enable slave select
-    SPI1 -> CR2 |= SPI_CR2_SSOE;
+    LSM_SPI -> CR2 |= SPI_CR2_SSOE;
     //enable software NSS
-    //SPI1 -> CR1 |= SPI_CR1_SSM;
-    //SPI1 -> CR1 |= SPI_CR1_SSI;
+    //LSM_SPI -> CR1 |= SPI_CR1_SSM;
+    //LSM_SPI -> CR1 |= SPI_CR1_SSI;
     //1 on idle
-    SPI1 -> CR1 |= SPI_CR1_CPOL;
-    SPI1 -> CR1 |= SPI_CR1_CPHA;
-    //enable dma on rxe
-    //SPI1 -> CR2 |= SPI_CR2_RXDMAEN;
+    LSM_SPI -> CR1 |= SPI_CR1_CPOL;
+    LSM_SPI -> CR1 |= SPI_CR1_CPHA;
 
     //enable interrupts
-    SPI1 -> CR2 |= SPI_CR2_TXEIE;
-    SPI1 -> CR2 |= SPI_CR2_RXNEIE;
+    LSM_SPI -> CR2 |= SPI_CR2_TXEIE;
+    LSM_SPI -> CR2 |= SPI_CR2_RXNEIE;
 
     //enable SPI
-    SPI1 -> CR1 |= SPI_CR1_SPE;
+    LSM_SPI -> CR1 |= SPI_CR1_SPE;
 }
 
 //testing spi send command function (not used)
 void spi_cmd(uint16_t data){
-	GPIOA -> ODR &= ~(1 << 4);
-	while(!(SPI1 -> SR & SPI_SR_TXE)){;}
-	SPI1 -> DR = 0xff00 & data;
-	while(!(SPI1 -> SR & SPI_SR_TXE)){;}
-	SPI1 -> DR = 0x00ff & data;
-	while((SPI1 -> SR & SPI_SR_BSY)){;}
-	GPIOA -> ODR |= 1 << 4;
+	LSM_SPI_GPIO -> ODR &= ~(1 << LSM_SPI_NSS_PIN);
+	while(!(LSM_SPI -> SR & SPI_SR_TXE)){;}
+	LSM_SPI -> DR = 0xff00 & data;
+	while(!(LSM_SPI -> SR & SPI_SR_TXE)){;}
+	LSM_SPI -> DR = 0x00ff & data;
+	while((LSM_SPI -> SR & SPI_SR_BSY)){;}
+	LSM_SPI_GPIO -> ODR |= 1 << LSM_SPI_NSS_PIN;
 
 }
 
@@ -111,13 +75,13 @@ void writeReg(uint8_t regAddress, uint8_t writeInfo){
 	write |= regAddress;
 	write &= ~(1 << 7); //tells micro to write the data in last 8 bits of DR
 
-	GPIOA -> ODR &= ~(1 << 4);
-	while(!(SPI1 -> SR & SPI_SR_TXE)){;}
-	SPI1 -> DR = write;
-	while(!(SPI1 -> SR & SPI_SR_TXE)){;}
-	SPI1 -> DR = writeInfo;
-	while((SPI1 -> SR & SPI_SR_BSY)){;}
-	GPIOA -> ODR |= 1 << 4;
+	LSM_SPI_GPIO -> ODR &= ~(1 << LSM_SPI_NSS_PIN);
+	while(!(LSM_SPI -> SR & SPI_SR_TXE)){;}
+	LSM_SPI -> DR = write;
+	while(!(LSM_SPI -> SR & SPI_SR_TXE)){;}
+	LSM_SPI -> DR = writeInfo;
+	while((LSM_SPI -> SR & SPI_SR_BSY)){;}
+	LSM_SPI_GPIO -> ODR |= 1 << LSM_SPI_NSS_PIN;
 }
 
 uint8_t readReg(uint8_t regAddress){
@@ -126,17 +90,17 @@ uint8_t readReg(uint8_t regAddress){
 	write |= regAddress;
 	write |= 1 << 7; //tells LSM to write data to last 8 bits of DR
 
-	GPIOA -> ODR &= ~(1 << 4);
-	while(!(SPI1 -> SR & SPI_SR_TXE)){;}
-	SPI1 -> DR = write;
-	while(!(SPI1 -> SR & SPI_SR_TXE)){;}
-	SPI1 -> DR = 0x00;
-	while(!(SPI1 -> SR & SPI_SR_TXE)){;}
-	while(!(SPI1 -> SR & SPI_SR_RXNE)){;}
-	read = SPI1 -> DR;
+	LSM_SPI_GPIO -> ODR &= ~(1 << LSM_SPI_NSS_PIN);
+	while(!(LSM_SPI -> SR & SPI_SR_TXE)){;}
+	LSM_SPI -> DR = write;
+	while(!(LSM_SPI -> SR & SPI_SR_TXE)){;}
+	LSM_SPI -> DR = 0x00;
+	while(!(LSM_SPI -> SR & SPI_SR_TXE)){;}
+	while(!(LSM_SPI -> SR & SPI_SR_RXNE)){;}
+	read = LSM_SPI -> DR;
 
-	while((SPI1 -> SR & SPI_SR_BSY)){;}
-	GPIOA -> ODR |= 1 << 4;
+	while((LSM_SPI -> SR & SPI_SR_BSY)){;}
+	LSM_SPI_GPIO -> ODR |= 1 << LSM_SPI_NSS_PIN;
 
 	return read; //8 bits of the read register
 }

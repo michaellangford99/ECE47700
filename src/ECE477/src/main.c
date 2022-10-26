@@ -21,8 +21,7 @@
 #define LED_PIN 5
 #define LED_GPIO GPIOA
 
-int main(void)
-{
+int main(void){
 
 	//RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
@@ -39,6 +38,8 @@ int main(void)
 	init_RX_USART();
 
 	init_PWM();
+
+	LSMRead();
 
 	for(;;) {
 
