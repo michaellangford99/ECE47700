@@ -90,13 +90,17 @@ uint8_t VL53L1X_getAddress()
 // mode.
 bool init()
 {
+  //nano_wait(1000);
+  while(1) {
+	  readReg16Bit(VHV_RESULT__COLDBOOT_STATUS);
+  }
   // check model ID and module type registers (values specified in datasheet)
   if (readReg16Bit(IDENTIFICATION__MODEL_ID) != 0xEACC) { return false; }
 
   // VL53L1_software_reset() begin
 
   writeReg(SOFT_RESET, 0x00);
-  nano_wait(10000);
+  nano_wait(1000);
   writeReg(SOFT_RESET, 0x01);
 
   // give it some time to boot; otherwise the sensor NACKs during the readReg()
@@ -275,17 +279,18 @@ uint16_t readReg16Bit(uint16_t reg)
 {
   uint16_t value;
 
-  I2CstartWrite();
-  I2Caddress(active_device->dev_address);
-  I2Cwrite((uint8_t)(reg >> 8)); // reg high byte
-  I2Cwrite((uint8_t)(reg));
-  I2Cstop();
 
-  uint8_t buffer[2];
-  I2CstartRead();
-  I2CrequestFrom(active_device->dev_address, buffer, (uint8_t)2);
-  value = (uint16_t)(buffer[0] <<8) | (uint16_t)buffer[1];      // All value
-  I2Cstop();
+	  I2CstartWrite();
+	  I2Caddress(active_device->dev_address);
+	  I2Cwrite((uint8_t)(reg >> 8)); // reg high byte
+	  I2Cwrite((uint8_t)(reg));
+	  I2Cstop();
+	  //nano_wait(100);
+	  uint8_t buffer[17];
+	  I2CstartRead();
+	  I2CrequestFrom((active_device->dev_address), buffer, (uint8_t)17);
+	  value = (uint16_t)((buffer)[0] <<8) | (uint16_t)(buffer)[1];      // All value
+	  I2Cstop();
 
   return value;
 }

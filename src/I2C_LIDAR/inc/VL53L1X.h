@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 // register addresses from API vl53l1x_register_map.h
+
 enum regAddr
 {
   SOFT_RESET                                                                 = 0x0000,
