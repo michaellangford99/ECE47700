@@ -173,9 +173,12 @@ void I2CrequestFrom(uint8_t address,uint8_t *buffer, uint8_t numOfBytes)
 
 void nano_wait(unsigned int n)
 {
-    asm(    "        mov r0,%0\n"
+    /*asm(    "        mov r0,%0\n"
             "repeat: sub r0,#83\n"
-            "        bgt repeat\n" : : "r"(n) : "r0", "cc");
+            "        bgt repeat\n" : : "r"(n) : "r0", "cc");*/
+	for(int i = 0; i < n; i++){
+		__asm("NOP");
+	}
 }
 
 
