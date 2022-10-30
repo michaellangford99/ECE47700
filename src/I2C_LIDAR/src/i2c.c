@@ -7,47 +7,6 @@
 
 void nano_wait(unsigned int);
 
-#define PLL_M 4
-#define PLL_N 180
-#define PLL_P 0
-
-
-void config (void)
-{
-	// Enable HSE
-    RCC->CR |= RCC_CR_HSEON;
-    while(!(RCC->CR & RCC_CR_HSERDY));
-
-    // Set the Power Enable clock
-    RCC->APB1ENR |= RCC_APB1ENR_PWREN;
-    PWR->CR |= PWR_CR_VOS;
-
-    // Configure the FLASH->ACR
-    FLASH->ACR |= FLASH_ACR_ICEN | FLASH_ACR_DCEN | FLASH_ACR_PRFTEN | FLASH_ACR_LATENCY_5WS;
-
-    // Configure the PRESCALARS hCLK, PCLK1, PCLK2;
-    // AHB PR
-    RCC -> CFGR |= RCC_CFGR_HPRE_DIV1;
-
-    // APB1 PR
-    RCC -> CFGR |= RCC_CFGR_PPRE1_DIV4;
-
-    // APB2 PR
-    RCC -> CFGR |= RCC_CFGR_PPRE2_DIV2;
-
-    // Configure the MAIN PLL
-    RCC->PLLCFGR = (PLL_M <<0) | (PLL_N << 6) | (RCC_PLLCFGR_PLLSRC_HSE);
-
-    // Enable the PLL
-    RCC->CR |= RCC_CR_PLLON;
-
-    // select the clock source
-    RCC->CFGR |= RCC_CFGR_SW_PLL;
-    while((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL);
-
-
-}
-
 void I2Cinit (void)
 {
     //init i2c
@@ -179,26 +138,4 @@ void nano_wait(unsigned int n)
 	for(int i = 0; i < n; i++){
 		__asm("NOP");
 	}
-}
-
-
-
-void init_I2C(void)
-{
-
-    
-    config();
-    I2Cinit();
-
-
-    
-    while (1) {
-        
-        
-        uint8_t data = 0b10101010;
-    	I2Cstart();
-    	I2Caddress (0x29);
-    	I2Cwrite(data);
-    	I2Cstop();
-    }
 }

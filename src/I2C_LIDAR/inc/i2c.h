@@ -1,7 +1,6 @@
 #ifndef __I2C_H__
 #define __I2C_H__
 
-void init_I2C(void);
 void I2Cinit(void);
 void I2CstartWrite(void);
 void I2CstartRead(void);

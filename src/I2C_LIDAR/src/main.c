@@ -29,17 +29,16 @@ const char font[];
   **
 */
 
-#define PLL_M 4
-#define PLL_N 180
-#define PLL_P 0
-
 #include "stm32f4xx.h"
+#include "system.h"
+#include "usb_usart.h"
 #include "i2c.h"
 #include "VL53L1X.h"
 
 int main(void)
 {
 
+	init_USB_USART();
 
     //init I2C
     //init device descriptor
@@ -50,11 +49,12 @@ int main(void)
     //setAddress(0x2A + i);
 
     VL53L1X_startContinuous(50);
+    VL53L1X_setDistanceMode(Long);
     uint16_t hold;
     while(1)
     {
     	hold = VL53L1X_read();
-        printf("data!: %d\n", hold);
+        //printf("data!: %d\n", hold);
     }
 
 

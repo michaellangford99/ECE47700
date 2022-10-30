@@ -609,6 +609,11 @@ void VL53L1X_stopContinuous()
 // be available. If blocking is false, it will try to return data immediately.
 // (VL53L1X_readSingle() also calls this function after starting a single-shot range
 // measurement)
+
+uint16_t last[10];
+int l = 0;
+
+
 uint16_t VL53L1X_read()
 {
   
@@ -785,13 +790,13 @@ void readResults()
 
   active_device->dev_results.stream_count = buffer[14];
 
-  active_device->dev_results.dss_actual_effective_spads_sd0  = (uint16_t)(buffer[13]<< 8); // high byte
+  active_device->dev_results.dss_actual_effective_spads_sd0  = (uint16_t)((uint16_t)buffer[13]<< 8); // high byte
   active_device->dev_results.dss_actual_effective_spads_sd0 |=           buffer[12];      // low byte
 
 //  bus->read(); // peak_signal_count_rate_mcps_sd0: not used
 //  bus->read();
 
-  active_device->dev_results.ambient_count_rate_mcps_sd0  = (uint16_t)(buffer[9] << 8); // high byte
+  active_device->dev_results.ambient_count_rate_mcps_sd0  = (uint16_t)((uint16_t)buffer[9] << 8); // high byte
   active_device->dev_results.ambient_count_rate_mcps_sd0 |=           (buffer[8]);      // low byte
 
 //  bus->read(); // sigma_sd0: not used
@@ -800,12 +805,38 @@ void readResults()
 //  bus->read(); // phase_sd0: not used
 //  bus->read();
 
-  active_device->dev_results.final_crosstalk_corrected_range_mm_sd0  = (uint16_t)(buffer[3] << 8); // high byte
+  active_device->dev_results.final_crosstalk_corrected_range_mm_sd0  = (uint16_t)((uint16_t)buffer[3] << 8); // high byte
   active_device->dev_results.final_crosstalk_corrected_range_mm_sd0 |=           (buffer[2] << 8);      // low byte
 
-  active_device->dev_results.peak_signal_count_rate_crosstalk_corrected_mcps_sd0  = (uint16_t)(buffer[1]<< 8); // high byte
+  active_device->dev_results.peak_signal_count_rate_crosstalk_corrected_mcps_sd0  = (uint16_t)((uint16_t)buffer[1]<< 8); // high byte
   active_device->dev_results.peak_signal_count_rate_crosstalk_corrected_mcps_sd0 |=           (buffer[0]);      // low byte
   I2Cstop();
+
+  /*for (int i = 0; i < 17; i++)
+  {
+	  printf("%x, ", buffer[i]);
+  }*/
+  uint32_t sum = 0;
+  for (int i = 0; i < 10-1; i++)
+  {
+	  last[i] = last[i+1];
+	  sum += last[i];
+  }
+  last[9]=active_device->dev_results.dss_actual_effective_spads_sd0;
+  sum += last[9];
+
+  printf("%d, ", sum);
+
+
+  printf("%d, ", active_device->dev_results.ambient_count_rate_mcps_sd0);
+  printf("%d, ", active_device->dev_results.dss_actual_effective_spads_sd0);
+  printf("%d, ", active_device->dev_results.final_crosstalk_corrected_range_mm_sd0);
+  printf("%d, ", active_device->dev_results.peak_signal_count_rate_crosstalk_corrected_mcps_sd0);
+  printf("%d, ", active_device->dev_results.range_status);
+  printf("%d, ", active_device->dev_results.stream_count);
+  printf("%d, ", active_device->dev_ranging_data.range_mm);
+
+  printf("\n");
 }
 
 // perform Dynamic SPAD Selection calculation/update
