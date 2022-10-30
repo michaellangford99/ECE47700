@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "*.tb": "vhdl",
+        "*.s": "arm",
+        "stm32f4xx.h": "c",
+        "stdint.h": "c"
+    }
+}
