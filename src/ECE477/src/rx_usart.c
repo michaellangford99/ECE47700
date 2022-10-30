@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "system.h"
 #include "crc8.h"
 #include "RX_usart.h"
 #include "fifo.h"
@@ -20,6 +21,13 @@ int rx_seroffset = 0;
 #define RX_USART_DMA_STREAM 		DMA2_Stream2
 #define RX_USART_DMA_CHANNEL		4
 #define RX_USART_INTERRUPT_HANDLE	USART1_IRQHandler
+
+#define RX_USART_BAUDRATE		400000
+#define CLOCK_RATE				SYSTEM_CLOCK
+#define RX_USART_CLOCK_RATE		CLOCK_RATE/2
+#define RX_USART_DIV			(RX_USART_CLOCK_RATE / (16*RX_USART_BAUDRATE))
+#define RX_USART_DIV_FRACTION	(((16 * RX_USART_CLOCK_RATE / (16*RX_USART_BAUDRATE))) % 16)
+#define RX_USART_DIV_MANTISSA	RX_USART_DIV
 
 void enable_rx_usart_interrupt()
 {
@@ -179,7 +187,7 @@ void init_RX_USART(void)
 	//115_200 = 180MHz / (8 * 2 * USARTDIV)
 	//USARTDIV = 180MHZ / (8 * 2 * 115_200)
 	//USARTDIV: fraction=0d11, mantissa=0d97
-	RX_USART->BRR = (6) | ((2) << 4);						//set baud rate to 115200
+	RX_USART->BRR = (RX_USART_DIV_FRACTION) | ((RX_USART_DIV_MANTISSA) << 4);						//set baud rate to 115200
 
 	RX_USART->CR1 |= USART_CR1_TE;				//enable transmitter
 	RX_USART->CR1 |= USART_CR1_RE;				//enable receiver

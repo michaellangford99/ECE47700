@@ -2,16 +2,17 @@
 
 #include <stdio.h>
 
+#include "system.h"
 #include "rx_usart.h"
 #include "pwm.h"
 #include "fifo.h"
 
-#define PWM_GPIO	GPIOA
-#define PWM_TIMR	TIM1
-#define PWM_CH1_PIN	8
-#define PWM_CH2_PIN 11
-#define PWM_CH3_PIN 11
-#define PWM_CH4_PIN 11
+#define PWM_GPIO		GPIOA
+#define PWM_TIMR		TIM1
+#define PWM_CH1_PIN		8
+#define PWM_CH2_PIN 	11
+#define PWM_CH3_PIN 	11
+#define PWM_CH4_PIN 	11
 #define PWM_TIMR_AFR	1
 
 // GPIOA is in this register
@@ -19,7 +20,7 @@
 // timer 1 enable is in this register
 #define RCCAPB2ENR (RCC->APB2ENR)
 
-#define FCLK					16000000
+#define FCLK					16000000 //SYSTEM_CLOCK
 #define PWM_REPETITION_RATE_HZ	50*8 //Oneshot125 pulse frequency
 #define	PWM_PSC 				1
 #define PWM_ARR 				(FCLK/((PWM_PSC+1) * PWM_REPETITION_RATE_HZ) - 1)
@@ -30,7 +31,6 @@
 
 #define FIR_LENGTH 400
 uint32_t last[FIR_LENGTH];
-
 
 //consider moving towards DMA based system where timer interrupt
 //causes transfer from main loop motor outputs to here

@@ -1,7 +1,7 @@
 #include "stm32f4xx.h"
 
 #include <stdio.h>
-
+#include "system.h"
 #include "usb_usart.h"
 #include "fifo.h"
 #include "tty.h"
@@ -19,9 +19,8 @@ int seroffset = 0;
 #define USB_USART_DMA_CHANNEL	4
 #define USB_USART_INTERRUPT_HANDLE	USART2_IRQHandler
 
-//TODO: fix the clock rate and use the constants derived here
 #define USB_USART_BAUDRATE		115200
-#define CLOCK_RATE				100000000
+#define CLOCK_RATE				SYSTEM_CLOCK
 #define USB_USART_CLOCK_RATE	CLOCK_RATE/2
 #define USB_USART_DIV			(USB_USART_CLOCK_RATE / (16*USB_USART_BAUDRATE))
 #define USB_USART_DIV_FRACTION	(((16 * USB_USART_CLOCK_RATE / (16*USB_USART_BAUDRATE))) % 16)
@@ -33,7 +32,7 @@ void enable_USB_usart_tty_interrupt()
 	USB_USART->CR3 |= USART_CR3_DMAR;
 
 	//USART2 is interrupt 38
-	NVIC->ISER[1] |= 1 << (USB_USART_INTERRUPT-32);
+	NVIC->ISER[USB_USART_INTERRUPT>31] |= 1 << (USB_USART_INTERRUPT%32);
 
 	//Set up DMA1
 	RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
@@ -137,7 +136,7 @@ void init_USB_USART(void)
 	//115_200 = 180MHz / (8 * 2 * USARTDIV)
 	//USARTDIV = 180MHZ / (8 * 2 * 115_200)
 	//USARTDIV: fraction=0d11, mantissa=0d97
-	USB_USART->BRR = (7) | ((8) << 4);						//set baud rate to 115200
+	USB_USART->BRR = (USB_USART_DIV_FRACTION) | ((USB_USART_DIV_MANTISSA) << 4);						//set baud rate to 115200
 
 	USB_USART->CR1 |= USART_CR1_TE;				//enable transmitter
 	USB_USART->CR1 |= USART_CR1_RE;				//enable receiver
