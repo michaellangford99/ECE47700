@@ -19,14 +19,14 @@ void init_spi(void){
     RCC -> APB2ENR |= RCC_APB2ENR_SPI1EN;
 
     //using pins PA4-PA7
-    LSM_SPI_GPIO -> MODER &= ~((0b11 << (LSM_SPI_NSS_PIN*2)) | (0b11 << (LSM_SPI_SCK_PIN*2)) | (0b11 << (LSM_SPI_MOSI_PIN*2)) | (0b11 << (LSM_SPI_MISO_PIN*2)));//~0x0000ff00;
-    LSM_SPI_GPIO -> MODER |= (1 << (LSM_SPI_NSS_PIN*2)) | (2 << (LSM_SPI_SCK_PIN*2)) | (2 << (LSM_SPI_MOSI_PIN*2)) | (2 << (LSM_SPI_MISO_PIN*2));//0x0000a900;
+    LSM_SPI_GPIO -> MODER &= ~((0b11 << (LSM_SPI_NSS_PIN*2)) | (0b11 << (SPI_SCK_PIN*2)) | (0b11 << (SPI_MOSI_PIN*2)) | (0b11 << (SPI_MISO_PIN*2)));//~0x0000ff00;
+    LSM_SPI_GPIO -> MODER |= (1 << (LSM_SPI_NSS_PIN*2)) | (2 << (SPI_SCK_PIN*2)) | (2 << (SPI_MOSI_PIN*2)) | (2 << (SPI_MISO_PIN*2));//0x0000a900;
 
     //LSM_SPI is AFR5 for all functions (NSS, SCK, MOSI, MISO) except for the stupid face NSS
-    LSM_SPI_GPIO -> AFR[0] &= ~((0xf << (LSM_SPI_SCK_PIN*4)));
-    LSM_SPI_GPIO -> AFR[0] &= ~((0xf << (LSM_SPI_MOSI_PIN*4)));
-    LSM_SPI_GPIO -> AFR[0] &= ~((0xf << (LSM_SPI_MISO_PIN*4)));
-    LSM_SPI_GPIO -> AFR[0] |= (5 << (LSM_SPI_SCK_PIN*4)) | (5 << (LSM_SPI_MOSI_PIN*4)) | (5 << (LSM_SPI_MISO_PIN*4));//0x55500000;
+    LSM_SPI_GPIO -> AFR[0] &= ~((0xf << (SPI_SCK_PIN*4)));
+    LSM_SPI_GPIO -> AFR[0] &= ~((0xf << (SPI_MOSI_PIN*4)));
+    LSM_SPI_GPIO -> AFR[0] &= ~((0xf << (SPI_MISO_PIN*4)));
+    LSM_SPI_GPIO -> AFR[0] |= (5 << (SPI_SCK_PIN*4)) | (5 << (SPI_MOSI_PIN*4)) | (5 << (SPI_MISO_PIN*4));//0x55500000;
 
     //Very high speed GPIO PA4 with a pullup resistor for CS
     //LSM_SPI_GPIO -> OSPEEDR |= 0x0000ff00;

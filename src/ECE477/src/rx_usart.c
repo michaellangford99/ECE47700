@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include "system.h"
 #include "crc8.h"
-#include "RX_usart.h"
+#include "rx_usart.h"
 #include "fifo.h"
 #include "tty.h"
 
@@ -13,14 +13,15 @@
 char rx_serfifo[FIFOSIZE];
 int rx_seroffset = 0;
 
-#define RX_USART 					USART1
-#define RX_USART_GPIO 				GPIOA
-#define RX_USART_TX					9
-#define RX_USART_RX					10
-#define RX_USART_INTERRUPT			37
+#define RX_USART 					USART6
+#define RX_USART_GPIO 				GPIOC
+#define RX_USART_TX					6
+#define RX_USART_RX					7
+#define RX_USART_AF					8
+#define RX_USART_INTERRUPT			71//USART6_IRQn
 #define RX_USART_DMA_STREAM 		DMA2_Stream2
-#define RX_USART_DMA_CHANNEL		4
-#define RX_USART_INTERRUPT_HANDLE	USART1_IRQHandler
+#define RX_USART_DMA_CHANNEL		5
+#define RX_USART_INTERRUPT_HANDLE	USART6_IRQHandler
 
 #define RX_USART_BAUDRATE		400000
 #define CLOCK_RATE				SYSTEM_CLOCK
@@ -34,8 +35,7 @@ void enable_rx_usart_interrupt()
 	RX_USART->CR1 |= USART_CR1_RXNEIE;
 	RX_USART->CR3 |= USART_CR3_DMAR;
 
-	//USART2 is interrupt 38
-	NVIC->ISER[1] |= 1 << (RX_USART_INTERRUPT-32);
+	NVIC->ISER[RX_USART_INTERRUPT>31] |= 1 << (RX_USART_INTERRUPT%32);
 
 	//Set up DMA1
 	//RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
@@ -149,33 +149,26 @@ void init_RX_USART(void)
 {
 	init_crc8(0xd5);
 
-	//USART1
-	//PB6, PB7
-
-	//USART2
-	//PA2 (TX), PA3 (RX)
-
-	//Enable GPIOA
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+	//Enable GPIO
+	//RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
 	//RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
 
-	RX_USART_GPIO->AFR[1] &= ~(0xF << (RX_USART_TX *4 - 32));
-	RX_USART_GPIO->AFR[1] &= ~(0xF << (RX_USART_RX *4 - 32));
+	//zero out AFR for PB6 and PB7
+	RX_USART_GPIO->AFR[RX_USART_TX>7] &= ~(0xF << ((RX_USART_TX%8) *4));
+	RX_USART_GPIO->AFR[RX_USART_RX>7] &= ~(0xF << ((RX_USART_RX%8) *4));
 
-	RX_USART_GPIO->AFR[1] |= (0x07 << (RX_USART_TX *4 - 32));
-	RX_USART_GPIO->AFR[1] |= (0x07 << (RX_USART_RX *4 - 32));
+	//select AF7 for PB6 and7PB6 as USART1_TX and USART1_RX, respectively
+	RX_USART_GPIO->AFR[RX_USART_TX>7] |= (RX_USART_AF << ((RX_USART_TX%8) *4));
+	RX_USART_GPIO->AFR[RX_USART_RX>7] |= (RX_USART_AF << ((RX_USART_RX%8) *4));
 
 	//zero out MODER for PB6 and PB7
 	RX_USART_GPIO->MODER &= ~(0xf << (RX_USART_TX*2));
 	//select alternate function mode for PB6 and PB7
 	RX_USART_GPIO->MODER |= (10 << (RX_USART_TX*2));
 
-
-	//Enable USART1
-	//RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
-
-	//Enable USART2
-	RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
+	//Enable USART6
+	RCC->APB2ENR |= RCC_APB2ENR_USART6EN;
 
 	RX_USART->CR1 &= ~USART_CR1_UE;
 	RX_USART->CR1 &= ~(1 << 12);	//set bit 12, 0 for word size 8 bits

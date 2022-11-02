@@ -4,9 +4,15 @@
 #define LSM_SPI 			SPI1
 #define LSM_SPI_GPIO 		GPIOA
 #define LSM_SPI_NSS_PIN 	4
-#define LSM_SPI_SCK_PIN 	5
-#define LSM_SPI_MOSI_PIN 	6
-#define LSM_SPI_MISO_PIN 	7
+
+#define SPI_GPIO            GPIOA
+#define SPI_SCK_PIN 	    5
+#define SPI_MOSI_PIN 	    6
+#define SPI_MISO_PIN 	    7
+
+#define MPU_SPI             SPI1
+#define MPU_SPI_GPIO        GPIOC
+#define MPU_SPI_NSS_PIN     4
 
 void init_spi(void);
 void spi_cmd(uint16_t data);

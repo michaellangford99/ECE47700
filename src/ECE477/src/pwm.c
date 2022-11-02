@@ -10,8 +10,8 @@
 #define PWM_GPIO		GPIOA
 #define PWM_TIMR		TIM1
 #define PWM_CH1_PIN		8
-#define PWM_CH2_PIN 	11
-#define PWM_CH3_PIN 	11
+#define PWM_CH2_PIN 	9
+#define PWM_CH3_PIN 	10
 #define PWM_CH4_PIN 	11
 #define PWM_TIMR_AFR	1
 

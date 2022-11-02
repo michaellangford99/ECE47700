@@ -10,14 +10,14 @@
 char serfifo[FIFOSIZE];
 int seroffset = 0;
 
-#define USB_USART 				USART2
-#define USB_USART_GPIO 			GPIOA
-#define USB_USART_TX			2
-#define USB_USART_RX			3
-#define USB_USART_INTERRUPT		38
-#define USB_USART_DMA_STREAM 	DMA1_Stream5
+#define USB_USART 				USART1
+#define USB_USART_GPIO 			GPIOB
+#define USB_USART_TX			6
+#define USB_USART_RX			7
+#define USB_USART_INTERRUPT		37
+#define USB_USART_DMA_STREAM 	DMA2_Stream5
 #define USB_USART_DMA_CHANNEL	4
-#define USB_USART_INTERRUPT_HANDLE	USART2_IRQHandler
+#define USB_USART_INTERRUPT_HANDLE	USART1_IRQHandler
 
 #define USB_USART_BAUDRATE		115200
 #define CLOCK_RATE				SYSTEM_CLOCK
@@ -96,15 +96,10 @@ void USB_USART_INTERRUPT_HANDLE(void)
 
 void init_USB_USART(void)
 {
-	//USART1
-	//PB6, PB7
-
-	//USART2
-	//PA2 (TX), PA3 (RX)
-
-	//Enable GPIOA
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
-	//RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
+	//Enable GPIO
+	//RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
+	//RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
 
 	//zero out AFR for PB6 and PB7
 	USB_USART_GPIO->AFR[0] &= ~(0xF << (USB_USART_TX *4));
@@ -119,12 +114,8 @@ void init_USB_USART(void)
 	//select alternate function mode for PB6 and PB7
 	USB_USART_GPIO->MODER |= (10 << (USB_USART_TX*2));
 
-
 	//Enable USART1
-	//RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
-
-	//Enable USART2
-	RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
+	RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
 
 	USB_USART->CR1 &= ~USART_CR1_UE;
 	USB_USART->CR1 &= ~(1 << 12);	//set bit 12, 0 for word size 8 bits

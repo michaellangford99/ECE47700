@@ -18,13 +18,13 @@
 #include "usb_usart.h"
 #include "pwm.h"
 
-#define LED_PIN 5
-#define LED_GPIO GPIOA
+#define LED_PIN 13
+#define LED_GPIO GPIOC
 
 int main(void){
 
-	//RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
+	//RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
 
 	//PC13 is the LED on test board
 	//PA5 is the LED on the Nucleo
@@ -33,13 +33,17 @@ int main(void){
 
 	LED_GPIO->ODR |= 0x1 << LED_PIN;
 
+	init_SYSTICK();
 	init_USB_USART();
+	//init_RX_USART();
+	//init_PWM();
 
-	init_RX_USART();
 
-	init_PWM();
+	
+	init_SPI1();
+	init_LSM6DS3();
 
-	LSMRead();
+	test_LSM6DS3();
 
 	for(;;) {
 

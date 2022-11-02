@@ -118,11 +118,8 @@ void init_PI_USART(void)
 	//select alternate function mode for PB6 and PB7
 	PI_USART_GPIO->MODER |= (0b1010 << (PI_USART_TX*2));
 
-	//Enable USART1
-	//RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
-
-	//Enable USART2
-	RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
+	//Enable USART4
+	RCC->APB1ENR |= RCC_APB1ENR_UART4EN;
 
 	PI_USART->CR1 &= ~USART_CR1_UE;
 	PI_USART->CR1 &= ~(1 << 12);	//set bit 12, 0 for word size 8 bits
