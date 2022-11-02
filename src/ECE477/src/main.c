@@ -46,7 +46,7 @@ int main(void){
 	init_RX_USART();
 	//init_PI_USART();
 
-	//init_PWM();
+	init_PWM();
 	//init_motors();
 
 	//init_I2C();
@@ -112,9 +112,14 @@ int main(void){
 		}
 		//LED_GPIO->ODR ^= 0x1 << LED_PIN;
 
-		//printf("ur mom\n");
+		pwm_output_t pwm_output;
 
-		//printf("%d, \t", set_PWM_duty_cycle());
+		pwm_output.duty_cycle_ch0 = (((2^16) - 1)*(uint32_t)(RX_USART_get_channels()->ch0 - CRSF_CHANNEL_VALUE_MIN))/(CRSF_CHANNEL_VALUE_MAX-CRSF_CHANNEL_VALUE_MIN);
+		pwm_output.duty_cycle_ch1 = (((2^16) - 1)*(uint32_t)(RX_USART_get_channels()->ch1 - CRSF_CHANNEL_VALUE_MIN))/(CRSF_CHANNEL_VALUE_MAX-CRSF_CHANNEL_VALUE_MIN);
+		pwm_output.duty_cycle_ch2 = (((2^16) - 1)*(uint32_t)(RX_USART_get_channels()->ch2 - CRSF_CHANNEL_VALUE_MIN))/(CRSF_CHANNEL_VALUE_MAX-CRSF_CHANNEL_VALUE_MIN);
+		pwm_output.duty_cycle_ch3 = (((2^16) - 1)*(uint32_t)(RX_USART_get_channels()->ch3 - CRSF_CHANNEL_VALUE_MIN))/(CRSF_CHANNEL_VALUE_MAX-CRSF_CHANNEL_VALUE_MIN);
+
+		set_PWM_duty_cycle(pwm_output);
 
 		printf("%d,\t", RX_USART_get_channels()->ch0);
 		printf("%d,\t", RX_USART_get_channels()->ch1);

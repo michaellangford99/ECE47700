@@ -20,7 +20,7 @@
 // timer 1 enable is in this register
 #define RCCAPB2ENR (RCC->APB2ENR)
 
-#define FCLK					16000000 //SYSTEM_CLOCK
+#define FCLK					SYSTEM_CLOCK
 #define PWM_REPETITION_RATE_HZ	50*8 //Oneshot125 pulse frequency
 #define	PWM_PSC 				1
 #define PWM_ARR 				(FCLK/((PWM_PSC+1) * PWM_REPETITION_RATE_HZ) - 1)
@@ -38,36 +38,13 @@ uint32_t last[FIR_LENGTH];
 //or set the motor outputs in main loop as pointers, so they automatically affect these.
 //though have to be careful as they take instantaneous effect
 
-uint32_t set_PWM_duty_cycle() {
 
-	/*if (saved_channel_data.ch2 >= 172)
-	{
-		uint32_t sum = 0;
-		for (int i = 0; i < FIR_LENGTH-1; i++)
-		{
-			last[i] = last[i+1];
-			sum = sum + last[i];
-		}
-
-		last[FIR_LENGTH-1] = RANGE*(saved_channel_data.ch2-172)/((1810-172));
-		sum = sum + last[FIR_LENGTH-1];
-
-		uint32_t output = sum/FIR_LENGTH;
-
-		if (output<=1000)
-			PWM_TIMR->CCR1 = LOWERBOUNDCRRX + output;
-
-		return output;
-	}
-	else
-	{
-		PWM_TIMR->CCR1 = LOWERBOUNDCRRX;
-	}*/
-	//PWM_TIMR->CCR2 = LOWERBOUNDCRRX + (RANGE*saved_channel_data.ch1)/1810;
-	//PWM_TIMR->CCR3 = LOWERBOUNDCRRX + (RANGE*saved_channel_data.ch2)/1810;
-	//PWM_TIMR->CCR4 = LOWERBOUNDCRRX + (RANGE*saved_channel_data.ch3)/1810;
-
-	return 0;
+//takes as input an array of 4 uint16_t values and scales it into it's valid range
+void set_PWM_duty_cycle(pwm_output_t pwm_output) {
+	PWM_TIMR->CCR1 = LOWERBOUNDCRRX + (RANGE*(uint32_t)pwm_output.duty_cycle_ch0)/(2^16 - 1);
+	PWM_TIMR->CCR2 = LOWERBOUNDCRRX + (RANGE*(uint32_t)pwm_output.duty_cycle_ch1)/(2^16 - 1);
+	PWM_TIMR->CCR3 = LOWERBOUNDCRRX + (RANGE*(uint32_t)pwm_output.duty_cycle_ch2)/(2^16 - 1);
+	PWM_TIMR->CCR4 = LOWERBOUNDCRRX + (RANGE*(uint32_t)pwm_output.duty_cycle_ch3)/(2^16 - 1);
 }
 
 void init_PWM(void)
@@ -119,6 +96,8 @@ void init_PWM(void)
 
 	// Enable the timer
 	PWM_TIMR -> CR1 |= 0x0001;
+
+	printf("RANGE: %d\n", RANGE);
 
 	//set_PWM_duty_cycle();
 }
