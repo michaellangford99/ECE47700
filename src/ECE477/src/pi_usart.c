@@ -8,8 +8,8 @@
 #include "tty.h"
 
 #define FIFOSIZE 16
-char serfifo[FIFOSIZE];
-int seroffset = 0;
+char pi_serfifo[FIFOSIZE];
+int pi_seroffset = 0;
 
 #define PI_USART 					UART4
 #define PI_USART_GPIO 				GPIOC
@@ -44,7 +44,7 @@ void enable_PI_usart_rx_interrupt()
 	PI_USART_DMA_STREAM->CR &= ~DMA_SxCR_CHSEL;
 	PI_USART_DMA_STREAM->CR |= (PI_USART_DMA_CHANNEL << 25);		//select channel 4
 
-	PI_USART_DMA_STREAM->M0AR = (uint32_t)&serfifo;
+	PI_USART_DMA_STREAM->M0AR = (uint32_t)&pi_serfifo;
 	PI_USART_DMA_STREAM->PAR = (uint32_t)&(PI_USART->DR);
 	PI_USART_DMA_STREAM->NDTR = FIFOSIZE;
 
@@ -70,7 +70,7 @@ int __io_putchar(int c) {
 }
 */
 
-int interrupt_getchar()
+int pi_interrupt_getchar()
 {
 	// Wait for a newline to complete the buffer.
 	while(!fifo_newline(&input_fifo))
@@ -82,20 +82,20 @@ int interrupt_getchar()
 
 /*
 int __io_getchar(void) {
-	char c = interrupt_getchar();
+	char c = pi_interrupt_getchar();
 
 	return c;
 }*/
 
 void PI_USART_INTERRUPT_HANDLE(void)
 {
-	while(PI_USART_DMA_STREAM->NDTR != sizeof serfifo - seroffset) {
+	while(PI_USART_DMA_STREAM->NDTR != sizeof pi_serfifo - pi_seroffset) {
 		if (fifo_full(&input_fifo))
 			fifo_remove(&input_fifo);
-		//insert_echo_char(serfifo[seroffset]);
+		//insert_echo_char(pi_serfifo[pi_seroffset]);
 		//process the data:
 		
-		seroffset = (seroffset + 1) % sizeof serfifo;
+		pi_seroffset = (pi_seroffset + 1) % sizeof pi_serfifo;
 	}
 }
 

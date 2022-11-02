@@ -18,27 +18,33 @@ int rx_seroffset = 0;
 #define RX_USART_TX					6
 #define RX_USART_RX					7
 #define RX_USART_AF					8
-#define RX_USART_INTERRUPT			71//USART6_IRQn
+#define RX_USART_INTERRUPT			71
 #define RX_USART_DMA_STREAM 		DMA2_Stream2
 #define RX_USART_DMA_CHANNEL		5
 #define RX_USART_INTERRUPT_HANDLE	USART6_IRQHandler
 
-#define RX_USART_BAUDRATE		400000
+#define RX_USART_BAUDRATE		420000
 #define CLOCK_RATE				SYSTEM_CLOCK
-#define RX_USART_CLOCK_RATE		CLOCK_RATE/2
+#define RX_USART_CLOCK_RATE		CLOCK_RATE
 #define RX_USART_DIV			(RX_USART_CLOCK_RATE / (16*RX_USART_BAUDRATE))
 #define RX_USART_DIV_FRACTION	(((16 * RX_USART_CLOCK_RATE / (16*RX_USART_BAUDRATE))) % 16)
 #define RX_USART_DIV_MANTISSA	RX_USART_DIV
+
+crsf_channels_t saved_channel_data;
+
+#define ELRS_PACKET_MAX_SIZE 	40
+#define BUFFER_SIZE ELRS_PACKET_MAX_SIZE
+uint8_t rx_buffer[BUFFER_SIZE*2];
+uint8_t* rx_buffer_start = rx_buffer;
 
 void enable_rx_usart_interrupt()
 {
 	RX_USART->CR1 |= USART_CR1_RXNEIE;
 	RX_USART->CR3 |= USART_CR3_DMAR;
 
-	NVIC->ISER[RX_USART_INTERRUPT>31] |= 1 << (RX_USART_INTERRUPT%32);
+	NVIC->ISER[RX_USART_INTERRUPT/32] |= 1 << (RX_USART_INTERRUPT%32);
 
-	//Set up DMA1
-	//RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
+	//Set up DMA2
 	RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
 
 	//USART1 is on DMA1 Stream 5 Channel 4
@@ -69,11 +75,6 @@ void enable_rx_usart_interrupt()
 //then old bytes are overwritten from the beginning.
 //a pointer / index exists indicating the starting byte
 //everytime a new byte arrives, the pointer is incremented, and the corresponding byte overwritten.
-
-#define ELRS_PACKET_MAX_SIZE 	40
-#define BUFFER_SIZE ELRS_PACKET_MAX_SIZE
-uint8_t rx_buffer[BUFFER_SIZE*2];
-uint8_t* rx_buffer_start = rx_buffer;
 
 uint8_t process_packet_buffer(uint8_t new)
 {
@@ -143,6 +144,11 @@ void RX_USART_INTERRUPT_HANDLE(void)
 
 		rx_seroffset = (rx_seroffset + 1) % sizeof rx_serfifo;
 	}
+}
+
+crsf_channels_t* RX_USART_get_channels()
+{
+	return &saved_channel_data;
 }
 
 void init_RX_USART(void)

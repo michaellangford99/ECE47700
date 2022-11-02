@@ -40,7 +40,7 @@ uint32_t last[FIR_LENGTH];
 
 uint32_t set_PWM_duty_cycle() {
 
-	if (saved_channel_data.ch2 >= 172)
+	/*if (saved_channel_data.ch2 >= 172)
 	{
 		uint32_t sum = 0;
 		for (int i = 0; i < FIR_LENGTH-1; i++)
@@ -62,7 +62,7 @@ uint32_t set_PWM_duty_cycle() {
 	else
 	{
 		PWM_TIMR->CCR1 = LOWERBOUNDCRRX;
-	}
+	}*/
 	//PWM_TIMR->CCR2 = LOWERBOUNDCRRX + (RANGE*saved_channel_data.ch1)/1810;
 	//PWM_TIMR->CCR3 = LOWERBOUNDCRRX + (RANGE*saved_channel_data.ch2)/1810;
 	//PWM_TIMR->CCR4 = LOWERBOUNDCRRX + (RANGE*saved_channel_data.ch3)/1810;

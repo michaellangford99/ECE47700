@@ -118,8 +118,7 @@ typedef struct crsfPayloadLinkstatistics_s
     int8_t downlink_SNR;
 } crsfLinkStatistics_t;
 
-crsf_channels_t saved_channel_data;
-
 void init_RX_USART(void);
+crsf_channels_t* RX_USART_get_channels();
 
 #endif /* __RX_USART_H__ */
