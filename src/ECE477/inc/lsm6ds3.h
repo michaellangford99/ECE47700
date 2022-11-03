@@ -214,7 +214,7 @@
 #define A_GAIN 1//A_GAIN_2G //accelerometer gain to convert to g's
 
 //Calibration array length
-#define CAL_LENGTH 1024
+#define CAL_LENGTH 4096
 
 void init_LSM6DS3(void);
 void read_axes(void);
