@@ -14,7 +14,7 @@
 #define MPU_SPI_GPIO        GPIOC
 #define MPU_SPI_NSS_PIN     4
 
-void init_spi(void);
+void init_SPI1(void);
 void spi_cmd(uint16_t data);
 void writeReg(uint8_t regAddress, uint8_t writeInfo);
 uint8_t readReg(uint8_t regAddress);

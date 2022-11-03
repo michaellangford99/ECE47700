@@ -23,7 +23,7 @@ int pi_seroffset = 0;
 
 #define PI_USART_BAUDRATE			115200
 #define CLOCK_RATE					SYSTEM_CLOCK
-#define PI_USART_CLOCK_RATE			CLOCK_RATE/2
+#define PI_USART_CLOCK_RATE			CLOCK_RATE
 #define PI_USART_DIV				(PI_USART_CLOCK_RATE / (16*PI_USART_BAUDRATE))
 #define PI_USART_DIV_FRACTION		(((16 * PI_USART_CLOCK_RATE / (16*PI_USART_BAUDRATE))) % 16)
 #define PI_USART_DIV_MANTISSA  		PI_USART_DIV
@@ -34,7 +34,7 @@ void enable_PI_usart_rx_interrupt()
 	PI_USART->CR3 |= USART_CR3_DMAR;
 
 	//USART2 is interrupt 38
-	NVIC->ISER[PI_USART_INTERRUPT>31] |= 1 << (PI_USART_INTERRUPT%32);
+	NVIC->ISER[PI_USART_INTERRUPT/32] |= 1 << (PI_USART_INTERRUPT%32);
 
 	//Set up DMA1
 	RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
@@ -60,40 +60,28 @@ void enable_PI_usart_rx_interrupt()
 
 	PI_USART_DMA_STREAM->CR |= DMA_SxCR_EN;
 }
-/*
-int __io_putchar(int c) {
-	if (c == '\n') __io_putchar('\r');
+
+void pi_putchar(uint8_t c)
+{
+	if (c == '\n') pi_putchar('\r');
 
 	while(!(PI_USART->SR & USART_SR_TXE)) { }
 	PI_USART->DR = c;
-	return c;
 }
-*/
 
-int pi_interrupt_getchar()
+void pi_puts(uint8_t* s)
 {
-	// Wait for a newline to complete the buffer.
-	while(!fifo_newline(&input_fifo))
-			asm volatile ("wfi"); // wait for an interrupt
-	// Return a character from the line buffer.
-	char ch = fifo_remove(&input_fifo);
-	return ch;
+	while (*(s++) != '\0')
+	{
+		pi_putchar(*s);
+	}
 }
-
-/*
-int __io_getchar(void) {
-	char c = pi_interrupt_getchar();
-
-	return c;
-}*/
 
 void PI_USART_INTERRUPT_HANDLE(void)
 {
 	while(PI_USART_DMA_STREAM->NDTR != sizeof pi_serfifo - pi_seroffset) {
-		if (fifo_full(&input_fifo))
-			fifo_remove(&input_fifo);
-		//insert_echo_char(pi_serfifo[pi_seroffset]);
-		//process the data:
+		
+		//do_something_with(pi_serfifo[pi_seroffset]);
 		
 		pi_seroffset = (pi_seroffset + 1) % sizeof pi_serfifo;
 	}

@@ -14,7 +14,7 @@
 #include "system.h"
 #include <stdio.h>
 
-void init_spi(void){
+void init_SPI1(void){
 	RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
     RCC -> APB2ENR |= RCC_APB2ENR_SPI1EN;
 
@@ -37,7 +37,7 @@ void init_spi(void){
     LSM_SPI -> CR1 &= ~SPI_CR1_SPE;
 
     //Setting Baud Rate (SPI clock) to the lowest possible just for testing
-    LSM_SPI -> CR1 |= SPI_CR1_BR_0 | SPI_CR1_BR_1 | SPI_CR1_BR_2;
+    LSM_SPI -> CR1 |= SPI_CR1_BR_0 | SPI_CR1_BR_1 ;//| SPI_CR1_BR_2;
     //Make microcontroller master
     LSM_SPI -> CR1 |= SPI_CR1_MSTR;
     //8bit data frame format

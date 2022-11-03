@@ -19,6 +19,7 @@
 #include "usb_usart.h"
 #include "pi_usart.h"
 #include "pwm.h"
+#include "spi.h"
 #include "i2c.h"
 #include "motors.h"
 #include "lsm6ds3.h"
@@ -40,21 +41,21 @@ int main(void){
 
 	LED_GPIO->ODR |= 0x1 << LED_PIN;
 
-	//init_SYSTICK();
+	init_SYSTICK();
 
 	init_USB_USART();
-	init_RX_USART();
+	//init_RX_USART();
 	//init_PI_USART();
 
-	init_PWM();
+	//init_PWM();
 	//init_motors();
 
 	//init_I2C();
 	//init_TMF8801();
 
-	//init_SPI1();
-	//init_LSM6DS3();
-	//test_LSM6DS3();
+	init_SPI1();
+	init_LSM6DS3();
+	test_LSM6DS3();
 
 	//main loop:
 	for(;;)
