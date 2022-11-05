@@ -15,7 +15,7 @@
 // Be sure to change this to your login...
 const char login[] = "garciads";
 
-void nano_wait(unsigned int);
+//void nano_wait(unsigned int);
 const char font[];
 
 
