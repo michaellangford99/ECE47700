@@ -1,6 +1,15 @@
 #ifndef __RX_USART_H__
 #define __RX_USART_H__
 
+#define CRSF_RX_BAUDRATE 420000
+#define CRSF_OPENTX_BAUDRATE 400000
+#define CRSF_OPENTX_SLOW_BAUDRATE 115200 // Used for QX7 not supporting 400kbps
+#define CRSF_NUM_CHANNELS 16
+#define CRSF_CHANNEL_VALUE_MIN 172
+#define CRSF_CHANNEL_VALUE_MID 992
+#define CRSF_CHANNEL_VALUE_MAX 1811
+#define CRSF_MAX_PACKET_LEN 64
+
 typedef struct
 {
     uint16_t ch0 : 11;
@@ -118,8 +127,7 @@ typedef struct crsfPayloadLinkstatistics_s
     int8_t downlink_SNR;
 } crsfLinkStatistics_t;
 
-crsf_channels_t saved_channel_data;
-
 void init_RX_USART(void);
+crsf_channels_t* RX_USART_get_channels();
 
 #endif /* __RX_USART_H__ */

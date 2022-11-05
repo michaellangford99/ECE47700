@@ -8,8 +8,8 @@
 #include "tty.h"
 
 #define FIFOSIZE 16
-char serfifo[FIFOSIZE];
-int seroffset = 0;
+char pi_serfifo[FIFOSIZE];
+int pi_seroffset = 0;
 
 #define PI_USART 					UART4
 #define PI_USART_GPIO 				GPIOC
@@ -23,7 +23,7 @@ int seroffset = 0;
 
 #define PI_USART_BAUDRATE			115200
 #define CLOCK_RATE					SYSTEM_CLOCK
-#define PI_USART_CLOCK_RATE			CLOCK_RATE/2
+#define PI_USART_CLOCK_RATE			CLOCK_RATE
 #define PI_USART_DIV				(PI_USART_CLOCK_RATE / (16*PI_USART_BAUDRATE))
 #define PI_USART_DIV_FRACTION		(((16 * PI_USART_CLOCK_RATE / (16*PI_USART_BAUDRATE))) % 16)
 #define PI_USART_DIV_MANTISSA  		PI_USART_DIV
@@ -34,7 +34,7 @@ void enable_PI_usart_rx_interrupt()
 	PI_USART->CR3 |= USART_CR3_DMAR;
 
 	//USART2 is interrupt 38
-	NVIC->ISER[PI_USART_INTERRUPT>31] |= 1 << (PI_USART_INTERRUPT%32);
+	NVIC->ISER[PI_USART_INTERRUPT/32] |= 1 << (PI_USART_INTERRUPT%32);
 
 	//Set up DMA1
 	RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
@@ -44,7 +44,7 @@ void enable_PI_usart_rx_interrupt()
 	PI_USART_DMA_STREAM->CR &= ~DMA_SxCR_CHSEL;
 	PI_USART_DMA_STREAM->CR |= (PI_USART_DMA_CHANNEL << 25);		//select channel 4
 
-	PI_USART_DMA_STREAM->M0AR = (uint32_t)&serfifo;
+	PI_USART_DMA_STREAM->M0AR = (uint32_t)&pi_serfifo;
 	PI_USART_DMA_STREAM->PAR = (uint32_t)&(PI_USART->DR);
 	PI_USART_DMA_STREAM->NDTR = FIFOSIZE;
 
@@ -60,42 +60,30 @@ void enable_PI_usart_rx_interrupt()
 
 	PI_USART_DMA_STREAM->CR |= DMA_SxCR_EN;
 }
-/*
-int __io_putchar(int c) {
-	if (c == '\n') __io_putchar('\r');
+
+void pi_putchar(uint8_t c)
+{
+	if (c == '\n') pi_putchar('\r');
 
 	while(!(PI_USART->SR & USART_SR_TXE)) { }
 	PI_USART->DR = c;
-	return c;
 }
-*/
 
-int interrupt_getchar()
+void pi_puts(uint8_t* s)
 {
-	// Wait for a newline to complete the buffer.
-	while(!fifo_newline(&input_fifo))
-			asm volatile ("wfi"); // wait for an interrupt
-	// Return a character from the line buffer.
-	char ch = fifo_remove(&input_fifo);
-	return ch;
+	while (*(s++) != '\0')
+	{
+		pi_putchar(*s);
+	}
 }
-
-/*
-int __io_getchar(void) {
-	char c = interrupt_getchar();
-
-	return c;
-}*/
 
 void PI_USART_INTERRUPT_HANDLE(void)
 {
-	while(PI_USART_DMA_STREAM->NDTR != sizeof serfifo - seroffset) {
-		if (fifo_full(&input_fifo))
-			fifo_remove(&input_fifo);
-		//insert_echo_char(serfifo[seroffset]);
-		//process the data:
+	while(PI_USART_DMA_STREAM->NDTR != sizeof pi_serfifo - pi_seroffset) {
 		
-		seroffset = (seroffset + 1) % sizeof serfifo;
+		//do_something_with(pi_serfifo[pi_seroffset]);
+		
+		pi_seroffset = (pi_seroffset + 1) % sizeof pi_serfifo;
 	}
 }
 
@@ -118,11 +106,8 @@ void init_PI_USART(void)
 	//select alternate function mode for PB6 and PB7
 	PI_USART_GPIO->MODER |= (0b1010 << (PI_USART_TX*2));
 
-	//Enable USART1
-	//RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
-
-	//Enable USART2
-	RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
+	//Enable USART4
+	RCC->APB1ENR |= RCC_APB1ENR_UART4EN;
 
 	PI_USART->CR1 &= ~USART_CR1_UE;
 	PI_USART->CR1 &= ~(1 << 12);	//set bit 12, 0 for word size 8 bits

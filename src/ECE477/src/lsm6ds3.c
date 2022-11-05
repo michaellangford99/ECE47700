@@ -12,6 +12,7 @@
 #include "string.h"
 #include "spi.h"
 #include "lsm6ds3.h"
+#include "systick.h"
 
 int16_t data[6] = {0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000};
 
@@ -27,7 +28,7 @@ int16_t data[6] = {0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000};
 //first of all, systick needs to have high precision
 //not sure what the range on this is.
 
-void initLSM(){
+void init_LSM6DS3(){
 	//register addresses
 	uint8_t addr1 = CTRL1_XL;
 	uint8_t addr2 = CTRL2_G;
@@ -41,19 +42,16 @@ void initLSM(){
 	uint8_t addr10 = CTRL10_C;
 
 	//inital LSM6DSO parameters (see LSM6DSO reference manual (https://www.st.com/en/mems-and-sensors/lsm6dsl.html))
-	uint8_t ctrl1 = CTRL1_DEF; //0b01100000
-	ctrl1 |= ODR_XL2 | ODR_XL1;
-	uint8_t ctrl2 = CTRL2_DEF; //0b01100000
-	ctrl2 |= ODR_G2 | ODR_G1;
-	uint8_t ctrl3 = CTRL3_DEF; //0b00000100
-	uint8_t ctrl4 = CTRL4_DEF; //0b00000100
-	ctrl4 |= I2C_disable;
-	uint8_t ctrl5 = CTRL5_DEF; //0b00000000
-	uint8_t ctrl6 = CTRL6_DEF; //0b10000000
-	uint8_t ctrl7 = CTRL7_DEF; //0b00000000
-	uint8_t ctrl8 = CTRL8_DEF; //0b00000000
-	uint8_t ctrl9 = CTRL9_DEF; //0b11100000
-	uint8_t ctrl10 = CTRL10_DEF; //0b00000000
+	uint8_t ctrl1 = CTRL1_DEF | ODR_XL2 | ODR_XL1;
+	uint8_t ctrl2 = CTRL2_DEF | ODR_G3  | ODR_G1;
+	uint8_t ctrl3 = CTRL3_DEF;
+	uint8_t ctrl4 = CTRL4_DEF | I2C_disable;
+	uint8_t ctrl5 = CTRL5_DEF;
+	uint8_t ctrl6 = CTRL6_DEF;
+	uint8_t ctrl7 = CTRL7_DEF;
+	uint8_t ctrl8 = CTRL8_DEF;
+	uint8_t ctrl9 = CTRL9_DEF;
+	uint8_t ctrl10 = CTRL10_DEF;
 
 	//ctrl register writing
 	writeReg(addr1, ctrl1);
@@ -84,9 +82,9 @@ void read_axes(){
 	data[5] = ((int16_t)data_buf[10] | ((int16_t)data_buf[11] << 8)) * A_GAIN;
 }
 
-void LSMRead(void){
-    init_spi();
-    initLSM();
+void test_LSM6DS3(void){
+    //init_spi();
+    //initLSM();
     uint8_t xgyroL = OUTX_L_G;
     uint8_t xgyroH = OUTX_H_G;
     uint8_t ygyroL = OUTY_L_G;
@@ -127,9 +125,12 @@ void LSMRead(void){
 
     for (int i = 0; i < CAL_LENGTH; i++)
     {
-    	for(int i = 0; i < 1000; i++){
+    	/*for(int i = 0; i < 1000; i++){
     		__asm("NOP");
-		}
+		}*/
+
+    	wait(1.0f/(6.67f*1000.0f));
+
     	read_axes();
     	cal[0] += data[0];
 		cal[1] += data[1];
@@ -141,11 +142,14 @@ void LSMRead(void){
     cal[2] = cal[2] / CAL_LENGTH;
 
     int p = 0;
-    int32_t xyz[3];
+    float xyz[3];
 
     xyz[0] = 0;
     xyz[1] = 0;
     xyz[2] = 0;
+
+    float last_time;
+    float current_time = ftime();
 
     while(1){
 
@@ -167,9 +171,14 @@ void LSMRead(void){
 		data[1] -= cal[1];
 		data[2] -= cal[2];
 
-		xyz[0] += data[0];
-		xyz[1] += data[1];
-		xyz[2] += data[2];
+		last_time = current_time;
+		current_time = ftime();
+
+		xyz[0] += data[0] * G_GAIN_250DPS * (current_time - last_time);
+		xyz[1] += data[1] * G_GAIN_250DPS * (current_time - last_time);
+		xyz[2] += data[2] * G_GAIN_250DPS * (current_time - last_time);
+
+
 
         //data[0] = ((int16_t)readReg(xgyroL) | ((int16_t)readReg(xgyroH) << 8)) * G_GAIN;
         //data[0] = ((int16_t)readReg(xgyroL) | ((int16_t)readReg(xgyroH) << 8)) * G_GAIN;
@@ -209,9 +218,9 @@ void LSMRead(void){
     	//printf("Gyro Values: X=%d Y=%d Z=%d\n", data[0], data[1], data[2]);
     	//printf("Accel Values: X=%d Y=%d Z=%d\n", data[3], data[4], data[5]);
 
-		if (p++ > 4)
+		if (p++ > 40)
 		{
-			printf("%d, %d, %d, %d, %d, %d, %d, %d, %d\n", data[0], data[1], data[2], data[3], data[4], data[5], xyz[0], xyz[1], xyz[2]);
+			printf("%f, %f, %f\n", /*data[0], data[1], data[2], data[3], data[4], data[5], */xyz[0], xyz[1], xyz[2]);
 			p=0;
 		}
     }

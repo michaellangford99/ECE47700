@@ -31,7 +31,7 @@
 #define OUTY_L_A 0x2a //read only
 #define OUTY_H_A 0x2b //read only
 #define OUTZ_L_A 0x2c //read only
-#define OUTZ_H_A 0x2d //read only'
+#define OUTZ_H_A 0x2d //read only
 
 //Register definitions for control registers
 /***********************************************
@@ -53,6 +53,11 @@
 
 #define CTRL1_DEF 0b00000000
 
+#define ACCEL_FS_2G  (0)
+#define ACCEL_FS_4G  (FS_XL1 |      0)
+#define ACCEL_FS_8G  (FS_XL1 | FS_XL0)
+#define ACCEL_FS_18G (0      | FS_XL0)
+
 /***********************************************
  * CTRL2_G Definitions (See Table 55 for Gyro ODR Settings)
  * FS SELECTION
@@ -71,6 +76,11 @@
 
 #define CTRL2_DEF 0b00000000
 
+#define GYRO_FS_250DPS  (0)
+#define GYRO_FS_500DPS  (FS_XL1 |      0)
+#define GYRO_FS_1000DPS (FS_XL1 | FS_XL0)
+#define GYRO_FS_2000DPS (0      | FS_XL0)
+
 /***********************************************
  * CTRL3_C Definitions
  ************************************************/
@@ -83,7 +93,7 @@
 #define BLE 		(1<<1)
 #define SW_RESET	(1<<0)
 
-#define CTRL3_DEF 0b00000100
+#define CTRL3_DEF 0b00000000
 
 /***********************************************
  * CTRL4_C Definitions
@@ -123,7 +133,7 @@
 #define FTYPE_1 	(1<<1)
 #define FTYPE_0		(1<<0)
 
-#define CTRL6_DEF 0b10000000
+#define CTRL6_DEF 0b00000000
 
 /***********************************************
  * CTRL7_G Definitions
@@ -189,14 +199,25 @@
  *
  ***********************************************/
 
-#define G_GAIN 1 //gyroscope gain to convert to degrees per second
-#define A_GAIN 1 //accelerometer gain to convert to g's
+#define G_GAIN_125DPS   0.004375f
+#define G_GAIN_250DPS   0.00875f
+#define G_GAIN_500DPS   0.0175f
+#define G_GAIN_1000DPS   0.035f
+#define G_GAIN_2000DPS   0.070f
+
+#define A_GAIN_2G       0.000061f
+#define A_GAIN_4G       0.000122f
+#define A_GAIN_8G       0.000244f
+#define A_GAIN_16G      0.000488f
+
+#define G_GAIN 1//G_GAIN_250DPS //gyroscope gain to convert to degrees per second
+#define A_GAIN 1//A_GAIN_2G //accelerometer gain to convert to g's
 
 //Calibration array length
-#define CAL_LENGTH 1024
+#define CAL_LENGTH 4096
 
-void initLSM(void);
+void init_LSM6DS3(void);
 void read_axes(void);
-void LSMRead(void);
+void test_LSM6DS3(void);
 
 #endif /* __LSM6DS3_H__ */

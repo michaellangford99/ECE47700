@@ -1,8 +1,15 @@
 #ifndef __PWM_H__
 #define __PWM_H__
 
+typedef struct {
+	uint16_t duty_cycle_ch0;
+	uint16_t duty_cycle_ch1;
+	uint16_t duty_cycle_ch2;
+	uint16_t duty_cycle_ch3;
+} pwm_output_t;
+
 void init_PWM(void);
 
-uint32_t set_PWM_duty_cycle();
+void set_PWM_duty_cycle();
 
 #endif /* __PWM_H__ */
