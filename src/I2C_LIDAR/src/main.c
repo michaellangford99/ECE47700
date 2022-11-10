@@ -41,7 +41,11 @@ int main(void)
 	init_USB_USART();
 	I2Cinit();
 	TMF8801_t device_descrip;
-	bool devInit = TMF8801_init(&device_descrip);
+	TMF8801_init(&device_descrip);
+	while (1) {
+		read_distance(&device_descrip);
+	}
+	/*bool devInit = _TMF8801_init(&device_descrip);
 	nano_wait(1000);
 	if(devInit == true)
 	{
@@ -64,14 +68,14 @@ int main(void)
 	if(!isConnected()){
 		wakeUpDevice();
 	}
-	nano_wait(10000);
-	while(1) {
+	nano_wait(10000);*/
+	/*while(1) {
 		if(dataAvailable()) {
 		int distance = getDistance();
 		printf("%d\n", distance);
 		}
 		nano_wait(100);
-	}
+	}*/
 /*    //init I2C
     //init device descriptor
     //call init

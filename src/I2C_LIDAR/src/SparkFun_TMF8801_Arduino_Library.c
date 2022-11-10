@@ -40,7 +40,44 @@ const uint8_t CONTENT_CALIBRATION = 0x0a;
 // Values below were taken from AN000597, pp 22
 const uint8_t ALGO_STATE[11] = { 0xB1, 0xA9, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-bool TMF8801_init(TMF8801_t* dev) {
+void TMF8801_init(TMF8801_t* dev)
+{
+	bool devInit = _TMF8801_init(dev);
+	nano_wait(1000);
+	if(devInit == true)
+	{
+			enableInterrupt();
+			nano_wait(1000);
+			getSerialNumber();
+			nano_wait(1000);
+			getHardwareVersion();
+			nano_wait(1000);
+			getApplicationVersionMajor();
+			nano_wait(1000);
+			getApplicationVersionMinor();
+			nano_wait(1000);
+	}
+	else
+	{
+		getStatus();
+	}
+
+	if(!isConnected())
+	{
+		wakeUpDevice();
+	}
+	nano_wait(10000);
+}
+
+void read_distance(TMF8801_t* dev) {
+	if(dataAvailable())
+	{
+		int distance = getDistance();
+		printf("%d\n", distance);
+	}
+	nano_wait(100);
+}
+bool _TMF8801_init(TMF8801_t* dev) {
 	// Setting up the system clock to count the number of ticks
 	#define LED_GPIO GPIOA
 	#define LED_PIN 5

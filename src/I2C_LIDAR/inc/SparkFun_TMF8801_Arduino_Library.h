@@ -112,8 +112,12 @@ typedef struct
 
 TMF8801_t* activeDev;
 
+void TMF8801_init(TMF8801_t* dev);
+
+void read_distance(TMF8801_t* dev);
+
 //Initializes STM32F411 and TMF8801
-bool TMF8801_init(TMF8801_t* dev);
+bool _TMF8801_init(TMF8801_t* dev);
 
 // Polls if TMF8801's CPU is ready
 bool cpuReady();
