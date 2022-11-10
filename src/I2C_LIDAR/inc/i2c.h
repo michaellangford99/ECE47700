@@ -1,6 +1,6 @@
 #ifndef __I2C_H__
 #define __I2C_H__
-
+#include <stdint.h>
 void I2Cinit(void);
 void I2CstartWrite(void);
 void I2CstartRead(void);

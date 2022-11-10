@@ -16,13 +16,9 @@
   along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __TMF8801_LIBRARY_IO__
-#define __TMF8801_LIBRARY_IO__
-
-#include "i2c.h"
+#include "SparkFun_TMF8801_IO.h",
 #include "SparkFun_TMF8801_Constants.h"
+#include "SparkFun_TMF8801_Arduino_Library.h"
+#include "i2c.h"
 #include <stdbool.h>
 #include <stdint.h>
-
-#endif /*__TMFF8801_LIBRARY_IO__ */
-

@@ -20,8 +20,27 @@
 #include "SparkFun_TMF8801_Arduino_Library.h"
 #include "SparkFun_TMF8801_IO.h"
 
-bool begin(uint8_t address)
-{
+// Constants definitions
+
+const uint8_t DEFAULT_I2C_ADDR = 0x41;
+const uint8_t CPU_READY_TIMEOUT = 200;
+const uint8_t APPLICATION_READY_TIMEOUT = 200;
+const uint8_t CHIP_ID_NUMBER = 0x07;
+const uint8_t APPLICATION = 0xc0;
+const uint8_t BOOTLOADER = 0x80;
+const uint8_t COMMAND_CALIBRATION = 0x0b;
+const uint8_t COMMAND_FACTORY_CALIBRATION = 0x0a;
+const uint8_t COMMAND_MEASURE = 0x02;
+const uint8_t COMMAND_RESULT = 0x55;
+const uint8_t COMMAND_SERIAL = 0x47;
+const uint8_t COMMAND_STOP = 0xff;
+const uint8_t INTERRUPT_MASK = 0x01;
+const uint8_t CONTENT_CALIBRATION = 0x0a;
+
+// Values below were taken from AN000597, pp 22
+const uint8_t ALGO_STATE[11] = { 0xB1, 0xA9, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+
+bool TMF8801_init(TMF8801_t* dev) {
 	// Setting up the system clock to count the number of ticks
 	#define LED_GPIO GPIOA
 	#define LED_PIN 5
@@ -44,10 +63,42 @@ bool begin(uint8_t address)
 			| SysTick_CTRL_ENABLE_Msk |
 			SysTick_CTRL_CLKSOURCE_Msk);
 
+	activeDev = dev;
+	activeDev->address = 0x41;
 
+	((activeDev->commandDataValues))[0] = 0x03;
+	((activeDev->commandDataValues))[1] = 0x23;
+	(activeDev->commandDataValues)[2] = 0x44;
+	(activeDev->commandDataValues)[3] = 0x00;
+	(activeDev->commandDataValues)[4] = 0x00;
+	(activeDev->commandDataValues)[5] = 0x64;
+	(activeDev->commandDataValues)[6] = 0xD8;
+	(activeDev->commandDataValues)[7] = 0xA4;
+	activeDev->gpio1_prog = MODE_LOW_OUTPUT;
+	activeDev->gpio0_prog = MODE_LOW_OUTPUT;
+	activeDev->calibrationData[0] = 0xC1;
+	activeDev->calibrationData[1] = 0x22;
+	activeDev->calibrationData[2] = 0x00;
+	activeDev->calibrationData[3] = 0x1C;
+	activeDev->calibrationData[4] = 0x9;
+	activeDev->calibrationData[5] = 0x40;
+	activeDev->calibrationData[6] = 0x8C;
+	activeDev->calibrationData[7] = 0x98;
+	activeDev->calibrationData[8] = 0xA;
+	activeDev->calibrationData[9] = 0x15;
+	activeDev->calibrationData[10] = 0xCE;
+	activeDev->calibrationData[11] = 0x9C;
+	activeDev->calibrationData[12] = 0x1;
+	activeDev->calibrationData[13] = 0xFC;
+	return begin(activeDev->address);
+}
+
+bool begin(uint8_t address)
+{
 	// Initialize the selected I2C interface 
-	bool ready = begin(address);
-	
+	bool ready;
+
+	ready = isConnected();
 	// If the interface is not ready or TMF8801 is unreacheable return false
 	if (ready == false)
 	{
@@ -56,8 +107,11 @@ bool begin(uint8_t address)
 	}
 
 	// Reset TMF8801. Since it clears itself, we don't need to clear it
+	nano_wait(1000);
 	setRegisterBit(REGISTER_ENABLE_REG, CPU_RESET);
 
+
+	nano_wait(1000);
 	ready = cpuReady();
 	if (ready == false)
 	{
@@ -106,17 +160,17 @@ void TMF8801_setDevice(TMF8801_t* device)
   activeDev= device;
 }
 
-uint32_t ticks = 0;
+uint32_t ticksTMF = 0;
 void SysTick_Handler(void)
 {
-	ticks++;
+	ticksTMF++;
 	LED_GPIO->ODR ^= 0x1 << LED_PIN;
 	//LED_GPIO->ODR ^= 0x1 << LED_PIN;
 }
 
 uint32_t millis()
 {
-	return ticks;
+	return ticksTMF;
 }
 
 bool cpuReady()
@@ -153,9 +207,9 @@ bool dataAvailable()
 bool isConnected()
 {
 	// Polls I2C interface
-	bool twiConnected = isConnected();
-	if (!twiConnected)
-		return false;
+	//bool twiConnected = isConnected();
+	//if (!twiConnected)
+	//	return false;
 
 	// Returns true if TMF8801 ID returned id is 0x07
 	return (readSingleByte(REGISTER_ID) == CHIP_ID_NUMBER);
@@ -389,7 +443,7 @@ void clearInterruptFlag()
 void updateCommandData8()
 {
 	// Writes commandDataValues array into CMD_DATA_7 to CMD_DATA_0 registers
-	writeMultipleBytes(REGISTER_CMD_DATA7, activeDev->commandDataValues, sizeof(activeDev->commandDataValues));
+	writeMultipleBytes(REGISTER_CMD_DATA7, (activeDev->commandDataValues), sizeof((activeDev->commandDataValues)));
 }
 
 bool measurementEnabled()
@@ -412,7 +466,7 @@ void setGPIO0Mode(uint8_t gpioMode)
 	currentRegisterValue = readSingleByte(REGISTER_CMD_DATA0);
 	currentRegisterValue &= 0xf0;
 	currentRegisterValue += gpioMode;
-	activeDev->commandDataValues[CMD_DATA_5] = currentRegisterValue;
+	(activeDev->commandDataValues)[CMD_DATA_5] = currentRegisterValue;
 
 	// Send command to device
 	uint8_t buffer[2];
@@ -441,7 +495,7 @@ void setGPIO1Mode(uint8_t gpioMode)
 	currentRegisterValue = readSingleByte(REGISTER_CMD_DATA0);
 	currentRegisterValue &= 0x0f;
 	currentRegisterValue += (gpioMode << 4);
-	activeDev->commandDataValues[CMD_DATA_5] = currentRegisterValue;
+	(activeDev->commandDataValues)[CMD_DATA_5] = currentRegisterValue;
 
 	// Send command to device
 	uint8_t buffer[2];
@@ -476,6 +530,93 @@ void getRegisterMultipleValues(uint8_t reg, uint8_t* buffer, uint8_t length)
 void setRegisterMultipleValues(uint8_t reg, const uint8_t* buffer, uint8_t length)
 {
 	writeMultipleBytes(reg, buffer, length);
+}
+
+bool isConnectedTMF8801()
+{
+	I2CstartWrite();
+	I2Cstop();
+	/*if (_i2cPort->endTransmission() != 0)
+		return (false);*/
+	return (true);
+}
+
+void writeMultipleBytes(uint8_t registerAddress, uint8_t* buffer, uint16_t packetLength)
+{
+	 I2CstartWrite();
+	 I2CbeginTransmission( activeDev->address);
+	 I2Cwrite(registerAddress);
+	 for (uint8_t i = 0; i < packetLength; i++)
+		 I2Cwrite((uint8_t)buffer[i]);
+	 I2Cstop();
+}
+
+void readMultipleBytes(uint8_t registerAddress, uint8_t* buffer, uint16_t packetLength)
+{
+	I2CstartWrite();
+	I2CbeginTransmission(activeDev->address);
+	//I2Cwrite(registerAddress >> 8);
+	I2Cwrite(registerAddress);
+	I2Cstop();
+
+	I2CstartRead();
+
+	I2CrequestFrom(activeDev->address, buffer, packetLength);
+	/*I2Cs->requestFrom(_address, packetLength);
+	for (byte i = 0; (i < packetLength) && _i2cPort->available(); i++)
+		buffer[i] = _i2cPort->read();*/
+	I2Cstop();
+}
+
+uint8_t readSingleByte(uint8_t registerAddress)
+{
+	uint8_t result;
+	I2CstartWrite();
+	nano_wait(100);
+	I2CbeginTransmission((activeDev->address));
+	I2Cwrite(registerAddress);
+	I2Cstop();
+	I2CstartRead();
+	uint8_t buffer[2];
+	I2CrequestFrom(activeDev->address, buffer, (uint8_t)2);
+	result = buffer[0];
+	I2Cstop();
+	return result;
+}
+
+void writeSingleByte(uint8_t registerAddress, uint8_t value)
+{
+	I2CstartWrite();
+	nano_wait(100);
+	I2CbeginTransmission(activeDev->address);
+	//I2Cwrite(registerAddress >> 8);
+	I2Cwrite(registerAddress);
+	I2Cwrite(value);
+	I2Cstop();
+}
+
+void setRegisterBit(uint8_t registerAddress, uint8_t const bitPosition)
+{
+		uint8_t value = readSingleByte(registerAddress);
+		value |= (1 << bitPosition);
+		writeSingleByte(registerAddress, value);
+}
+
+void clearRegisterBit(uint8_t registerAddress, uint8_t bitPosition)
+{
+	uint8_t value = readSingleByte(registerAddress);
+	value &= ~(1 << bitPosition);
+	writeSingleByte(registerAddress, value);
+}
+
+bool isBitSet(uint8_t registerAddress, uint8_t bitPosition)
+{
+	uint8_t value = readSingleByte(registerAddress);
+	uint8_t mask = 1 << bitPosition;
+	if (value & mask)
+		return true;
+	else
+		return false;
 }
 
 

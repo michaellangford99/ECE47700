@@ -58,7 +58,7 @@ void VL53L1X_setDevice(VL53L1X_t* device)
   active_device = device;
 }
 
-uint32_t ticks = 0;
+/*uint32_t ticks = 0;
 void SysTick_Handler(void)
 {
 	ticks++;
@@ -69,7 +69,7 @@ void SysTick_Handler(void)
 uint32_t millis()
 {
 	return ticks;
-}
+}*/
 
 // Public Methods //////////////////////////////////////////////////////////////
 

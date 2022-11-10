@@ -21,6 +21,8 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include "SparkFun_TMF8801_Constants.h"
 #include "SparkFun_TMF8801_IO.h"
 
@@ -70,15 +72,13 @@ typedef struct
   uint8_t dev_saved_vhv_timeout;
 } */
 
-TMF8801_t* activeDev;
-
 
 //class TMF8801
 typedef struct
 {
 	// CMD_DATA_7 to CMD_DATA_0 values used by updateCommandData8 function
 	// CMD_DATA_7 is commandDataValues[0], CMD_DATA_6 is commandDataValues[1] and so forth...
-	uint8_t commandDataValues[8] = {0x03, 0x23, 0x44, 0x00, 0x00, 0x64, 0xD8, 0xA4 };
+	uint8_t commandDataValues[8];
 
 	// Sample number
 	uint8_t resultNumber;
@@ -90,7 +90,7 @@ typedef struct
 	int distancePeak;
 
 	// I2C address
-	uint16_t address;
+	uint8_t address;
 
 	// I2C communication object instance
 	uint16_t tmf8801_io;
@@ -99,18 +99,21 @@ typedef struct
 	uint8_t lastError;
 
 	// Default GPIO1 mode. You can find allowed values in SparkFun_TMF8801_Constants.h
-	uint8_t gpio1_prog = MODE_LOW_OUTPUT;
+	uint8_t gpio1_prog;
 
 	// Default GPIO1 mode. You can find allowed values in SparkFun_TMF8801_Constants.h
-	uint8_t gpio0_prog = MODE_LOW_OUTPUT;
+	uint8_t gpio0_prog;
 
 	// Calibration data. Can be overwritten.
-	uint8_t calibrationData[14] = { 0xC1, 0x22, 0x0, 0x1C, 0x9, 0x40, 0x8C, 0x98, 0xA, 0x15, 0xCE, 0x9C, 0x1, 0xFC };
+	uint8_t calibrationData[14];
 
 }TMF8801_t;
 
 
 TMF8801_t* activeDev;
+
+//Initializes STM32F411 and TMF8801
+bool TMF8801_init(TMF8801_t* dev);
 
 // Polls if TMF8801's CPU is ready
 bool cpuReady();
@@ -125,7 +128,7 @@ void doMeasurement();
 void updateCommandData8();
 
 // Initializes TMF8801
-bool begin(uint8_t address = DEFAULT_I2C_ADDR);
+bool begin(uint8_t address);
 
 // Checks if TMF8801 has available data
 bool dataAvailable();
@@ -212,5 +215,33 @@ void resetDevice();
 void wakeUpDevice();
 
 uint32_t millis();
+
+// Starts two wire interface.
+bool begin(uint8_t address);
+
+// Returns true if we get a reply from the I2C device.
+bool isConnectedTMF8801();
+
+// Read a single byte from a register.
+uint8_t readSingleByte(uint8_t registerAddress);
+
+// Writes a single byte into a register.
+void writeSingleByte(uint8_t registerAddress, uint8_t value);
+
+// Reads multiple bytes from a register into buffer byte array.
+void readMultipleBytes(uint8_t registerAddress, uint8_t* buffer, uint16_t packetLength);
+
+// Writes multiple bytes to register from buffer byte array.
+void writeMultipleBytes(uint8_t registerAddress, uint8_t* buffer, uint16_t packetLength);
+
+// Sets a single bit in a specific register. Bit position ranges from 0 (lsb) to 7 (msb).
+void setRegisterBit(uint8_t registerAddress, uint8_t const bitPosition);
+
+// Clears a single bit in a specific register. Bit position ranges from 0 (lsb) to 7 (msb).
+void clearRegisterBit(uint8_t registerAddress, uint8_t bitPosition);
+
+// Returns true if a specific bit is set in a register. Bit position ranges from 0 (lsb) to 7 (msb).
+bool isBitSet(uint8_t registerAddress, uint8_t bitPosition);
+
 
 #endif

@@ -19,7 +19,7 @@
 #ifndef __TMF8801_CONSTANTS__
 #define __TMF8801_CONSTANTS__
 
-// Constants definitions
+/*// Constants definitions
 
 const uint8_t DEFAULT_I2C_ADDR = 0x41;
 const uint8_t CPU_READY_TIMEOUT = 200;
@@ -37,40 +37,51 @@ const uint8_t INTERRUPT_MASK = 0x01;
 const uint8_t CONTENT_CALIBRATION = 0x0a;
 
 // Values below were taken from AN000597, pp 22
-const uint8_t ALGO_STATE[11] = { 0xB1, 0xA9, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+const uint8_t ALGO_STATE[11] = { 0xB1, 0xA9, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };*/
 
 // Error constants
-const uint8_t ERROR_NONE = 0x0;
-const uint8_t ERROR_I2C_COMM_ERROR = 0x01;
-const uint8_t ERROR_CPU_RESET_TIMEOUT = 0x02;
-const uint8_t ERROR_WRONG_CHIP_ID = 0x03;
-const uint8_t ERROR_CPU_LOAD_APPLICATION_ERROR = 0x04;
-const uint8_t ERROR_FACTORY_CALIBRATION_ERROR = 0x05;
+enum ERRORCONSTS {
+	ERROR_NONE = 0x0,
+	ERROR_I2C_COMM_ERROR = 0x01,
+	ERROR_CPU_RESET_TIMEOUT = 0x02,
+	ERROR_WRONG_CHIP_ID = 0x03,
+	ERROR_CPU_LOAD_APPLICATION_ERROR = 0x04,
+	ERROR_FACTORY_CALIBRATION_ERROR = 0x05
+};
 
 // GPIO mode
-const uint8_t MODE_INPUT = 0x0;
-const uint8_t MODE_LOW_INPUT = 0x01;
-const uint8_t MODE_HIGH_INPUT = 0x02;
-const uint8_t MODE_VCSEL = 0x03;
-const uint8_t MODE_LOW_OUTPUT = 0x04;
-const uint8_t MODE_HIGH_OUTPUT = 0x05;
+enum GPIOMODE
+{
+	MODE_INPUT = 0x0,
+	MODE_LOW_INPUT = 0x01,
+	MODE_HIGH_INPUT = 0x02,
+	MODE_VCSEL = 0x03,
+	MODE_LOW_OUTPUT = 0x04,
+	MODE_HIGH_OUTPUT = 0x05,
+};
 
 // COMMAND constants
-const uint8_t CMD_DATA_7 = 0x0;
-const uint8_t CMD_DATA_6 = 0x01;
-const uint8_t CMD_DATA_5 = 0x02;
-const uint8_t CMD_DATA_4 = 0x03;
-const uint8_t CMD_DATA_3 = 0x04;
-const uint8_t CMD_DATA_2 = 0x05;
-const uint8_t CMD_DATA_1 = 0x06;
-const uint8_t CMD_DATA_0 = 0x07;
+enum COMMAND
+{
+	CMD_DATA_7 = 0x0,
+	CMD_DATA_6 = 0x01,
+	CMD_DATA_5 = 0x02,
+	CMD_DATA_4 = 0x03,
+	CMD_DATA_3 = 0x04,
+	CMD_DATA_2 = 0x05,
+	CMD_DATA_1 = 0x06,
+	CMD_DATA_0 = 0x07
+};
 
 // CPU status
-const uint8_t CPU_RESET= 0X07;
-const uint8_t CPU_READY = 0X06;
+enum CPUSTAT
+{
+	CPU_RESET= 0X07,
+	CPU_READY = 0X06
+};
 
 // Registers definitions
-enum regAddr
+enum regAddr2
 {
 	REGISTER_APPID = 0x00,
 	REGISTER_APPREQID = 0x02,
@@ -129,5 +140,8 @@ enum regAddr
 };
 
 // Calibration data
-const uint8_t CALIBRATION_DATA_LENGTH = 14;
+enum calibrationDataLength
+{
+ CALIBRATION_DATA_LENGTH = 14
+};
 #endif
