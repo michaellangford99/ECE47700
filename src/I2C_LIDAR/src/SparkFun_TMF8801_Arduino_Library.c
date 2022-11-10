@@ -120,6 +120,7 @@ bool begin(uint8_t address)
 	}
 
 	// Are we really talking to a TMF8801 ?
+	nano_wait(1000);
 	uint8_t value = readSingleByte(REGISTER_ID);
 	if (value != CHIP_ID_NUMBER)
 	{
@@ -128,6 +129,7 @@ bool begin(uint8_t address)
 	}
 
 	// Load the measurement application and wait until it's ready
+	nano_wait(1000);
 	writeSingleByte(REGISTER_APPREQID, APPLICATION);
 	ready = applicationReady();
 	if (ready == false)
@@ -137,14 +139,19 @@ bool begin(uint8_t address)
 	}
 
 	// Set calibration data
+	nano_wait(1000);
 	writeSingleByte(REGISTER_COMMAND, COMMAND_CALIBRATION);
+	nano_wait(1000);
 	writeMultipleBytes(REGISTER_FACTORY_CALIB_0, activeDev->calibrationData, sizeof(activeDev->calibrationData));
+	nano_wait(1000);
 	writeMultipleBytes(REGISTER_STATE_DATA_WR_0, ALGO_STATE, sizeof(ALGO_STATE));
 
 	// Configure the application - values were taken from AN0597, pp. 22
+	nano_wait(1000);
 	updateCommandData8();	
 
 	// Start the application
+	nano_wait(1000);
 	writeSingleByte(REGISTER_COMMAND, COMMAND_MEASURE);
 
 	//delay(10);
@@ -384,10 +391,10 @@ void wakeUpDevice()
 	// Write ENABLE_REG to bring device back to operation and wait until it's back
 	do
 	{
-		writeSingleByte(REGISTER_ENABLE_REG, 0x01);
-		result = readSingleByte(REGISTER_ENABLE_REG);
-		//delay(100);
-		nano_wait(100);
+			writeSingleByte(REGISTER_ENABLE_REG, 0x01);
+			result = readSingleByte(REGISTER_ENABLE_REG);
+			//delay(100);
+			nano_wait(1000);
 	} while (result != 0x41);
 }
 

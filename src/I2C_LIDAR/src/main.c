@@ -42,23 +42,34 @@ int main(void)
 	I2Cinit();
 	TMF8801_t device_descrip;
 	bool devInit = TMF8801_init(&device_descrip);
+	nano_wait(1000);
 	if(devInit == true)
 	{
-		enableInterrupt();
-		getSerialNumber();
-		getHardwareVersion();
-		getApplicationVersionMajor();
-		getApplicationVersionMinor();
+			enableInterrupt();
+			nano_wait(1000);
+			getSerialNumber();
+			nano_wait(1000);
+			getHardwareVersion();
+			nano_wait(1000);
+			getApplicationVersionMajor();
+			nano_wait(1000);
+			getApplicationVersionMinor();
+			nano_wait(1000);
 	}
 	else
 	{
 		getStatus();
 	}
 
+	if(!isConnected()){
+		wakeUpDevice();
+	}
+	nano_wait(10000);
 	while(1) {
-		//if(dataAvailable()) {
-		getDistance();
-		//}
+		if(dataAvailable()) {
+		int distance = getDistance();
+		printf("%d\n", distance);
+		}
 		nano_wait(100);
 	}
 /*    //init I2C
