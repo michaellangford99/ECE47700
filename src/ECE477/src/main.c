@@ -26,12 +26,13 @@
 //#include "sensor_fusion.h"
 
 
-#define LED_PIN 5//13
-#define LED_GPIO GPIOA//GPIOC
+#define LED_PIN 13
+#define LED_GPIO GPIOC
 
 int main(void){
 
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
 
 	//PC13 is the LED on test board
@@ -44,18 +45,18 @@ int main(void){
 	init_SYSTICK();
 
 	init_USB_USART();
-	//init_RX_USART();
+	init_RX_USART();
 	//init_PI_USART();
 
-	//init_PWM();
+	init_PWM();
 	//init_motors();
 
 	//init_I2C();
 	//init_TMF8801();
 
-	init_SPI1();
-	init_LSM6DS3();
-	test_LSM6DS3();
+	//init_SPI1();
+	//init_LSM6DS3();
+	//calibrate_LSM6DS3();
 
 	//main loop:
 	for(;;)
@@ -104,21 +105,30 @@ int main(void){
 			//dump log data out over USB
 	}
 
+	uint16_t speed = 0;
+	int dir = 1;
 
 	for(;;) {
 
-		for (volatile int i = 9900; i > 0; i--)
+		for (volatile int i = 1100; i > 0; i--)
 		{
 			__asm("NOP");
 		}
-		//LED_GPIO->ODR ^= 0x1 << LED_PIN;
+		LED_GPIO->ODR ^= 0x1 << LED_PIN;
+
+		//update_LSM6DS3();
+
+		//printf("ur mom\n");
 
 		pwm_output_t pwm_output;
 
-		pwm_output.duty_cycle_ch0 = (((2^16) - 1)*(uint32_t)(RX_USART_get_channels()->ch0 - CRSF_CHANNEL_VALUE_MIN))/(CRSF_CHANNEL_VALUE_MAX-CRSF_CHANNEL_VALUE_MIN);
-		pwm_output.duty_cycle_ch1 = (((2^16) - 1)*(uint32_t)(RX_USART_get_channels()->ch1 - CRSF_CHANNEL_VALUE_MIN))/(CRSF_CHANNEL_VALUE_MAX-CRSF_CHANNEL_VALUE_MIN);
-		pwm_output.duty_cycle_ch2 = (((2^16) - 1)*(uint32_t)(RX_USART_get_channels()->ch2 - CRSF_CHANNEL_VALUE_MIN))/(CRSF_CHANNEL_VALUE_MAX-CRSF_CHANNEL_VALUE_MIN);
-		pwm_output.duty_cycle_ch3 = (((2^16) - 1)*(uint32_t)(RX_USART_get_channels()->ch3 - CRSF_CHANNEL_VALUE_MIN))/(CRSF_CHANNEL_VALUE_MAX-CRSF_CHANNEL_VALUE_MIN);
+		uint16_t s = (uint16_t)((((uint32_t)100000)*(uint32_t)(RX_USART_get_channels()->ch2 - CRSF_CHANNEL_VALUE_MIN))/(uint32_t)(CRSF_CHANNEL_VALUE_MAX-CRSF_CHANNEL_VALUE_MIN));
+
+
+		pwm_output.duty_cycle_ch0 = s;
+		pwm_output.duty_cycle_ch1 = s;//speed;//(((2^16) - 1)*(uint32_t)(RX_USART_get_channels()->ch1 - CRSF_CHANNEL_VALUE_MIN))/(CRSF_CHANNEL_VALUE_MAX-CRSF_CHANNEL_VALUE_MIN);
+		pwm_output.duty_cycle_ch2 = s;//speed;//(((2^16) - 1)*(uint32_t)(RX_USART_get_channels()->ch2 - CRSF_CHANNEL_VALUE_MIN))/(CRSF_CHANNEL_VALUE_MAX-CRSF_CHANNEL_VALUE_MIN);
+		pwm_output.duty_cycle_ch3 = s;//speed;//(((2^16) - 1)*(uint32_t)(RX_USART_get_channels()->ch3 - CRSF_CHANNEL_VALUE_MIN))/(CRSF_CHANNEL_VALUE_MAX-CRSF_CHANNEL_VALUE_MIN);
 
 		set_PWM_duty_cycle(pwm_output);
 

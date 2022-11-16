@@ -31,13 +31,14 @@ void init_SPI1(void){
     //Very high speed GPIO PA4 with a pullup resistor for CS
     //LSM_SPI_GPIO -> OSPEEDR |= 0x0000ff00;
     LSM_SPI_GPIO -> PUPDR |= (2 << (LSM_SPI_NSS_PIN*2));//0x00000200;
+    //LSM_SPI_GPIO -> PUPDR |= (1 << (SPI_MISO_PIN*2));//0x00000200;
     LSM_SPI_GPIO -> ODR |= (1 << LSM_SPI_NSS_PIN);
 
     //Disable LSM_SPI to configure settings
     LSM_SPI -> CR1 &= ~SPI_CR1_SPE;
 
     //Setting Baud Rate (SPI clock) to the lowest possible just for testing
-    LSM_SPI -> CR1 |= SPI_CR1_BR_0 | SPI_CR1_BR_1 ;//| SPI_CR1_BR_2;
+    LSM_SPI -> CR1 |= SPI_CR1_BR_0 | SPI_CR1_BR_1;// | SPI_CR1_BR_2;
     //Make microcontroller master
     LSM_SPI -> CR1 |= SPI_CR1_MSTR;
     //8bit data frame format

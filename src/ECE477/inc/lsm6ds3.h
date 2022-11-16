@@ -217,7 +217,8 @@
 #define CAL_LENGTH 4096
 
 void init_LSM6DS3(void);
+void calibrate_LSM6DS3();
 void read_axes(void);
-void test_LSM6DS3(void);
+void update_LSM6DS3(void);
 
 #endif /* __LSM6DS3_H__ */

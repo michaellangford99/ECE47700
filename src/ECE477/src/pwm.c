@@ -41,10 +41,10 @@ uint32_t last[FIR_LENGTH];
 
 //takes as input an array of 4 uint16_t values and scales it into it's valid range
 void set_PWM_duty_cycle(pwm_output_t pwm_output) {
-	PWM_TIMR->CCR1 = LOWERBOUNDCRRX + (RANGE*(uint32_t)pwm_output.duty_cycle_ch0)/(2^16 - 1);
-	PWM_TIMR->CCR2 = LOWERBOUNDCRRX + (RANGE*(uint32_t)pwm_output.duty_cycle_ch1)/(2^16 - 1);
-	PWM_TIMR->CCR3 = LOWERBOUNDCRRX + (RANGE*(uint32_t)pwm_output.duty_cycle_ch2)/(2^16 - 1);
-	PWM_TIMR->CCR4 = LOWERBOUNDCRRX + (RANGE*(uint32_t)pwm_output.duty_cycle_ch3)/(2^16 - 1);
+	PWM_TIMR->CCR1 = LOWERBOUNDCRRX + (RANGE*(uint32_t)pwm_output.duty_cycle_ch0)/(100000);
+	PWM_TIMR->CCR2 = LOWERBOUNDCRRX + (RANGE*(uint32_t)pwm_output.duty_cycle_ch1)/(100000);
+	PWM_TIMR->CCR3 = LOWERBOUNDCRRX + (RANGE*(uint32_t)pwm_output.duty_cycle_ch2)/(100000);
+	PWM_TIMR->CCR4 = LOWERBOUNDCRRX + (RANGE*(uint32_t)pwm_output.duty_cycle_ch3)/(100000);
 }
 
 void init_PWM(void)

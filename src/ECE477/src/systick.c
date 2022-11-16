@@ -9,9 +9,6 @@
 #define SYSTICK_INT_FREQ 1000			//1KHz desired interrupt frequency
 #define SYSTICK_LOAD	((AHB_CLOCK_DIV_8/SYSTICK_INT_FREQ)-1)
 
-#define LED_PIN 5
-#define LED_GPIO GPIOA
-
 void init_SYSTICK()
 {
 	SysTick->LOAD = SYSTICK_LOAD;

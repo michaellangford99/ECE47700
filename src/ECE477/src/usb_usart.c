@@ -1,10 +1,10 @@
 #include "stm32f4xx.h"
 
 #include <stdio.h>
-#include "system.h"
 #include "usb_usart.h"
 #include "fifo.h"
 #include "tty.h"
+#include "system.h"
 
 #define FIFOSIZE 16
 char serfifo[FIFOSIZE];
