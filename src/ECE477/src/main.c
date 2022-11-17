@@ -111,21 +111,15 @@ int main(void){
 			//dump log data out over USB
 	}
 
-	float timestamp = 0.0f;
-
 	for(;;) {
 
-		for (volatile int i = 601000; i > 0; i--)
-		{
-			__asm("NOP");
-		}
 		LED_GPIO->ODR ^= 0x1 << LED_PIN;
 
-		//update_LSM6DS3();
+		update_LSM6DS3();
 
 		//printf("ur mom\n");
 
-		pwm_output_t pwm_output;
+		/*pwm_output_t pwm_output;
 
 		uint16_t s = (uint16_t)((((uint32_t)65535)*(uint32_t)(RX_USART_get_channels()->ch2 - CRSF_CHANNEL_VALUE_MIN))/(uint32_t)(CRSF_CHANNEL_VALUE_MAX-CRSF_CHANNEL_VALUE_MIN));
 
@@ -144,7 +138,7 @@ int main(void){
 		printf("%d,\t", RX_USART_get_channels()->ch4);
 		printf("%d,\t", RX_USART_get_channels()->ch5);
 		printf("%d,\t", RX_USART_get_channels()->ch6);
-		printf("%d\n",  RX_USART_get_channels()->ch7);
+		printf("%d\n",  RX_USART_get_channels()->ch7);*/
 
 		//char chr = __io_getchar();
 		//printf("You entered %c.", chr);

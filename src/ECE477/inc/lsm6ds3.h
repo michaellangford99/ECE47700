@@ -210,6 +210,8 @@
 #define A_GAIN_8G       0.000244f
 #define A_GAIN_16G      0.000488f
 
+#define A_RAW_1G        (32768/2)
+
 #define G_GAIN 1//G_GAIN_250DPS //gyroscope gain to convert to degrees per second
 #define A_GAIN 1//A_GAIN_2G //accelerometer gain to convert to g's
 

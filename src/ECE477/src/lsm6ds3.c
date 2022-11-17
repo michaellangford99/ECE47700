@@ -13,6 +13,7 @@
 #include "spi.h"
 #include "lsm6ds3.h"
 #include "systick.h"
+#include "math.h"
 
 int16_t gyro_raw_x;
 int16_t gyro_raw_y;
@@ -46,6 +47,12 @@ float accel_x;
 float accel_y;
 float accel_z;
 
+float accel_pitch;
+float accel_roll;
+
+float compl_pitch;
+float compl_roll;
+
 //timestamps
 float last_time;
 float current_time;
@@ -65,8 +72,8 @@ float current_time;
 void init_LSM6DS3(){
 	
 	//inital LSM6DSO parameters (see LSM6DSO reference manual (https://www.st.com/en/mems-and-sensors/lsm6dsl.html))
-	uint8_t ctrl1 = CTRL1_DEF | ODR_XL2 | ODR_XL1;
-	uint8_t ctrl2 = CTRL2_DEF | ODR_G3  | ODR_G1 | GYRO_FS_500DPS;
+	uint8_t ctrl1 = CTRL1_DEF | ODR_XL2 | ODR_XL1 | ACCEL_FS_2G;
+	uint8_t ctrl2 = CTRL2_DEF | ODR_G3  | ODR_G1  | GYRO_FS_500DPS;
 	uint8_t ctrl3 = CTRL3_DEF;
 	uint8_t ctrl4 = CTRL4_DEF | I2C_disable;
 	uint8_t ctrl5 = CTRL5_DEF;
@@ -98,6 +105,10 @@ void calibrate_LSM6DS3()
 	gyro_cal_y = 0;
 	gyro_cal_z = 0;
 
+	accel_cal_x = 0;
+	accel_cal_y = 0;
+	accel_cal_z = 0;
+
 	for(int i = 0; i < 10000; i++){
 		__asm("NOP");
 	}
@@ -111,11 +122,19 @@ void calibrate_LSM6DS3()
 		gyro_cal_x += gyro_raw_x;
 		gyro_cal_y += gyro_raw_y;
 		gyro_cal_z += gyro_raw_z;
+
+		accel_cal_x += accel_raw_x;
+		accel_cal_y += accel_raw_y;
+		accel_cal_z += accel_raw_z - A_RAW_1G; //Z axis experiences gravity, this cals it to 1G
 	}
 
 	gyro_cal_x = gyro_cal_x / CAL_LENGTH;
 	gyro_cal_y = gyro_cal_y / CAL_LENGTH;
 	gyro_cal_z = gyro_cal_z / CAL_LENGTH;
+
+	accel_cal_x = accel_cal_x / CAL_LENGTH;
+	accel_cal_y = accel_cal_y / CAL_LENGTH;
+	accel_cal_z = accel_cal_z / CAL_LENGTH;
 
 	printf("LSM6DSO Calibration:\n\tgyro_cal_x: %d\n\tgyro_cal_y: %d\n\tgyro_cal_z: %d\n", gyro_cal_x, gyro_cal_y, gyro_cal_z);
 
@@ -157,12 +176,31 @@ void update_LSM6DS3(void){
 	gyro_angle_y += gyro_rate_y * (current_time - last_time);
 	gyro_angle_z += gyro_rate_z * (current_time - last_time);
 
+	accel_x = (accel_raw_x - accel_cal_x) * A_GAIN_2G;
+	accel_y = (accel_raw_y - accel_cal_y) * A_GAIN_2G;
+	accel_z = (accel_raw_z - accel_cal_z) * A_GAIN_2G;
+
+	accel_pitch = atan2(accel_x, accel_z) * (180.0f/3.1415963f) * 0.005f + 0.995f*accel_pitch;
+	accel_roll = atan2(accel_y, accel_z) * (180.0f/3.1415963f) * 0.005f + 0.995f*accel_roll;
+
+#define ALPHA 0.99f
+
+	compl_pitch = (1.0f-ALPHA)*(gyro_rate_y*2.0f)*(current_time - last_time) + ALPHA * accel_pitch;
+	compl_roll =  (1.0f-ALPHA)*(gyro_rate_x*2.0f)*(current_time - last_time) + ALPHA * accel_roll;
+
 	d++;
 
-	if (d > 100)
+	if (d > 50)
 	{
 		d = 0;
-		printf("%f,\t%f,\t%f,\t%f,\t%f,\t%f,\t%d,\t%d,\t%d,\t%f\n", gyro_rate_x, gyro_rate_y, gyro_rate_z, gyro_angle_x, gyro_angle_y, gyro_angle_z, accel_raw_x, accel_raw_y, accel_raw_z, current_time - last_time);
+
+		printf("%f,\t%f\n", compl_pitch, compl_roll);
+
+		//printf("%f,\t%f,\t%f,\t%f\n", gyro_angle_x, gyro_angle_y, accel_pitch * 180.0f/3.1415963f, accel_roll * 180.0f/3.1415963f);
+
+		//printf("%f,\t%f\n", accel_pitch * 180.0f/3.1415963f, accel_roll * 180.0f/3.1415963f);
+		//printf("%d,\t%d,\t%d,\t%f,\t%f,\t%f\n", accel_raw_x, accel_raw_y, accel_raw_z, accel_x, accel_y, accel_z);
+		//printf("%f,\t%f,\t%f,\t%f,\t%f,\t%f,\t%d,\t%d,\t%d,\t%f\n", gyro_rate_x, gyro_rate_y, gyro_rate_z, gyro_angle_x, gyro_angle_y, gyro_angle_z, accel_raw_x, accel_raw_y, accel_raw_z, current_time - last_time);
 		//printf("%d, %d, %d\n", gyro_raw_x - gyro_cal_x, gyro_raw_y - gyro_cal_y, gyro_raw_z - gyro_cal_z);
 	}
 	//printf("%d\n", accel_raw_x);
