@@ -370,7 +370,7 @@
  /* PLL_VCO = (HSE_VALUE or HSI_VALUE / PLL_M) * PLL_N */
  #define PLL_M      25
 #elif defined(STM32F412xG) || defined(STM32F413_423xx) || defined (STM32F446xx)
- #define PLL_M      8
+ #define PLL_M      16
 #elif defined (STM32F410xx) || defined (STM32F411xE)
  #if defined(USE_HSE_BYPASS)
   #define PLL_M      8    
@@ -381,11 +381,11 @@
 #endif /* STM32F40_41xxx || STM32F427_437xx || STM32F429_439xx || STM32F401xx || STM32F469_479xx */  
 
 /* USB OTG FS, SDIO and RNG Clock =  PLL_VCO / PLLQ */
-#define PLL_Q      7
+#define PLL_Q      2
 
 #if defined(STM32F446xx)
 /* PLL division factor for I2S, SAI, SYSTEM and SPDIF: Clock =  PLL_VCO / PLLR */
-#define PLL_R      7
+#define PLL_R      2
 #elif defined(STM32F412xG) || defined(STM32F413_423xx)
 #define PLL_R      2
 #else
@@ -511,7 +511,7 @@ void SystemInit(void)
          
   /* Configure the System clock source, PLL Multiplier and Divider factors, 
      AHB/APBx prescalers and Flash settings ----------------------------------*/
-  //SetSysClock();
+  SetSysClock();
 
   /* Configure the Vector Table location add offset address ------------------*/
 #ifdef VECT_TAB_SRAM
@@ -660,10 +660,10 @@ static void SetSysClock(void)
   __IO uint32_t StartUpCounter = 0, HSEStatus = 0;
   
   /* Enable HSE */
-  RCC->CR |= ((uint32_t)RCC_CR_HSEON);
+  //RCC->CR |= ((uint32_t)RCC_CR_HSEON);
  
   /* Wait till HSE is ready and if Time out is reached exit */
-  do
+  /*do
   {
     HSEStatus = RCC->CR & RCC_CR_HSERDY;
     StartUpCounter++;
@@ -676,7 +676,9 @@ static void SetSysClock(void)
   else
   {
     HSEStatus = (uint32_t)0x00;
-  }
+  }*/
+
+  HSEStatus = 1;
 
   if (HSEStatus == (uint32_t)0x01)
   {
@@ -712,7 +714,7 @@ static void SetSysClock(void)
 #if  defined(STM32F412xG) || defined(STM32F413_423xx) || defined(STM32F446xx)
     /* Configure the main PLL */
     RCC->PLLCFGR = PLL_M | (PLL_N << 6) | (((PLL_P >> 1) -1) << 16) |
-                   (RCC_PLLCFGR_PLLSRC_HSE) | (PLL_Q << 24) | (PLL_R << 28);
+                   (RCC_PLLCFGR_PLLSRC_HSI) | (PLL_Q << 24) | (PLL_R << 28);
 #endif /* STM32F412xG || STM32F413_423xx || STM32F446xx */    
     
     /* Enable the main PLL */

@@ -38,7 +38,7 @@ void init_SPI1(void){
     LSM_SPI -> CR1 &= ~SPI_CR1_SPE;
 
     //Setting Baud Rate (SPI clock) to the lowest possible just for testing
-    LSM_SPI -> CR1 |= SPI_CR1_BR_0 | SPI_CR1_BR_1;// | SPI_CR1_BR_2;
+    LSM_SPI -> CR1 |= SPI_CR1_BR_PCLOCK_DIV_32;//SPI_CR1_BR_0 | SPI_CR1_BR_1 | SPI_CR1_BR_2;
     //Make microcontroller master
     LSM_SPI -> CR1 |= SPI_CR1_MSTR;
     //8bit data frame format
@@ -58,6 +58,11 @@ void init_SPI1(void){
 
     //enable SPI
     LSM_SPI -> CR1 |= SPI_CR1_SPE;
+
+    printf("SPI1\n");
+    printf("\tSPI_CR1_BR_PCLOCK_DIV_32: 0x%x\n", SPI_CR1_BR_PCLOCK_DIV_32);
+    printf("\tSPI_PCLOCK_DIV_32:        %d\n", SPI_PCLOCK_DIV_32);
+
 }
 
 //testing spi send command function (not used)

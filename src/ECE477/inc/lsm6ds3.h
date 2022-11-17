@@ -200,10 +200,10 @@
  ***********************************************/
 
 #define G_GAIN_125DPS   0.004375f
-#define G_GAIN_250DPS   0.00875f
-#define G_GAIN_500DPS   0.0175f
-#define G_GAIN_1000DPS   0.035f
-#define G_GAIN_2000DPS   0.070f
+#define G_GAIN_250DPS   (250.0f/32768.0f)
+#define G_GAIN_500DPS   (500.05/32768.0f)
+#define G_GAIN_1000DPS  0.035f
+#define G_GAIN_2000DPS  0.070f
 
 #define A_GAIN_2G       0.000061f
 #define A_GAIN_4G       0.000122f

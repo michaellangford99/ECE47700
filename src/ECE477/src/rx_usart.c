@@ -24,7 +24,7 @@ int rx_seroffset = 0;
 #define RX_USART_INTERRUPT_HANDLE	USART6_IRQHandler
 
 #define RX_USART_BAUDRATE		CRSF_RX_BAUDRATE
-#define CLOCK_RATE				SYSTEM_CLOCK
+#define CLOCK_RATE				APB2_PCLOCK
 #define RX_USART_CLOCK_RATE		CLOCK_RATE
 #define RX_USART_DIV			(RX_USART_CLOCK_RATE / (16*RX_USART_BAUDRATE))
 #define RX_USART_DIV_FRACTION	(((16 * RX_USART_CLOCK_RATE / (16*RX_USART_BAUDRATE))) % 16)
@@ -194,4 +194,19 @@ void init_RX_USART(void)
 	RX_USART->CR1 |= USART_CR1_UE;				//enable USART
 
 	enable_rx_usart_interrupt();
+
+	//log startup details:
+	printf("RX_USART:\n");
+	printf("\tRX_USART_BAUDRATE:      %d\n", RX_USART_BAUDRATE);
+	printf("\tCLOCK_RATE:             %d\n", CLOCK_RATE);
+	printf("\tRX_USART_CLOCK_RATE:    %d\n", RX_USART_CLOCK_RATE);
+	printf("\tRX_USART_DIV:           %d\n", RX_USART_DIV);
+	printf("\tRX_USART_DIV_FRACTION:  %d\n", RX_USART_DIV_FRACTION);
+	printf("\tRX_USART_DIV_MANTISSA:  %d\n", RX_USART_DIV_MANTISSA);
+	printf("\tCRSF_RX_BAUDRATE:       %d\n", CRSF_RX_BAUDRATE);
+	printf("\tCRSF_NUM_CHANNELS:      %d\n", CRSF_NUM_CHANNELS);
+	printf("\tCRSF_CHANNEL_VALUE_MIN: %d\n", CRSF_CHANNEL_VALUE_MIN);
+	printf("\tCRSF_CHANNEL_VALUE_MID: %d\n", CRSF_CHANNEL_VALUE_MID);
+	printf("\tCRSF_CHANNEL_VALUE_MAX: %d\n", CRSF_CHANNEL_VALUE_MAX);
+	printf("\tCRSF_MAX_PACKET_LEN:    %d\n", CRSF_MAX_PACKET_LEN);
 }

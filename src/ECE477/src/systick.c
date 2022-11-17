@@ -4,7 +4,7 @@
 #include "systick.h"
 #include "system.h"
 
-#define AHB_CLOCK 		SYSTEM_CLOCK		//48 MHz
+#define AHB_CLOCK 		SystemCoreClock		//48 MHz
 #define AHB_CLOCK_DIV_8 (AHB_CLOCK/8)	//6 MHz
 #define SYSTICK_INT_FREQ 1000			//1KHz desired interrupt frequency
 #define SYSTICK_LOAD	((AHB_CLOCK_DIV_8/SYSTICK_INT_FREQ)-1)
@@ -16,12 +16,18 @@ void init_SYSTICK()
 
 	SysTick->CTRL |= (1<<0);
 	SysTick->CTRL |= (SysTick_CTRL_TICKINT_Msk | SysTick_CTRL_ENABLE_Msk/* | SysTick_CTRL_CLKSOURCE_Msk*/);
+
+	printf("SYSTICK:\n");
+	printf("\tSYSTICK_LOAD:		%d\n", SYSTICK_LOAD);
+	printf("\tAHB_CLOCK:		%d\n", AHB_CLOCK);
+	printf("\tAHB_CLOCK_DIV_8:	%d\n", AHB_CLOCK_DIV_8);
 }
 
 uint32_t ticks = 0;
 void SysTick_Handler(void)
 {
 	ticks++;
+	//GPIOC->ODR ^= 0x1 << 13;
 }
 
 uint32_t millis()

@@ -66,7 +66,7 @@ void init_LSM6DS3(){
 	
 	//inital LSM6DSO parameters (see LSM6DSO reference manual (https://www.st.com/en/mems-and-sensors/lsm6dsl.html))
 	uint8_t ctrl1 = CTRL1_DEF | ODR_XL2 | ODR_XL1;
-	uint8_t ctrl2 = CTRL2_DEF | ODR_G3  | ODR_G1;
+	uint8_t ctrl2 = CTRL2_DEF | ODR_G3  | ODR_G1 | GYRO_FS_500DPS;
 	uint8_t ctrl3 = CTRL3_DEF;
 	uint8_t ctrl4 = CTRL4_DEF | I2C_disable;
 	uint8_t ctrl5 = CTRL5_DEF;
@@ -117,6 +117,8 @@ void calibrate_LSM6DS3()
 	gyro_cal_y = gyro_cal_y / CAL_LENGTH;
 	gyro_cal_z = gyro_cal_z / CAL_LENGTH;
 
+	printf("LSM6DSO Calibration:\n\tgyro_cal_x: %d\n\tgyro_cal_y: %d\n\tgyro_cal_z: %d\n", gyro_cal_x, gyro_cal_y, gyro_cal_z);
+
 	//intentionally stting delta time to zero
 	current_time = ftime();
 	last_time = current_time;
@@ -147,9 +149,9 @@ void update_LSM6DS3(void){
 	last_time = current_time;
 	current_time = ftime();
 
-	gyro_rate_x = (gyro_raw_x - gyro_cal_x) * G_GAIN_250DPS;
-	gyro_rate_y = (gyro_raw_y - gyro_cal_y) * G_GAIN_250DPS;
-	gyro_rate_z = (gyro_raw_z - gyro_cal_z) * G_GAIN_250DPS;
+	gyro_rate_x = (gyro_raw_x - gyro_cal_x) * G_GAIN_500DPS;
+	gyro_rate_y = (gyro_raw_y - gyro_cal_y) * G_GAIN_500DPS;
+	gyro_rate_z = (gyro_raw_z - gyro_cal_z) * G_GAIN_500DPS;
 
 	gyro_angle_x += gyro_rate_x * (current_time - last_time);
 	gyro_angle_y += gyro_rate_y * (current_time - last_time);
@@ -157,10 +159,11 @@ void update_LSM6DS3(void){
 
 	d++;
 
-	if (d > 40)
+	if (d > 100)
 	{
 		d = 0;
-		printf("%f, %f, %f, %f, %f, %f, %d, %d, %d\n", gyro_rate_x, gyro_rate_y, gyro_rate_z, gyro_angle_x, gyro_angle_y, gyro_angle_z, accel_raw_x, accel_raw_y, accel_raw_z);
+		printf("%f,\t%f,\t%f,\t%f,\t%f,\t%f,\t%d,\t%d,\t%d,\t%f\n", gyro_rate_x, gyro_rate_y, gyro_rate_z, gyro_angle_x, gyro_angle_y, gyro_angle_z, accel_raw_x, accel_raw_y, accel_raw_z, current_time - last_time);
+		//printf("%d, %d, %d\n", gyro_raw_x - gyro_cal_x, gyro_raw_y - gyro_cal_y, gyro_raw_z - gyro_cal_z);
 	}
 	//printf("%d\n", accel_raw_x);
 }

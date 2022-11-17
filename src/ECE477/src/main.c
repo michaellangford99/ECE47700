@@ -42,9 +42,14 @@ int main(void){
 
 	LED_GPIO->ODR |= 0x1 << LED_PIN;
 
+	init_USB_USART();
+
+	printf("\n-----------------------------------------\n");
+	printf("ECE477 STM32F446RET6 Flight Controller V0\n");
+	printf("-----------------------------------------\n\n");
+
 	init_SYSTICK();
 
-	init_USB_USART();
 	init_RX_USART();
 	//init_PI_USART();
 
@@ -54,9 +59,10 @@ int main(void){
 	//init_I2C();
 	//init_TMF8801();
 
-	//init_SPI1();
-	//init_LSM6DS3();
-	//calibrate_LSM6DS3();
+	init_SPI1();
+	init_LSM6DS3();
+
+	calibrate_LSM6DS3();
 
 	//main loop:
 	for(;;)
@@ -105,12 +111,11 @@ int main(void){
 			//dump log data out over USB
 	}
 
-	uint16_t speed = 0;
-	int dir = 1;
+	float timestamp = 0.0f;
 
 	for(;;) {
 
-		for (volatile int i = 1100; i > 0; i--)
+		for (volatile int i = 601000; i > 0; i--)
 		{
 			__asm("NOP");
 		}
@@ -122,8 +127,7 @@ int main(void){
 
 		pwm_output_t pwm_output;
 
-		uint16_t s = (uint16_t)((((uint32_t)100000)*(uint32_t)(RX_USART_get_channels()->ch2 - CRSF_CHANNEL_VALUE_MIN))/(uint32_t)(CRSF_CHANNEL_VALUE_MAX-CRSF_CHANNEL_VALUE_MIN));
-
+		uint16_t s = (uint16_t)((((uint32_t)65535)*(uint32_t)(RX_USART_get_channels()->ch2 - CRSF_CHANNEL_VALUE_MIN))/(uint32_t)(CRSF_CHANNEL_VALUE_MAX-CRSF_CHANNEL_VALUE_MIN));
 
 		pwm_output.duty_cycle_ch0 = s;
 		pwm_output.duty_cycle_ch1 = s;//speed;//(((2^16) - 1)*(uint32_t)(RX_USART_get_channels()->ch1 - CRSF_CHANNEL_VALUE_MIN))/(CRSF_CHANNEL_VALUE_MAX-CRSF_CHANNEL_VALUE_MIN);
@@ -132,6 +136,7 @@ int main(void){
 
 		set_PWM_duty_cycle(pwm_output);
 
+		printf("%d,\t", s);
 		printf("%d,\t", RX_USART_get_channels()->ch0);
 		printf("%d,\t", RX_USART_get_channels()->ch1);
 		printf("%d,\t", RX_USART_get_channels()->ch2);

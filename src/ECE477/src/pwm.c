@@ -20,9 +20,9 @@
 // timer 1 enable is in this register
 #define RCCAPB2ENR (RCC->APB2ENR)
 
-#define FCLK					SYSTEM_CLOCK
+#define FCLK					APB2_TIM_CLOCK //APB2 TIM clock is div by 2 then mul by 2
 #define PWM_REPETITION_RATE_HZ	50*8 //Oneshot125 pulse frequency
-#define	PWM_PSC 				1
+#define	PWM_PSC 				8
 #define PWM_ARR 				(FCLK/((PWM_PSC+1) * PWM_REPETITION_RATE_HZ) - 1)
 
 #define LOWERBOUNDCRRX 			((PWM_ARR*5)/100)
@@ -41,10 +41,10 @@ uint32_t last[FIR_LENGTH];
 
 //takes as input an array of 4 uint16_t values and scales it into it's valid range
 void set_PWM_duty_cycle(pwm_output_t pwm_output) {
-	PWM_TIMR->CCR1 = LOWERBOUNDCRRX + (RANGE*(uint32_t)pwm_output.duty_cycle_ch0)/(100000);
-	PWM_TIMR->CCR2 = LOWERBOUNDCRRX + (RANGE*(uint32_t)pwm_output.duty_cycle_ch1)/(100000);
-	PWM_TIMR->CCR3 = LOWERBOUNDCRRX + (RANGE*(uint32_t)pwm_output.duty_cycle_ch2)/(100000);
-	PWM_TIMR->CCR4 = LOWERBOUNDCRRX + (RANGE*(uint32_t)pwm_output.duty_cycle_ch3)/(100000);
+	PWM_TIMR->CCR1 = LOWERBOUNDCRRX + (RANGE*(uint32_t)pwm_output.duty_cycle_ch0)/(65535);
+	PWM_TIMR->CCR2 = LOWERBOUNDCRRX + (RANGE*(uint32_t)pwm_output.duty_cycle_ch1)/(65535);
+	PWM_TIMR->CCR3 = LOWERBOUNDCRRX + (RANGE*(uint32_t)pwm_output.duty_cycle_ch2)/(65535);
+	PWM_TIMR->CCR4 = LOWERBOUNDCRRX + (RANGE*(uint32_t)pwm_output.duty_cycle_ch3)/(65535);
 }
 
 void init_PWM(void)
@@ -97,7 +97,11 @@ void init_PWM(void)
 	// Enable the timer
 	PWM_TIMR -> CR1 |= 0x0001;
 
-	printf("RANGE: %d\n", RANGE);
+	printf("PWM:\n");
+	printf("\tPWM_ARR:         %d\n", PWM_ARR);
+	printf("\tUPPERBOUNDCRRX:  %d\n", UPPERBOUNDCRRX);
+	printf("\tLOWERBOUNDCRRX:  %d\n", LOWERBOUNDCRRX);
+	printf("\tRANGE:           %d\n", RANGE);
 
 	//set_PWM_duty_cycle();
 }
