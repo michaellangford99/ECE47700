@@ -9,11 +9,13 @@
 */
 
 #include "stm32f4xx.h"
+#include "system.h"
 #include "string.h"
 #include "spi.h"
 #include "lsm6ds3.h"
 #include "systick.h"
 #include "math.h"
+#include "fir.h"
 
 int16_t gyro_raw_x;
 int16_t gyro_raw_y;
@@ -46,6 +48,12 @@ float gyro_angle_z;
 float accel_x;
 float accel_y;
 float accel_z;
+
+#define TOTAL_ACC_DECIMATION 10
+int total_acceleration_decimation_index;
+struct fir_filter total_acceleration_filter;
+float total_acceleration[64];
+float total_acceleration_filtered;
 
 float accel_pitch;
 float accel_roll;
@@ -94,6 +102,13 @@ void init_LSM6DS3(){
 	writeReg(CTRL8_XL, 	ctrl8);
 	writeReg(CTRL9_XL, 	ctrl9);
 	writeReg(CTRL10_C,	ctrl10);
+
+	//init test filter:
+
+	total_acceleration_filter.circular_buffer = total_acceleration;
+	total_acceleration_filter.first_element = 0;
+	total_acceleration_filter.impulse_response = hanning_64;
+	total_acceleration_filter.length = 64;
 
 	current_time = ftime();
 	last_time = current_time;
@@ -180,28 +195,47 @@ void update_LSM6DS3(void){
 	accel_y = (accel_raw_y - accel_cal_y) * A_GAIN_2G;
 	accel_z = (accel_raw_z - accel_cal_z) * A_GAIN_2G;
 
-	accel_pitch = atan2(accel_x, accel_z) * (180.0f/3.1415963f) * 0.005f + 0.995f*accel_pitch;
-	accel_roll = atan2(accel_y, accel_z) * (180.0f/3.1415963f) * 0.005f + 0.995f*accel_roll;
+	accel_pitch = atan2(accel_x, sqrt(accel_z*accel_z + accel_y*accel_y)) * (180.0f/3.1415963f) * 0.01f + 0.99f*accel_pitch;
+	accel_roll = atan2(accel_y, sqrt(accel_z*accel_z + accel_x*accel_x)) * (180.0f/3.1415963f) * 0.01f + 0.99f*accel_roll;
 
-#define ALPHA 0.99f
+	//total_acceleration_decimation_index++;
+	//if (total_acceleration_decimation_index == TOTAL_ACC_DECIMATION)
+	//{
+	//	total_acceleration_decimation_index = 0;
+		total_acceleration_filtered = update_filter(&total_acceleration_filter, sqrt(accel_x*accel_x + accel_y*accel_y + accel_z*accel_z));
+	//}
+	//trust of the accel
+	#define ALPHA_0 0.006f//0.61f
 
-	compl_pitch = (1.0f-ALPHA)*(gyro_rate_y*2.0f)*(current_time - last_time) + ALPHA * accel_pitch;
-	compl_roll =  (1.0f-ALPHA)*(gyro_rate_x*2.0f)*(current_time - last_time) + ALPHA * accel_roll;
+	float alpha_correction = pow(total_acceleration_filtered-1.0f, 2.0f);
+	//bigger this is, less it should trust accel
+	alpha_correction=-alpha_correction*10.0f;
+	alpha_correction = (alpha_correction < -ALPHA_0) ? -ALPHA_0 : alpha_correction;
+
+#define ALPHA (ALPHA_0 + alpha_correction)
+
+
+	compl_pitch += (1.0f-ALPHA)*(-gyro_rate_y*2.0f)*(current_time - last_time) + ALPHA * (accel_pitch-compl_pitch);
+	compl_roll +=  (1.0f-ALPHA)*(gyro_rate_x*2.0f)*(current_time - last_time) + ALPHA * (accel_roll-compl_roll);
 
 	d++;
 
-	if (d > 50)
+	if (d > 100)
 	{
 		d = 0;
 
-		printf("%f,\t%f\n", compl_pitch, compl_roll);
+		//printf("%f,\t%f,\t%f,\t%f,\n", accel_x, accel_y, accel_z, current_time - last_time);
+
+		printf("%f,\t%f,\t%f,\t%f\n", compl_pitch, compl_roll, (current_time - last_time), alpha_correction);
 
 		//printf("%f,\t%f,\t%f,\t%f\n", gyro_angle_x, gyro_angle_y, accel_pitch * 180.0f/3.1415963f, accel_roll * 180.0f/3.1415963f);
 
-		//printf("%f,\t%f\n", accel_pitch * 180.0f/3.1415963f, accel_roll * 180.0f/3.1415963f);
+		//printf("%f,\t%f,\t%f,\t%f\n", accel_pitch, accel_roll, total_acceleration_filtered,sqrt(accel_x*accel_x + accel_y*accel_y + accel_z*accel_z));
 		//printf("%d,\t%d,\t%d,\t%f,\t%f,\t%f\n", accel_raw_x, accel_raw_y, accel_raw_z, accel_x, accel_y, accel_z);
 		//printf("%f,\t%f,\t%f,\t%f,\t%f,\t%f,\t%d,\t%d,\t%d,\t%f\n", gyro_rate_x, gyro_rate_y, gyro_rate_z, gyro_angle_x, gyro_angle_y, gyro_angle_z, accel_raw_x, accel_raw_y, accel_raw_z, current_time - last_time);
 		//printf("%d, %d, %d\n", gyro_raw_x - gyro_cal_x, gyro_raw_y - gyro_cal_y, gyro_raw_z - gyro_cal_z);
 	}
 	//printf("%d\n", accel_raw_x);
 }
+
+

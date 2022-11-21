@@ -110,7 +110,7 @@ int main(void){
 		//medium update rate, or as needed
 			//dump log data out over USB
 	}
-
+	int d = 0;
 	for(;;) {
 
 		LED_GPIO->ODR ^= 0x1 << LED_PIN;
@@ -119,7 +119,7 @@ int main(void){
 
 		//printf("ur mom\n");
 
-		/*pwm_output_t pwm_output;
+		pwm_output_t pwm_output;
 
 		uint16_t s = (uint16_t)((((uint32_t)65535)*(uint32_t)(RX_USART_get_channels()->ch2 - CRSF_CHANNEL_VALUE_MIN))/(uint32_t)(CRSF_CHANNEL_VALUE_MAX-CRSF_CHANNEL_VALUE_MIN));
 
@@ -130,15 +130,23 @@ int main(void){
 
 		set_PWM_duty_cycle(pwm_output);
 
-		printf("%d,\t", s);
-		printf("%d,\t", RX_USART_get_channels()->ch0);
-		printf("%d,\t", RX_USART_get_channels()->ch1);
-		printf("%d,\t", RX_USART_get_channels()->ch2);
-		printf("%d,\t", RX_USART_get_channels()->ch3);
-		printf("%d,\t", RX_USART_get_channels()->ch4);
-		printf("%d,\t", RX_USART_get_channels()->ch5);
-		printf("%d,\t", RX_USART_get_channels()->ch6);
-		printf("%d\n",  RX_USART_get_channels()->ch7);*/
+		d++;
+		if (d > 100)
+		{
+			d = 0;
+
+			//printf("%d,\t", s);
+			/*printf("%d,\t", RX_USART_get_channels()->ch0);
+			printf("%d,\t", RX_USART_get_channels()->ch1);
+			printf("%d,\t", RX_USART_get_channels()->ch2);
+			printf("%d,\t", RX_USART_get_channels()->ch3);
+			printf("%d,\t", RX_USART_get_channels()->ch4);
+			printf("%d,\t", RX_USART_get_channels()->ch5);
+			printf("%d,\t", RX_USART_get_channels()->ch6);
+			printf("%d,\t", RX_USART_get_channels()->ch7);*/
+			//printf("%f,\t", compl_pitch);
+			//printf("%f,\n", compl_roll);
+		}
 
 		//char chr = __io_getchar();
 		//printf("You entered %c.", chr);

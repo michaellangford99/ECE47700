@@ -218,6 +218,9 @@
 //Calibration array length
 #define CAL_LENGTH 4096
 
+extern float compl_pitch;
+extern float compl_roll;
+
 void init_LSM6DS3(void);
 void calibrate_LSM6DS3();
 void read_axes(void);
