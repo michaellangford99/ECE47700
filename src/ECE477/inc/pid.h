@@ -19,6 +19,6 @@ struct PID
 
 	void init_PID(struct PID* pid);
 	float update_PID(struct PID* pid, float real, float desired);
-	void Set_Constants(struct PID* pid, float KP, float KI, float KD);
+	void set_PID_constants(struct PID* pid, float KP, float KI, float KD);
 
 #endif

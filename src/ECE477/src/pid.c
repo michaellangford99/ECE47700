@@ -48,7 +48,7 @@ void PIDClass::clear_D_Error(float real, float desired)
 	Last_Error = desired - real;
 }*/
 
-void Set_Constants(struct PID* pid, float KP, float KI, float KD)
+void set_PID_constants(struct PID* pid, float KP, float KI, float KD)
 {
 	pid->kP = KP;
 	pid->kI = KI;

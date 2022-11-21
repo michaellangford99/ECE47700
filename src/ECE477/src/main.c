@@ -23,11 +23,28 @@
 #include "i2c.h"
 #include "motors.h"
 #include "lsm6ds3.h"
+#include "pid.h"
+#include "math.h"
 //#include "sensor_fusion.h"
 
+struct PID yaw_pid;
+struct PID pitch_pid;
+struct PID roll_pid;
 
 #define LED_PIN 13
 #define LED_GPIO GPIOC
+
+float max(float a, float b)
+{
+	if (a > b) return a;
+	return b;
+}
+
+float min(float a, float b)
+{
+	if (a < b) return a;
+	return b;
+}
 
 int main(void){
 
@@ -63,6 +80,14 @@ int main(void){
 	init_LSM6DS3();
 
 	calibrate_LSM6DS3();
+
+	init_PID(&yaw_pid);
+	init_PID(&pitch_pid);
+	init_PID(&roll_pid);
+
+	set_PID_constants(&yaw_pid, 	0.01f, 0.00f, 00.0f);
+	set_PID_constants(&pitch_pid, 	0.01f, 0.00f, 00.0f);
+	set_PID_constants(&roll_pid, 	0.01f, 0.00f, 00.0f);
 
 	//main loop:
 	for(;;)
@@ -117,16 +142,55 @@ int main(void){
 
 		update_LSM6DS3();
 
-		//printf("ur mom\n");
+		float rx_throttle = RX_USART_convert_channel_to_motor_range(RX_USART_get_channels()->ELRS_THROTTLE) / 65535.0f;
+		float rx_yaw 	 = (RX_USART_convert_channel_to_motor_range(RX_USART_get_channels()->ELRS_YAW)     / 65535.0f) - 0.5f;
+		float rx_pitch 	 = (RX_USART_convert_channel_to_motor_range(RX_USART_get_channels()->ELRS_PITCH)   / 65535.0f) - 0.5f;
+		float rx_roll 	 = (RX_USART_convert_channel_to_motor_range(RX_USART_get_channels()->ELRS_ROLL)    / 65535.0f) - 0.5f;
+
+		float yaw_pid_response 	 = update_PID(&yaw_pid,   gyro_angle_z, rx_yaw);
+		float pitch_pid_response = update_PID(&pitch_pid, compl_pitch,  rx_pitch);
+		float roll_pid_response  = update_PID(&roll_pid,  compl_roll,   rx_roll);
+
+		float motor_output[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+
+		motor_output[0] = rx_throttle;
+		motor_output[1] = rx_throttle;
+		motor_output[2] = rx_throttle;
+		motor_output[3] = rx_throttle;
+
+		motor_output[0] += yaw_pid_response;
+		motor_output[1] += -yaw_pid_response;
+		motor_output[2] += -yaw_pid_response;
+		motor_output[3] += yaw_pid_response;
+
+		motor_output[0] += pitch_pid_response;
+		motor_output[1] += pitch_pid_response;
+		motor_output[2] += -pitch_pid_response;
+		motor_output[3] += -pitch_pid_response;
+
+		motor_output[0] += -roll_pid_response;
+		motor_output[1] += roll_pid_response;
+		motor_output[2] += -roll_pid_response;
+		motor_output[3] += roll_pid_response;
+
+		//clamp motor values
+
+		motor_output[0] = max(0.0f, motor_output[0]);
+		motor_output[1] = max(0.0f, motor_output[1]);
+		motor_output[2] = max(0.0f, motor_output[2]);
+		motor_output[3] = max(0.0f, motor_output[3]);
+
+		motor_output[0] = min(1.0f, motor_output[0]);
+		motor_output[1] = min(1.0f, motor_output[1]);
+		motor_output[2] = min(1.0f, motor_output[2]);
+		motor_output[3] = min(1.0f, motor_output[3]);
 
 		pwm_output_t pwm_output;
 
-		uint16_t s = (uint16_t)((((uint32_t)65535)*(uint32_t)(RX_USART_get_channels()->ch2 - CRSF_CHANNEL_VALUE_MIN))/(uint32_t)(CRSF_CHANNEL_VALUE_MAX-CRSF_CHANNEL_VALUE_MIN));
-
-		pwm_output.duty_cycle_ch0 = s;
-		pwm_output.duty_cycle_ch1 = s;//speed;//(((2^16) - 1)*(uint32_t)(RX_USART_get_channels()->ch1 - CRSF_CHANNEL_VALUE_MIN))/(CRSF_CHANNEL_VALUE_MAX-CRSF_CHANNEL_VALUE_MIN);
-		pwm_output.duty_cycle_ch2 = s;//speed;//(((2^16) - 1)*(uint32_t)(RX_USART_get_channels()->ch2 - CRSF_CHANNEL_VALUE_MIN))/(CRSF_CHANNEL_VALUE_MAX-CRSF_CHANNEL_VALUE_MIN);
-		pwm_output.duty_cycle_ch3 = s;//speed;//(((2^16) - 1)*(uint32_t)(RX_USART_get_channels()->ch3 - CRSF_CHANNEL_VALUE_MIN))/(CRSF_CHANNEL_VALUE_MAX-CRSF_CHANNEL_VALUE_MIN);
+		pwm_output.duty_cycle_ch0 = (uint16_t)(motor_output[0]*65535.0f);
+		pwm_output.duty_cycle_ch1 = (uint16_t)(motor_output[1]*65535.0f);
+		pwm_output.duty_cycle_ch2 = (uint16_t)(motor_output[2]*65535.0f);
+		pwm_output.duty_cycle_ch3 = (uint16_t)(motor_output[3]*65535.0f);
 
 		set_PWM_duty_cycle(pwm_output);
 
@@ -136,16 +200,34 @@ int main(void){
 			d = 0;
 
 			//printf("%d,\t", s);
-			/*printf("%d,\t", RX_USART_get_channels()->ch0);
-			printf("%d,\t", RX_USART_get_channels()->ch1);
-			printf("%d,\t", RX_USART_get_channels()->ch2);
-			printf("%d,\t", RX_USART_get_channels()->ch3);
-			printf("%d,\t", RX_USART_get_channels()->ch4);
-			printf("%d,\t", RX_USART_get_channels()->ch5);
-			printf("%d,\t", RX_USART_get_channels()->ch6);
-			printf("%d,\t", RX_USART_get_channels()->ch7);*/
-			//printf("%f,\t", compl_pitch);
-			//printf("%f,\n", compl_roll);
+			//printf("%d,\t", RX_USART_get_channels()->ELRS_THROTTLE);
+			//printf("%d,\t", RX_USART_get_channels()->ELRS_YAW);
+			//printf("%d,\t", RX_USART_get_channels()->ELRS_PITCH);
+			//printf("%d,\t", RX_USART_get_channels()->ELRS_ROLL);
+			printf("%f,\t", rx_throttle);
+			printf("%f,\t", rx_yaw);
+			printf("%f,\t", rx_pitch);
+			printf("%f,\t", rx_roll);
+			printf("%f,\t", yaw_pid_response);
+			printf("%f,\t", pitch_pid_response);
+			printf("%f,\t", roll_pid_response);
+			printf("%f,\t", motor_output[0]);
+			printf("%f,\t", motor_output[1]);
+			printf("%f,\t", motor_output[2]);
+			printf("%f,\t", motor_output[3]);
+			printf("%d,\t", pwm_output.duty_cycle_ch0);
+			printf("%d,\t", pwm_output.duty_cycle_ch1);
+			printf("%d,\t", pwm_output.duty_cycle_ch2);
+			printf("%d,\t", pwm_output.duty_cycle_ch3);
+			printf("%f,\t", compl_pitch);
+			printf("%f,\n", compl_roll);
+
+
+
+			//printf("%d,\t", RX_USART_get_channels()->ch4);
+			//printf("%d,\t", RX_USART_get_channels()->ch5);
+			//printf("%d,\t", RX_USART_get_channels()->ch6);
+			//printf("%d,\t", RX_USART_get_channels()->ch7);
 		}
 
 		//char chr = __io_getchar();

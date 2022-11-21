@@ -127,7 +127,13 @@ typedef struct crsfPayloadLinkstatistics_s
     int8_t downlink_SNR;
 } crsfLinkStatistics_t;
 
+#define ELRS_ROLL		ch0
+#define ELRS_PITCH		ch1
+#define ELRS_THROTTLE	ch2
+#define ELRS_YAW		ch3
+
 void init_RX_USART(void);
 crsf_channels_t* RX_USART_get_channels();
+uint16_t RX_USART_convert_channel_to_motor_range(uint16_t ch);
 
 #endif /* __RX_USART_H__ */

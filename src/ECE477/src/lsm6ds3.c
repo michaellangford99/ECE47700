@@ -226,7 +226,7 @@ void update_LSM6DS3(void){
 
 		//printf("%f,\t%f,\t%f,\t%f,\n", accel_x, accel_y, accel_z, current_time - last_time);
 
-		printf("%f,\t%f,\t%f,\t%f\n", compl_pitch, compl_roll, (current_time - last_time), alpha_correction);
+		//printf("%f,\t%f,\t%f,\t%f\n", compl_pitch, compl_roll, (current_time - last_time), alpha_correction);
 
 		//printf("%f,\t%f,\t%f,\t%f\n", gyro_angle_x, gyro_angle_y, accel_pitch * 180.0f/3.1415963f, accel_roll * 180.0f/3.1415963f);
 
