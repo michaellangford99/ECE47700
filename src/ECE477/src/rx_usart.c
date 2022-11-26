@@ -156,6 +156,11 @@ uint16_t RX_USART_convert_channel_to_motor_range(uint16_t ch)
 	return (uint16_t)((((uint32_t)65535)*(uint32_t)(ch - CRSF_CHANNEL_VALUE_MIN))/(uint32_t)(CRSF_CHANNEL_VALUE_MAX-CRSF_CHANNEL_VALUE_MIN));
 }
 
+float RX_USART_convert_channel_to_unit_range(uint16_t ch)
+{
+	return  1.0f*(float)(ch - CRSF_CHANNEL_VALUE_MIN)/(float)(CRSF_CHANNEL_VALUE_MAX-CRSF_CHANNEL_VALUE_MIN);
+}
+
 void init_RX_USART(void)
 {
 	init_crc8(0xd5);

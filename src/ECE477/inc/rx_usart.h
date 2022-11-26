@@ -135,5 +135,6 @@ typedef struct crsfPayloadLinkstatistics_s
 void init_RX_USART(void);
 crsf_channels_t* RX_USART_get_channels();
 uint16_t RX_USART_convert_channel_to_motor_range(uint16_t ch);
+float RX_USART_convert_channel_to_unit_range(uint16_t ch);
 
 #endif /* __RX_USART_H__ */

@@ -330,13 +330,8 @@ const float hanning_256[256] = {
 	0
 };
 
-float update_filter(struct fir_filter* f, float new_value)
+float compute_filter(struct fir_filter* f)
 {
-	f->circular_buffer[f->first_element] = new_value;
-	f->first_element++;
-	if (f->first_element >= f->length)
-		f->first_element = 0;
-
 	float conv_sum = 0.0f;
 
 	for (int i = 0; i < f->length; i++)
@@ -345,4 +340,21 @@ float update_filter(struct fir_filter* f, float new_value)
 	}
 
 	return conv_sum/((f->length-1)/2.0f);
+}
+
+float update_filter(struct fir_filter* f, float new_value)
+{
+	shift_filter(f, &new_value, 1);
+
+	return compute_filter(f);
+}
+
+void shift_filter(struct fir_filter* f, float* new_values, int count)
+{
+	for (int i = 0; i < count; i++)
+	{
+		f->circular_buffer[f->first_element] = new_values[i];
+		f->first_element++;
+		f->first_element = f->first_element%f->length;
+	}
 }

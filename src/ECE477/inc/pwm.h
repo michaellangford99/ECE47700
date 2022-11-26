@@ -1,6 +1,11 @@
 #ifndef __PWM_H__
 #define __PWM_H__
 
+#include <stdio.h>
+#include "stdint.h"
+#include "system.h"
+#include "math.h"
+
 typedef struct {
 	uint16_t duty_cycle_ch0;
 	uint16_t duty_cycle_ch1;

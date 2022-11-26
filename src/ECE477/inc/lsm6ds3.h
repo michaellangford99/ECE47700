@@ -222,6 +222,10 @@ extern float compl_pitch;
 extern float compl_roll;
 extern float gyro_angle_z;
 
+extern float gyro_rate_x;
+extern float gyro_rate_y;
+extern float gyro_rate_z;
+
 void init_LSM6DS3(void);
 void calibrate_LSM6DS3();
 void read_axes(void);
