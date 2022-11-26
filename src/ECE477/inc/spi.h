@@ -16,6 +16,12 @@
 #define MPU_SPI_GPIO        GPIOC
 #define MPU_SPI_NSS_PIN     4
 
+typedef enum
+{
+    SELECT_LSM_SPI = 0x00,
+    SELECT_MPU_SPI = 0x01,
+} spi_bus_selection_e;
+
 #define SPI_PCLOCK			APB2_PCLOCK
 
 #define SPI_PCLOCK_DIV_2    (SPI_PCLOCK/2)
@@ -37,6 +43,7 @@
 #define SPI_CR1_BR_PCLOCK_DIV_256	SPI_CR1_BR_2 | SPI_CR1_BR_1 | SPI_CR1_BR_0
 
 void init_SPI1(void);
+void select_SPI(spi_bus_selection_e spi_bus);
 void spi_cmd(uint16_t data);
 void writeReg(uint8_t regAddress, uint8_t writeInfo);
 uint8_t readReg(uint8_t regAddress);

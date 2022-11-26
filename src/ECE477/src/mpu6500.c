@@ -1,10 +1,10 @@
 /**
   ******************************************************************************
-  * @file    lsm6ds3.c
-  * @author  OWen Mandel, Michael Langford
+  * @file    mpu6500.c
+  * @author  Michael Langford
   * @version V1.0
-  * @date    11-November-2022
-  * @brief   LSM6DS3 6DoF IMU driver.
+  * @date    26-November-2022
+  * @brief   MPU6500 6DoF IMU driver.
   ******************************************************************************
 */
 
@@ -12,10 +12,17 @@
 #include "system.h"
 #include "string.h"
 #include "spi.h"
-#include "lsm6ds3.h"
+#include "mpu6500.h"
 #include "systick.h"
 #include "math.h"
 #include "fir.h"
+
+Gyro_FS_Sel gyro_fs = _250DPS;
+Gyro_Config gyro_config;
+Accel_FS_Sel accel_fs = _4g;
+Accel_Config accel_config;
+//puts data in correct units after scale selector applied
+const float GYRO_MULTIPLIER = 250.0f;
 
 int16_t gyro_raw_x;
 int16_t gyro_raw_y;
@@ -77,35 +84,20 @@ float current_time;
 //first of all, systick needs to have high precision
 //not sure what the range on this is.
 
-void init_LSM6DS3(){
+void init_MPU6500(){
 	
-	//inital LSM6DSO parameters (see LSM6DSO reference manual (https://www.st.com/en/mems-and-sensors/lsm6dsl.html))
-	uint8_t ctrl1 = CTRL1_DEF | ODR_XL2 | ODR_XL1 | ACCEL_FS_2G;
-	uint8_t ctrl2 = CTRL2_DEF | ODR_G3  | ODR_G1  | GYRO_FS_500DPS;
-	uint8_t ctrl3 = CTRL3_DEF;
-	uint8_t ctrl4 = CTRL4_DEF | I2C_disable;
-	uint8_t ctrl5 = CTRL5_DEF;
-	uint8_t ctrl6 = CTRL6_DEF;
-	uint8_t ctrl7 = CTRL7_DEF;
-	uint8_t ctrl8 = CTRL8_DEF;
-	uint8_t ctrl9 = CTRL9_DEF;
-	uint8_t ctrl10 = CTRL10_DEF;
-
 	//ctrl register writing
-	select_SPI(SELECT_LSM_SPI);
-	writeReg(CTRL1_XL, 	ctrl1);
-	writeReg(CTRL2_G, 	ctrl2);
-	writeReg(CTRL3_G, 	ctrl3);
-	writeReg(CTRL4_G, 	ctrl4);
-	writeReg(CTRL5_G, 	ctrl5);
-	writeReg(CTRL6_G, 	ctrl6);
-	writeReg(CTRL7_G, 	ctrl7);
-	writeReg(CTRL8_XL, 	ctrl8);
-	writeReg(CTRL9_XL, 	ctrl9);
-	writeReg(CTRL10_C,	ctrl10);
+	select_SPI(SELECT_MPU_SPI);
+
+	writeReg(CONFIG, 	0);
+
+    accel_config.bits.ACCEL_FS_SEL = accel_fs;
+	writeReg(ACCEL_CONFIG, accel_config.raw);
+
+	gyro_config.bits.GYRO_FS_SEL = gyro_fs;
+	writeReg(GYRO_CONFIG, accel_config.raw);
 
 	//init test filter:
-
 	total_acceleration_filter.circular_buffer = total_acceleration;
 	total_acceleration_filter.first_element = 0;
 	total_acceleration_filter.impulse_response = hanning_64;
@@ -115,7 +107,7 @@ void init_LSM6DS3(){
 	last_time = current_time;
 }
 
-void calibrate_LSM6DS3()
+void calibrate_MPU6500()
 {
 	gyro_cal_x = 0;
 	gyro_cal_y = 0;
@@ -152,7 +144,7 @@ void calibrate_LSM6DS3()
 	accel_cal_y = accel_cal_y / CAL_LENGTH;
 	accel_cal_z = accel_cal_z / CAL_LENGTH;
 
-	printf("LSM6DSO Calibration:\n\tgyro_cal_x: %d\n\tgyro_cal_y: %d\n\tgyro_cal_z: %d\n", gyro_cal_x, gyro_cal_y, gyro_cal_z);
+	printf("MPU6500 Calibration:\n\tgyro_cal_x: %d\n\tgyro_cal_y: %d\n\tgyro_cal_z: %d\n", gyro_cal_x, gyro_cal_y, gyro_cal_z);
 
 	//intentionally stting delta time to zero
 	current_time = ftime();
@@ -163,23 +155,29 @@ void read_axes(){
 	uint8_t data_buf[12];
 	
 	select_SPI(SELECT_LSM_SPI);
-	for (int i = 0; i < 12; i++)
+	for (int i = 0; i < 6; i++)
 	{
-		data_buf[i] = readReg(OUTX_L_G+i);
-		data_buf[i] = readReg(OUTX_L_G+i);
+		data_buf[i] = readReg(GYRO_XOUT_H+i);
+		data_buf[i] = readReg(GYRO_XOUT_H+i);
+	}
+    
+    for (int i = 0; i < 6; i++)
+	{
+		data_buf[6+i] = readReg(ACCEL_XOUT_H+i);
+		data_buf[6+i] = readReg(ACCEL_XOUT_H+i);
 	}
 
-	gyro_raw_x  = ((int16_t)data_buf[0]  | ((int16_t)data_buf[1]  << 8));
-	gyro_raw_y  = ((int16_t)data_buf[2]  | ((int16_t)data_buf[3]  << 8));
-	gyro_raw_z  = ((int16_t)data_buf[4]  | ((int16_t)data_buf[5]  << 8));
-	accel_raw_x = ((int16_t)data_buf[6]  | ((int16_t)data_buf[7]  << 8));
-	accel_raw_y = ((int16_t)data_buf[8]  | ((int16_t)data_buf[9]  << 8));
-	accel_raw_z = ((int16_t)data_buf[10] | ((int16_t)data_buf[11] << 8));
+	gyro_raw_x  = ((int16_t)data_buf[1]  | ((int16_t)data_buf[0]  << 8));
+	gyro_raw_y  = ((int16_t)data_buf[3]  | ((int16_t)data_buf[2]  << 8));
+	gyro_raw_z  = ((int16_t)data_buf[5]  | ((int16_t)data_buf[4]  << 8));
+	accel_raw_x = ((int16_t)data_buf[7]  | ((int16_t)data_buf[6]  << 8));
+	accel_raw_y = ((int16_t)data_buf[9]  | ((int16_t)data_buf[8]  << 8));
+	accel_raw_z = ((int16_t)data_buf[11] | ((int16_t)data_buf[10] << 8));
 }
 
 int d = 0;
 
-void update_LSM6DS3(void){
+void update_MPU6500(void){
    
 	read_axes();
 

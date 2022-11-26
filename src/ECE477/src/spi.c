@@ -14,6 +14,10 @@
 #include "system.h"
 #include <stdio.h>
 
+SPI_TypeDef*  selected_SPI;
+GPIO_TypeDef* selected_GPIO;
+uint8_t       selected_NSS;
+
 void init_SPI1(void){
 	RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
     RCC -> APB2ENR |= RCC_APB2ENR_SPI1EN;
@@ -63,6 +67,22 @@ void init_SPI1(void){
     printf("\tSPI_CR1_BR_PCLOCK_DIV_32: 0x%x\n", SPI_CR1_BR_PCLOCK_DIV_32);
     printf("\tSPI_PCLOCK_DIV_32:        %d\n", SPI_PCLOCK_DIV_32);
 
+}
+
+void select_SPI(spi_bus_selection_e spi_bus)
+{
+  if (spi_bus == SELECT_LSM_SPI)
+  {
+    selected_SPI =  LSM_SPI;
+    selected_GPIO = LSM_SPI_GPIO;
+    selected_NSS =  LSM_SPI_NSS_PIN;
+  }
+  else if (spi_bus == SELECT_MPU_SPI)
+  {
+    selected_SPI =  MPU_SPI;
+    selected_GPIO = MPU_SPI_GPIO;
+    selected_NSS =  MPU_SPI_NSS_PIN;
+  }
 }
 
 //testing spi send command function (not used)
