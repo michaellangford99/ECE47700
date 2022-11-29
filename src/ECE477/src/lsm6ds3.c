@@ -17,53 +17,55 @@
 #include "math.h"
 #include "fir.h"
 
-int16_t gyro_raw_x;
-int16_t gyro_raw_y;
-int16_t gyro_raw_z;
+static int16_t gyro_raw_x;
+static int16_t gyro_raw_y;
+static int16_t gyro_raw_z;
 
-int16_t accel_raw_x;
-int16_t accel_raw_y;
-int16_t accel_raw_z;
+static int16_t accel_raw_x;
+static int16_t accel_raw_y;
+static int16_t accel_raw_z;
 
 //large data type to allow for very large integration time
-int64_t gyro_cal_x;
-int64_t gyro_cal_y;
-int64_t gyro_cal_z;
+static int64_t gyro_cal_x;
+static int64_t gyro_cal_y;
+static int64_t gyro_cal_z;
 
-int64_t accel_cal_x;
-int64_t accel_cal_y;
-int64_t accel_cal_z;
+static int64_t accel_cal_x;
+static int64_t accel_cal_y;
+static int64_t accel_cal_z;
 
 //in units of deg/s
-float gyro_rate_x;
-float gyro_rate_y;
-float gyro_rate_z;
+static float gyro_rate_x;
+static float gyro_rate_y;
+static float gyro_rate_z;
 
 //in units of deg - this is not assisted by any other sensor data
-float gyro_angle_x;
-float gyro_angle_y;
-float gyro_angle_z;
+static float gyro_angle_x;
+static float gyro_angle_y;
+static float gyro_angle_z;
 
 //in units of g's
-float accel_x;
-float accel_y;
-float accel_z;
+static float accel_x;
+static float accel_y;
+static float accel_z;
 
 #define TOTAL_ACC_DECIMATION 10
-int total_acceleration_decimation_index;
-struct fir_filter total_acceleration_filter;
-float total_acceleration[64];
-float total_acceleration_filtered;
+static int total_acceleration_decimation_index;
+static struct fir_filter total_acceleration_filter;
+static float total_acceleration[64];
+static float total_acceleration_filtered;
 
-float accel_pitch;
-float accel_roll;
+static float accel_pitch;
+static float accel_roll;
 
-float compl_pitch;
-float compl_roll;
+static float compl_pitch;
+static float compl_roll;
+
+imu_data_t lsm6dsx_data;
 
 //timestamps
-float last_time;
-float current_time;
+static float last_time;
+static float current_time;
 
 //first off, we want to figure out if we are doing fixed point or what
 //2 g max means +/- 32768 covers the range +/- 2g
@@ -220,6 +222,14 @@ void update_LSM6DS3(void){
 
 	compl_pitch += (1.0f-ALPHA)*(-gyro_rate_y*2.0f)*(current_time - last_time) + ALPHA * (accel_pitch-compl_pitch);
 	compl_roll +=  (1.0f-ALPHA)*(gyro_rate_x*2.0f)*(current_time - last_time) + ALPHA * (accel_roll-compl_roll);
+
+	lsm6dsx_data.accel_cal_x = accel_cal_x;
+	lsm6dsx_data.gyro_rate_x = gyro_rate_x;
+	lsm6dsx_data.gyro_rate_y = gyro_rate_y;
+	lsm6dsx_data.gyro_rate_z = gyro_rate_z;
+
+	lsm6dsx_data.compl_pitch = compl_pitch;
+	lsm6dsx_data.compl_roll = compl_roll;
 
 	d++;
 

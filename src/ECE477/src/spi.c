@@ -20,6 +20,7 @@ uint8_t       selected_NSS;
 
 void init_SPI1(void){
 	RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
+	RCC -> AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
     RCC -> APB2ENR |= RCC_APB2ENR_SPI1EN;
 
     //using pins PA4-PA7
@@ -37,6 +38,9 @@ void init_SPI1(void){
     LSM_SPI_GPIO -> PUPDR |= (2 << (LSM_SPI_NSS_PIN*2));//0x00000200;
     //LSM_SPI_GPIO -> PUPDR |= (1 << (SPI_MISO_PIN*2));//0x00000200;
     LSM_SPI_GPIO -> ODR |= (1 << LSM_SPI_NSS_PIN);
+
+    MPU_SPI_GPIO->MODER &= ~(0b11 << (MPU_SPI_NSS_PIN*2));
+    MPU_SPI_GPIO->MODER |=  (0b01 << (MPU_SPI_NSS_PIN*2));
 
     //Disable LSM_SPI to configure settings
     LSM_SPI -> CR1 &= ~SPI_CR1_SPE;
@@ -87,13 +91,13 @@ void select_SPI(spi_bus_selection_e spi_bus)
 
 //testing spi send command function (not used)
 void spi_cmd(uint16_t data){
-	LSM_SPI_GPIO -> ODR &= ~(1 << LSM_SPI_NSS_PIN);
-	while(!(LSM_SPI -> SR & SPI_SR_TXE)){;}
-	LSM_SPI -> DR = 0xff00 & data;
-	while(!(LSM_SPI -> SR & SPI_SR_TXE)){;}
+	selected_GPIO -> ODR &= ~(1 << selected_NSS);
+	while(!(selected_SPI -> SR & SPI_SR_TXE)){;}
+	selected_SPI -> DR = 0xff00 & data;
+	while(!(selected_SPI -> SR & SPI_SR_TXE)){;}
 	LSM_SPI -> DR = 0x00ff & data;
-	while((LSM_SPI -> SR & SPI_SR_BSY)){;}
-	LSM_SPI_GPIO -> ODR |= 1 << LSM_SPI_NSS_PIN;
+	while((selected_SPI -> SR & SPI_SR_BSY)){;}
+	selected_GPIO -> ODR |= 1 << selected_NSS;
 
 }
 
@@ -102,13 +106,13 @@ void writeReg(uint8_t regAddress, uint8_t writeInfo){
 	write |= regAddress;
 	write &= ~(1 << 7); //tells micro to write the data in last 8 bits of DR
 
-	LSM_SPI_GPIO -> ODR &= ~(1 << LSM_SPI_NSS_PIN);
-	while(!(LSM_SPI -> SR & SPI_SR_TXE)){;}
-	LSM_SPI -> DR = write;
-	while(!(LSM_SPI -> SR & SPI_SR_TXE)){;}
-	LSM_SPI -> DR = writeInfo;
-	while((LSM_SPI -> SR & SPI_SR_BSY)){;}
-	LSM_SPI_GPIO -> ODR |= 1 << LSM_SPI_NSS_PIN;
+	selected_GPIO -> ODR &= ~(1 << selected_NSS);
+	while(!(selected_SPI -> SR & SPI_SR_TXE)){;}
+	selected_SPI -> DR = write;
+	while(!(selected_SPI -> SR & SPI_SR_TXE)){;}
+	selected_SPI -> DR = writeInfo;
+	while((selected_SPI -> SR & SPI_SR_BSY)){;}
+	selected_GPIO -> ODR |= 1 << selected_NSS;
 }
 
 uint8_t readReg(uint8_t regAddress){
@@ -117,17 +121,17 @@ uint8_t readReg(uint8_t regAddress){
 	write |= regAddress;
 	write |= 1 << 7; //tells LSM to write data to last 8 bits of DR
 
-	LSM_SPI_GPIO -> ODR &= ~(1 << LSM_SPI_NSS_PIN);
-	while(!(LSM_SPI -> SR & SPI_SR_TXE)){;}
-	LSM_SPI -> DR = write;
-	while(!(LSM_SPI -> SR & SPI_SR_TXE)){;}
-	LSM_SPI -> DR = 0x00;
-	while(!(LSM_SPI -> SR & SPI_SR_TXE)){;}
-	while(!(LSM_SPI -> SR & SPI_SR_RXNE)){;}
-	read = LSM_SPI -> DR;
+	selected_GPIO -> ODR &= ~(1 << selected_NSS);
+	while(!(selected_SPI -> SR & SPI_SR_TXE)){;}
+	selected_SPI -> DR = write;
+	while(!(selected_SPI -> SR & SPI_SR_TXE)){;}
+	selected_SPI -> DR = 0x00;
+	while(!(selected_SPI -> SR & SPI_SR_TXE)){;}
+	while(!(selected_SPI -> SR & SPI_SR_RXNE)){;}
+	read = selected_SPI -> DR;
 
-	while((LSM_SPI -> SR & SPI_SR_BSY)){;}
-	LSM_SPI_GPIO -> ODR |= 1 << LSM_SPI_NSS_PIN;
+	while((selected_SPI -> SR & SPI_SR_BSY)){;}
+	selected_GPIO -> ODR |= 1 << selected_NSS;
 
 	return read; //8 bits of the read register
 }

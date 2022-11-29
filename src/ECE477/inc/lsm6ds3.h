@@ -1,6 +1,8 @@
 #ifndef __LSM6DS3_H__
 #define __LSM6DS3_H__
 
+#include "imu.h"
+
 //LSM6DSO definitions for register addresses and pins in the register
 #define FUNC_CFG_ACCESS 0x01
 #define WHO_AM_I 0x0f //read only
@@ -218,17 +220,11 @@
 //Calibration array length
 #define CAL_LENGTH 4096
 
-extern float compl_pitch;
-extern float compl_roll;
-extern float gyro_angle_z;
-
-extern float gyro_rate_x;
-extern float gyro_rate_y;
-extern float gyro_rate_z;
+extern imu_data_t lsm6dsx_data;
 
 void init_LSM6DS3(void);
 void calibrate_LSM6DS3();
-void read_axes(void);
+void read_axes_LSM6DS3();
 void update_LSM6DS3(void);
 
 #endif /* __LSM6DS3_H__ */
