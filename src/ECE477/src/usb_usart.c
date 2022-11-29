@@ -144,4 +144,17 @@ void init_USB_USART(void)
 	setbuf(stdin,0);
 	setbuf(stdout,0);
 	setbuf(stderr,0);
+
+	printf("\n-----------------------------------------\n");
+	printf("ECE477 STM32F446RET6 Flight Controller V0\n");
+	printf("-----------------------------------------\n\n");
+
+	//log startup details:
+	printf("USB_USART:\n");
+	printf("\tUSB_USART_BAUDRATE:      %d\n", USB_USART_BAUDRATE);
+	printf("\tCLOCK_RATE:              %d\n", CLOCK_RATE);
+	printf("\tUSB_USART_CLOCK_RATE:    %d\n", USB_USART_CLOCK_RATE);
+	printf("\tUSB_USART_DIV:           %d\n", USB_USART_DIV);
+	printf("\tUSB_USART_DIV_FRACTION:  %d\n", USB_USART_DIV_FRACTION);
+	printf("\tUSB_USART_DIV_MANTISSA:  %d\n", USB_USART_DIV_MANTISSA);
 }
