@@ -20,13 +20,18 @@
 // timer 1 enable is in this register
 #define RCCAPB2ENR (RCC->APB2ENR)
 
+//normal PWM pulse range - 1000us-2000us
+
 #define FCLK					APB2_TIM_CLOCK //APB2 TIM clock is div by 2 then mul by 2
-#define PWM_REPETITION_RATE_HZ	50*8 //Oneshot125 pulse frequency
+#define PWM_REPETITION_RATE_HZ	3800 //Oneshot125 max pulse frequency
 #define	PWM_PSC 				8
 #define PWM_ARR 				(FCLK/((PWM_PSC+1) * PWM_REPETITION_RATE_HZ) - 1)
 
-#define LOWERBOUNDCRRX 			((PWM_ARR*5)/100)
-#define UPPERBOUNDCRRX 			((PWM_ARR*10)/100)
+#define ONESHOT_125_MIN_PULSE	125 //us
+#define ONESHOT_125_MAX_PULSE	250 //us
+
+#define LOWERBOUNDCRRX 			((ONESHOT_125_MIN_PULSE*(FCLK/1000000))/((PWM_PSC+1)))
+#define UPPERBOUNDCRRX 			((ONESHOT_125_MAX_PULSE*(FCLK/1000000))/((PWM_PSC+1)))
 #define RANGE					(UPPERBOUNDCRRX-LOWERBOUNDCRRX)
 
 #define FIR_LENGTH 400
@@ -98,6 +103,10 @@ void init_PWM(void)
 	PWM_TIMR -> CR1 |= 0x0001;
 
 	printf("PWM:\n");
+	printf("\tPWM_FREQ:        %d\n", PWM_REPETITION_RATE_HZ);
+	printf("\tPWM_PERIOD [uS]: %f\n", 1000000.0f/(float)PWM_REPETITION_RATE_HZ);
+	printf("\tMIN_PULSE  [uS]: %d\n", ONESHOT_125_MIN_PULSE);
+	printf("\tMAX_PULSE  [uS]: %d\n", ONESHOT_125_MAX_PULSE);
 	printf("\tPWM_ARR:         %d\n", PWM_ARR);
 	printf("\tUPPERBOUNDCRRX:  %d\n", UPPERBOUNDCRRX);
 	printf("\tLOWERBOUNDCRRX:  %d\n", LOWERBOUNDCRRX);

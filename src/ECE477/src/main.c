@@ -18,11 +18,13 @@
 #include "rx_usart.h"
 #include "usb_usart.h"
 #include "pi_usart.h"
+#include "systick.h"
 #include "pwm.h"
 #include "spi.h"
 #include "i2c.h"
 #include "motors.h"
 #include "lsm6ds3.h"
+#include "mpu6500.h"
 #include "pid.h"
 #include "math.h"
 #include "fir.h"
@@ -68,38 +70,41 @@ int main(void){
 
 	init_USB_USART();
 
-	printf("\n-----------------------------------------\n");
-	printf("ECE477 STM32F446RET6 Flight Controller V0\n");
-	printf("-----------------------------------------\n\n");
+	//(print this within USB_USART startup so it's before the USB_USART config info
+	//printf("\n-----------------------------------------\n");
+	//printf("ECE477 STM32F446RET6 Flight Controller V0\n");
+	//printf("-----------------------------------------\n\n");
 
 	init_SYSTICK();
 
 	init_RX_USART();
-	//init_PI_USART();
+	init_PI_USART();
 
 	init_PWM();
 	//init_motors();
 
-	//init_I2C();
+	init_I2C();
 	//init_TMF8801();
 
 	init_SPI1();
 	init_LSM6DS3();
+	init_MPU6500();
 
 	calibrate_LSM6DS3();
+	calibrate_MPU6500();
 
 	init_PID(&yaw_pid);
 	init_PID(&pitch_pid);
 	init_PID(&roll_pid);
 
-	set_PID_constants(&yaw_pid, 	1.10f, 0.00f, 00.0f);
-	set_PID_constants(&pitch_pid, 	1.10f, 0.00f, 00.0f);
-	set_PID_constants(&roll_pid, 	1.10f, 0.00f, 00.0f);
+	set_PID_constants(&yaw_pid, 	0.0000f, 0.00f, 00.0f);
+	set_PID_constants(&pitch_pid, 	0.0030f, 0.00f, 00.1f);
+	set_PID_constants(&roll_pid, 	0.0030f, 0.00f, 00.1f);
 
 	for (int i = 0; i < 4; i++)
 	{
-		motor_filter[i].impulse_response = hanning_256;
-		motor_filter[i].length = 256;
+		motor_filter[i].impulse_response = hanning_64;
+		motor_filter[i].length = 64;
 		motor_filter[i].first_element = 0;
 		motor_filter[i].circular_buffer = motor_buffer[i];
 	}
@@ -157,6 +162,7 @@ int main(void){
 		LED_GPIO->ODR ^= 0x1 << LED_PIN;
 
 		update_LSM6DS3();
+		update_MPU6500();
 
 		float rx_throttle = RX_USART_convert_channel_to_unit_range(RX_USART_get_channels()->ELRS_THROTTLE);
 		float rx_yaw 	  = RX_USART_convert_channel_to_unit_range(RX_USART_get_channels()->ELRS_YAW)   - 0.5f;
@@ -164,8 +170,8 @@ int main(void){
 		float rx_roll 	  = RX_USART_convert_channel_to_unit_range(RX_USART_get_channels()->ELRS_ROLL)  - 0.5f;
 
 		float yaw_pid_response 	 = update_PID(&yaw_pid,   0/*gyro_angle_z*/, rx_yaw);
-		float pitch_pid_response = update_PID(&pitch_pid, 0/*compl_pitch*/,  rx_pitch);
-		float roll_pid_response  = update_PID(&roll_pid,  0/*compl_roll*/,   rx_roll);
+		float pitch_pid_response = update_PID(&pitch_pid, lsm6dsx_data.compl_pitch,  rx_pitch*30);
+		float roll_pid_response  = update_PID(&roll_pid,  lsm6dsx_data.compl_roll,   rx_roll*30);
 
 		//clamp PID outputs (depending on throttle?)
 		float max_response = 0.2f;
@@ -200,7 +206,7 @@ int main(void){
 			motor_output[3] += roll_pid_response;
 		}
 		else
-			gyro_angle_z = 0;
+			lsm6dsx_data.gyro_angle_z = 0;
 
 		//clamp motor values
 
@@ -220,7 +226,7 @@ int main(void){
 		}
 
 		m++;
-		if (m == 64)
+		if (m == 8)
 		{
 			m = 0;
 
@@ -238,7 +244,7 @@ int main(void){
 		}
 
 		d++;
-		if (d > 10)
+		if (d > 50)
 		{
 			d = 0;
 
@@ -257,15 +263,13 @@ int main(void){
 			printf("%f,\t", filtered_motor_output[0]);
 			printf("%f,\t", filtered_motor_output[1]);
 			printf("%f,\t", filtered_motor_output[2]);
-			printf("%f,\t", filtered_motor_output[3]);
+			printf("%f,\t", filtered_motor_output[3]);*/
 			printf("%d,\t", pwm_output.duty_cycle_ch0);
 			printf("%d,\t", pwm_output.duty_cycle_ch1);
 			printf("%d,\t", pwm_output.duty_cycle_ch2);
-			printf("%d,\t", pwm_output.duty_cycle_ch3);*/
-			printf("%f,\t", gyro_rate_x);
-			printf("%f,\n", gyro_rate_y);
-
-
+			printf("%d,\t", pwm_output.duty_cycle_ch3);
+			printf("%f,\t", lsm6dsx_data.compl_pitch);
+			printf("%f,\n", lsm6dsx_data.compl_roll);
 
 			//printf("%d,\t", RX_USART_get_channels()->ch4);
 			//printf("%d,\t", RX_USART_get_channels()->ch5);
