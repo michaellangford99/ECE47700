@@ -22,7 +22,7 @@ int pi_seroffset = 0;
 #define PI_USART_INTERRUPT_HANDLE	UART4_IRQHandler
 
 #define PI_USART_BAUDRATE			115200
-#define CLOCK_RATE					SYSTEM_CLOCK
+#define CLOCK_RATE					APB1_PCLOCK
 #define PI_USART_CLOCK_RATE			CLOCK_RATE
 #define PI_USART_DIV				(PI_USART_CLOCK_RATE / (16*PI_USART_BAUDRATE))
 #define PI_USART_DIV_FRACTION		(((16 * PI_USART_CLOCK_RATE / (16*PI_USART_BAUDRATE))) % 16)
@@ -128,9 +128,20 @@ void init_PI_USART(void)
 
 	enable_PI_usart_rx_interrupt();
 
-	/*setbuf(stdin,0);
-	setbuf(stdout,0);
-	setbuf(stderr,0);*/
-	//^^ would be nice to use these but with specific streams for the PI.
-	//TODO: look into this
+	//log startup details:
+	printf("PI_USART:\n");
+	printf("\tPI_USART_BAUDRATE:      %d\n", PI_USART_BAUDRATE);
+	printf("\tCLOCK_RATE:             %d\n", CLOCK_RATE);
+	printf("\tPI_USART_CLOCK_RATE:    %d\n", PI_USART_CLOCK_RATE);
+	printf("\tPI_USART_DIV:           %d\n", PI_USART_DIV);
+	printf("\tPI_USART_DIV_FRACTION:  %d\n", PI_USART_DIV_FRACTION);
+	printf("\tPI_USART_DIV_MANTISSA:  %d\n", PI_USART_DIV_MANTISSA);
+}
+
+char test_text[100];
+
+void test_PI_USART()
+{
+	sprintf(test_text, "Testing PI USART.\t%d\n", 420);
+	pi_puts(test_text);
 }

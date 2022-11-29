@@ -33,6 +33,11 @@ void init_I2C(void)
     I2C1->CCR = 193;
     I2C1->TRISE = 46;
     I2C1->CR1 |= I2C_CR1_PE;
+
+    printf("I2C1\n");
+	printf("\tI2C1->CCR:          %d\n", I2C1->CCR);
+	printf("\tI2C1->TRISE:        %d\n", I2C1->TRISE);
+	printf("\tI2C1->CR1:         x%x\n", I2C1->CR1);
 }
 
 void I2CstartWrite (void)
