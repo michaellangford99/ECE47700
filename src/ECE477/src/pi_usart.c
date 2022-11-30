@@ -80,12 +80,80 @@ void pi_puts(uint8_t* s)
 	}
 }
 
+pi_packet_t saved_pi_packet;
+
+#define BUFFER_SIZE 20
+uint8_t pi_buffer[BUFFER_SIZE*2];
+uint8_t* pi_buffer_start = pi_buffer;
+#define PI_FRAME_START_CODE 'A'
+#define PI_FRAME_END_CODE 'A'
+
+uint8_t process_pi_packet_buffer(uint8_t new)
+{
+	//first, add the byte and shift the
+	*pi_buffer_start = new;
+	pi_buffer_start++;
+	if ((uint32_t)(pi_buffer_start-pi_buffer) > BUFFER_SIZE-1)
+		pi_buffer_start = pi_buffer;
+
+	if ((*pi_buffer_start) == PI_FRAME_START_CODE)
+	{
+		//go through and attempt to parse
+		//place the data struct at this location and see if it passes
+		//first task is to verify the length is within bounds, and
+		//that the message type is what we're looking for
+		//Then verify it has a valid CRC
+		//move everything from the beginning of memory to
+
+		pi_packet_t* pi_packet = (pi_packet_t*)pi_buffer_start;
+
+		//copy everything from bottom to the pi_buffer_start point into the upper half of the array to make it contiguous
+		memcpy(pi_buffer + BUFFER_SIZE, pi_buffer, pi_buffer_start-pi_buffer);
+
+		//instead, validate the ending sequence
+		//or validate CRC
+		if (pi_packet->ending == PI_FRAME_END_CODE)
+		{
+		//uint8_t calculated_crc = calc_crc(&(pi_packet->header.type), sizeof(crsf_channels_t)+1/*don't include the CRC in the CRC calc haha*/);
+		//uint8_t rx_crc = pi_packet->crc;
+
+		//if (rx_crc == calculated_crc)
+		//{
+			//valid packet
+			memcpy((void*)&saved_pi_packet, (void*)pi_packet, sizeof(pi_packet_t));
+			return 1;
+		//}
+		}
+	}
+	//if any check here is false, the data gets shifted until a valid packet is detected
+	return 0;
+}
+
+
 void PI_USART_INTERRUPT_HANDLE(void)
 {
 	while(PI_USART_DMA_STREAM->NDTR != sizeof pi_serfifo - pi_seroffset) {
 		
-		//do_something_with(pi_serfifo[pi_seroffset]);
-		pi_putchar(pi_serfifo[pi_seroffset]);
+		uint8_t parse_status = process_pi_packet_buffer(pi_serfifo[pi_seroffset]);
+
+		if (parse_status)
+		{
+			//crsf_channels_t* channel_data = &saved_channel_data;
+
+			//instead, save the LiDAR and steering commands
+
+			//printf("Saved a sequence!");
+
+			/*printf("%d,\t", channel_data->ch0);
+			printf("%d,\t", channel_data->ch1);
+			printf("%d,\t", channel_data->ch2);
+			printf("%d,\t", channel_data->ch3);
+			printf("%d,\t", channel_data->ch4);
+			printf("%d,\t", channel_data->ch5);
+			printf("%d,\t", channel_data->ch6);
+			printf("%d\n", channel_data->ch7);*/
+		}
+		//pi_putchar(pi_serfifo[pi_seroffset]);
 		
 		pi_seroffset = (pi_seroffset + 1) % sizeof pi_serfifo;
 	}
@@ -140,6 +208,8 @@ void init_PI_USART(void)
 	printf("\tPI_USART_DIV:           %d\n", PI_USART_DIV);
 	printf("\tPI_USART_DIV_FRACTION:  %d\n", PI_USART_DIV_FRACTION);
 	printf("\tPI_USART_DIV_MANTISSA:  %d\n", PI_USART_DIV_MANTISSA);
+	printf("\tPI_FRAME_START_CODE:    %d\n", PI_FRAME_START_CODE);
+	printf("\tPI_FRAME_END_CODE:      %d\n", PI_FRAME_END_CODE);
 }
 
 char output_text[100];

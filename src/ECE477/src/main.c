@@ -276,6 +276,10 @@ int main(void){
 			printf("%f,\t", filtered_motor_output[3]);*/
 			printf("%.2f,\t", 1.0f/(current_time - last_time));
 			printf("%.2f,\t", 1.0f/(current_time_2 - last_time_2));
+			printf("%d,\t", saved_pi_packet.lidar_reading[0]);
+			printf("%d,\t", saved_pi_packet.lidar_reading[1]);
+			printf("%d,\t", saved_pi_packet.lidar_reading[2]);
+			printf("%d,\t", saved_pi_packet.lidar_reading[3]);
 			printf("%d,\t", pwm_output.duty_cycle_ch0);
 			printf("%d,\t", pwm_output.duty_cycle_ch1);
 			printf("%d,\t", pwm_output.duty_cycle_ch2);
