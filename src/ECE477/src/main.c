@@ -40,6 +40,12 @@ float filtered_motor_output[4];
 float motor_output[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 pwm_output_t pwm_output;
 
+//timestamps
+static float last_time_2;
+static float current_time_2;
+static float last_time;
+static float current_time;
+
 #define LED_PIN 13
 #define LED_GPIO GPIOC
 
@@ -161,8 +167,12 @@ int main(void){
 
 		LED_GPIO->ODR ^= 0x1 << LED_PIN;
 
+		last_time = current_time;
+		current_time = ftime();
+
 		update_LSM6DS3();
 		update_MPU6500();
+		update_PI_USART();
 
 		float rx_throttle = RX_USART_convert_channel_to_unit_range(RX_USART_get_channels()->ELRS_THROTTLE);
 		float rx_yaw 	  = RX_USART_convert_channel_to_unit_range(RX_USART_get_channels()->ELRS_YAW)   - 0.5f;
@@ -226,7 +236,7 @@ int main(void){
 		}
 
 		m++;
-		if (m == 8)
+		if (m == 32)
 		{
 			m = 0;
 
@@ -264,18 +274,23 @@ int main(void){
 			printf("%f,\t", filtered_motor_output[1]);
 			printf("%f,\t", filtered_motor_output[2]);
 			printf("%f,\t", filtered_motor_output[3]);*/
+			printf("%.2f,\t", 1.0f/(current_time - last_time));
+			printf("%.2f,\t", 1.0f/(current_time_2 - last_time_2));
 			printf("%d,\t", pwm_output.duty_cycle_ch0);
 			printf("%d,\t", pwm_output.duty_cycle_ch1);
 			printf("%d,\t", pwm_output.duty_cycle_ch2);
 			printf("%d,\t", pwm_output.duty_cycle_ch3);
-			printf("%f,\t", lsm6dsx_data.compl_pitch);
-			printf("%f,\n", lsm6dsx_data.compl_roll);
+			printf("%.3f,\t", lsm6dsx_data.compl_pitch);
+			printf("%.3f,\n", lsm6dsx_data.compl_roll);
 
 			//printf("%d,\t", RX_USART_get_channels()->ch4);
 			//printf("%d,\t", RX_USART_get_channels()->ch5);
 			//printf("%d,\t", RX_USART_get_channels()->ch6);
 			//printf("%d,\t", RX_USART_get_channels()->ch7);
 		}
+
+		last_time_2 = current_time_2;
+		current_time_2 = ftime();
 
 		//char chr = __io_getchar();
 		//printf("You entered %c.", chr);

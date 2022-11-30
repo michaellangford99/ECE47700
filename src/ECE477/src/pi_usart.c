@@ -6,6 +6,8 @@
 #include "pi_usart.h"
 #include "fifo.h"
 #include "tty.h"
+#include "lsm6ds3.h"
+#include "mpu6500.h"
 
 #define FIFOSIZE 16
 char pi_serfifo[FIFOSIZE];
@@ -71,9 +73,10 @@ void pi_putchar(uint8_t c)
 
 void pi_puts(uint8_t* s)
 {
-	while (*(s++) != '\0')
+	while (*s != '\0')
 	{
 		pi_putchar(*s);
+		s++;
 	}
 }
 
@@ -82,6 +85,7 @@ void PI_USART_INTERRUPT_HANDLE(void)
 	while(PI_USART_DMA_STREAM->NDTR != sizeof pi_serfifo - pi_seroffset) {
 		
 		//do_something_with(pi_serfifo[pi_seroffset]);
+		pi_putchar(pi_serfifo[pi_seroffset]);
 		
 		pi_seroffset = (pi_seroffset + 1) % sizeof pi_serfifo;
 	}
@@ -138,10 +142,24 @@ void init_PI_USART(void)
 	printf("\tPI_USART_DIV_MANTISSA:  %d\n", PI_USART_DIV_MANTISSA);
 }
 
-char test_text[100];
+char output_text[100];
 
 void test_PI_USART()
 {
-	sprintf(test_text, "Testing PI USART.\t%d\n", 420);
-	pi_puts(test_text);
+	sprintf(output_text, "Testing PI USART.\t%d\n", 420);
+	pi_puts(output_text);
+}
+
+int pi_update_count = 0;
+
+void update_PI_USART()
+{
+	pi_update_count++;
+	if (pi_update_count >= 300)
+	{
+		pi_update_count = 0;
+
+		sprintf(output_text, "IMU\t%.2f,\t%.2f,\t%.2f\n", lsm6dsx_data.gyro_angle_z, lsm6dsx_data.compl_pitch, lsm6dsx_data.compl_pitch);
+		pi_puts(output_text);
+	}
 }
