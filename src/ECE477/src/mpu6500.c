@@ -205,15 +205,15 @@ void update_MPU6500(void){
 	//if (total_acceleration_decimation_index == TOTAL_ACC_DECIMATION)
 	//{
 	//	total_acceleration_decimation_index = 0;
-		total_acceleration_filtered = update_filter(&total_acceleration_filter, sqrt(accel_x*accel_x + accel_y*accel_y + accel_z*accel_z));
+		//total_acceleration_filtered = update_filter(&total_acceleration_filter, sqrt(accel_x*accel_x + accel_y*accel_y + accel_z*accel_z));
 	//}
 	//trust of the accel
 	#define ALPHA_0 0.06f//0.61f
 
-	float alpha_correction = pow(total_acceleration_filtered-1.0f, 2.0f);
+	//float alpha_correction = pow(total_acceleration_filtered-1.0f, 2.0f);
 	//bigger this is, less it should trust accel
-	alpha_correction=-alpha_correction*10.0f;
-	alpha_correction = (alpha_correction < -ALPHA_0) ? -ALPHA_0 : alpha_correction;
+	//alpha_correction=-alpha_correction*10.0f;
+	//alpha_correction = (alpha_correction < -ALPHA_0) ? -ALPHA_0 : alpha_correction;
 
 #define ALPHA (ALPHA_0/* + alpha_correction*/)
 

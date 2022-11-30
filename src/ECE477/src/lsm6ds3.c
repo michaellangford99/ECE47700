@@ -207,15 +207,15 @@ void update_LSM6DS3(void){
 	//if (total_acceleration_decimation_index == TOTAL_ACC_DECIMATION)
 	//{
 	//	total_acceleration_decimation_index = 0;
-		total_acceleration_filtered = update_filter(&total_acceleration_filter, sqrt(accel_x*accel_x + accel_y*accel_y + accel_z*accel_z));
+		//total_acceleration_filtered = update_filter(&total_acceleration_filter, sqrt(accel_x*accel_x + accel_y*accel_y + accel_z*accel_z));
 	//}
 	//trust of the accel
 	#define ALPHA_0 0.06f//0.61f
 
-	float alpha_correction = pow(total_acceleration_filtered-1.0f, 2.0f);
+	//float alpha_correction = pow(total_acceleration_filtered-1.0f, 2.0f);
 	//bigger this is, less it should trust accel
-	alpha_correction=-alpha_correction*10.0f;
-	alpha_correction = (alpha_correction < -ALPHA_0) ? -ALPHA_0 : alpha_correction;
+	//alpha_correction=-alpha_correction*10.0f;
+	//alpha_correction = (alpha_correction < -ALPHA_0) ? -ALPHA_0 : alpha_correction;
 
 #define ALPHA (ALPHA_0/* + alpha_correction*/)
 
@@ -227,6 +227,8 @@ void update_LSM6DS3(void){
 	lsm6dsx_data.gyro_rate_x = gyro_rate_x;
 	lsm6dsx_data.gyro_rate_y = gyro_rate_y;
 	lsm6dsx_data.gyro_rate_z = gyro_rate_z;
+
+	lsm6dsx_data.gyro_angle_z = gyro_angle_z;
 
 	lsm6dsx_data.compl_pitch = compl_pitch;
 	lsm6dsx_data.compl_roll = compl_roll;
