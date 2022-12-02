@@ -82,11 +82,11 @@ void pi_puts(uint8_t* s)
 
 pi_packet_t saved_pi_packet;
 
-#define BUFFER_SIZE 20
+#define BUFFER_SIZE 60
 uint8_t pi_buffer[BUFFER_SIZE*2];
 uint8_t* pi_buffer_start = pi_buffer;
 #define PI_FRAME_START_CODE 'A'
-#define PI_FRAME_END_CODE 'A'
+#define PI_FRAME_END_CODE 'B'
 
 uint8_t process_pi_packet_buffer(uint8_t new)
 {
@@ -153,8 +153,10 @@ void PI_USART_INTERRUPT_HANDLE(void)
 			printf("%d,\t", channel_data->ch6);
 			printf("%d\n", channel_data->ch7);*/
 		}
-		//pi_putchar(pi_serfifo[pi_seroffset]);
 		
+		//putchar('0'+ pi_serfifo[pi_seroffset]);
+
+		//pi_putchar(pi_serfifo[pi_seroffset]);
 		pi_seroffset = (pi_seroffset + 1) % sizeof pi_serfifo;
 	}
 }
