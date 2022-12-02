@@ -15,13 +15,16 @@ struct PID
 	float Output;
 	float Last_Output;
 	float Delta_Output;
+	float maxD;
+	float maxI;
+	float maxP;
 	//float Max_Response;
 	//float Min_Response;
 };
 
 	void init_PID(struct PID* pid);
 	float update_PID(struct PID* pid, float real, float desired);
-	//void set_PID_bounds(struct PID* pid, float max, float min);
+	void set_PID_bounds(struct PID* pid, float P, float I, float D);
 	void set_PID_constants(struct PID* pid, float KP, float KI, float KD);
 
 #endif
