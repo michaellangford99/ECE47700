@@ -19,8 +19,6 @@
 #include "stm32f4xx.h"
 #include "SparkFun_TMF8801_Arduino_Library.h"
 #include "SparkFun_TMF8801_IO.h"
-#include "systick.h"
-#include "i2c.h"
 
 // Constants definitions
 
@@ -42,7 +40,7 @@ const uint8_t CONTENT_CALIBRATION = 0x0a;
 // Values below were taken from AN000597, pp 22
 const uint8_t ALGO_STATE[11] = { 0xB1, 0xA9, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-void TMF8801_init(TMF8801_t* dev)
+void init_TMF8801(TMF8801_t* dev)
 {
 	bool devInit = _TMF8801_init(dev);
 	nano_wait(1000);
@@ -207,7 +205,7 @@ void TMF8801_setDevice(TMF8801_t* device)
 }
 
 uint32_t ticksTMF = 0;
-void SysTick_Handler(void)
+/*void SysTick_Handler(void)
 {
 	ticksTMF++;
 	LED_GPIO->ODR ^= 0x1 << LED_PIN;
@@ -217,7 +215,7 @@ void SysTick_Handler(void)
 uint32_t millis()
 {
 	return ticksTMF;
-}
+}*/
 
 bool cpuReady()
 {

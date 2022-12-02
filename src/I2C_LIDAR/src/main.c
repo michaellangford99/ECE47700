@@ -39,7 +39,7 @@ int main(void)
 {
 
 	init_USB_USART();
-	I2Cinit();
+	init_I2C();
 	TMF8801_t device_descrip;
 	TMF8801_init(&device_descrip);
 	while (1) {

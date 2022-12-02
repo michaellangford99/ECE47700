@@ -2,9 +2,10 @@
 #include "stm32f4xx.h"
 #include <string.h> // for memset() declaration
 #include <math.h>   // for MA_PI
-#include "system.h"
-#include "systick.h"
+
 #include "i2c.h"
+
+//void nano_wait(unsigned int);
 
 void init_I2C(void)
 {
@@ -33,11 +34,6 @@ void init_I2C(void)
     I2C1->CCR = 193;
     I2C1->TRISE = 46;
     I2C1->CR1 |= I2C_CR1_PE;
-
-    printf("I2C1\n");
-	printf("\tI2C1->CCR:          %d\n", I2C1->CCR);
-	printf("\tI2C1->TRISE:        %d\n", I2C1->TRISE);
-	printf("\tI2C1->CR1:         x%x\n", I2C1->CR1);
 }
 
 void I2CstartWrite (void)
@@ -133,3 +129,13 @@ void I2CrequestFrom(uint8_t address,uint8_t *buffer, uint8_t numOfBytes)
 	}
     //while (!(I2C1->SR1 & I2C_SR1_BTF));
 }
+
+/*void nano_wait(unsigned int n)
+{
+    asm(    "        mov r0,%0\n"
+            "repeat: sub r0,#83\n"
+            "        bgt repeat\n" : : "r"(n) : "r0", "cc");
+	for(int i = 0; i < n; i++){
+		__asm("NOP");
+	}
+}*/

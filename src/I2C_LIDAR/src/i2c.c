@@ -5,9 +5,9 @@
 
 #include "i2c.h"
 
-void nano_wait(unsigned int);
+//void nano_wait(unsigned int);
 
-void I2Cinit (void)
+void init_I2C (void)
 {
     //init i2c
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;

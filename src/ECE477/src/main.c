@@ -28,6 +28,9 @@
 #include "pid.h"
 #include "math.h"
 #include "fir.h"
+#include "SparkFun_TMF8801_Arduino_Library.h"
+#include "SparkFun_TMF8801_Constants.h"
+#include "SparkFun_TMF8801_IO.h"
 //#include "sensor_fusion.h"
 
 struct PID yaw_pid;
@@ -39,6 +42,7 @@ struct fir_filter motor_filter[4];
 float filtered_motor_output[4];
 float motor_output[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 pwm_output_t pwm_output;
+TMF8801_t device_descrip;
 
 //timestamps
 static float last_time_2;
@@ -95,7 +99,7 @@ int main(void){
 	//init_motors();
 
 	init_I2C();
-	//init_TMF8801();
+	init_TMF8801(&device_descrip);
 
 	init_SPI1();
 	init_LSM6DS3();
@@ -305,8 +309,8 @@ int main(void){
 			printf("%d,\t", pwm_output.duty_cycle_ch2);
 			printf("%d,\t", pwm_output.duty_cycle_ch3);
 			printf("%.3f,\t", lsm6dsx_data.compl_pitch);
-			printf("%.3f,\n", lsm6dsx_data.compl_roll);
-
+			printf("%.3f,\t", lsm6dsx_data.compl_roll);
+			read_distance(&device_descrip);
 			//printf("%d,\t", RX_USART_get_channels()->ch4);
 			//printf("%d,\t", RX_USART_get_channels()->ch5);
 			//printf("%d,\t", RX_USART_get_channels()->ch6);
