@@ -132,9 +132,23 @@ typedef struct crsfPayloadLinkstatistics_s
 #define ELRS_THROTTLE	ch2
 #define ELRS_YAW		ch3
 
+#define ELRS_SA			ch4
+#define ELRS_SB			ch5
+#define ELRS_SC			ch6
+#define ELRS_SD			ch7
+
+#define ELRS_ARM_CHANNEL ELRS_SA
+
+#define ELRS_AUX_MIN	191
+#define ELRS_AUX_MID	992
+#define ELRS_AUX_MAX	1792
+
 void init_RX_USART(void);
 crsf_channels_t* RX_USART_get_channels();
 uint16_t RX_USART_convert_channel_to_motor_range(uint16_t ch);
 float RX_USART_convert_channel_to_unit_range(uint16_t ch);
+
+uint8_t radio_signal_status();
+uint8_t current_radio_signal_status();
 
 #endif /* __RX_USART_H__ */

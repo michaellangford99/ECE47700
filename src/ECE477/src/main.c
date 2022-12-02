@@ -49,6 +49,9 @@ static float current_time;
 #define LED_PIN 13
 #define LED_GPIO GPIOC
 
+int led_flash_count;
+int led_flash_period;
+
 float max(float a, float b)
 {
 	if (a > b) return a;
@@ -60,6 +63,8 @@ float min(float a, float b)
 	if (a < b) return a;
 	return b;
 }
+
+uint8_t safety();
 
 int main(void){
 
@@ -96,6 +101,9 @@ int main(void){
 	init_LSM6DS3();
 	init_MPU6500();
 
+	//wait for foam to stabilize
+	wait(2.0f);
+
 	calibrate_LSM6DS3();
 	calibrate_MPU6500();
 
@@ -103,9 +111,9 @@ int main(void){
 	init_PID(&pitch_pid);
 	init_PID(&roll_pid);
 
-	set_PID_constants(&yaw_pid, 	0.0000f, 0.00f, 00.0f);
-	set_PID_constants(&pitch_pid, 	0.0030f, 0.00f, 00.1f);
-	set_PID_constants(&roll_pid, 	0.0030f, 0.00f, 00.1f);
+	set_PID_constants(&yaw_pid, 	0.0080f, 0.00f, 00.0f);
+	set_PID_constants(&pitch_pid, 	0.0030f, 0.00f, 00.2f);
+	set_PID_constants(&roll_pid, 	0.0030f, 0.00f, 00.2f);
 
 	for (int i = 0; i < 4; i++)
 	{
@@ -114,6 +122,9 @@ int main(void){
 		motor_filter[i].first_element = 0;
 		motor_filter[i].circular_buffer = motor_buffer[i];
 	}
+
+	//indicate waiting for ARM
+	led_flash_period = 1000;
 
 	//main loop:
 	for(;;)
@@ -165,7 +176,12 @@ int main(void){
 	int m = 0;
 	for(;;) {
 
-		LED_GPIO->ODR ^= 0x1 << LED_PIN;
+		led_flash_count++;
+		if (led_flash_count >= led_flash_period)
+		{
+			led_flash_count = 0;
+			LED_GPIO->ODR ^= 0x1 << LED_PIN;
+		}
 
 		last_time = current_time;
 		current_time = ftime();
@@ -179,7 +195,7 @@ int main(void){
 		float rx_pitch 	  = RX_USART_convert_channel_to_unit_range(RX_USART_get_channels()->ELRS_PITCH) - 0.5f;
 		float rx_roll 	  = RX_USART_convert_channel_to_unit_range(RX_USART_get_channels()->ELRS_ROLL)  - 0.5f;
 
-		float yaw_pid_response 	 = update_PID(&yaw_pid,   0/*gyro_angle_z*/, rx_yaw);
+		float yaw_pid_response 	 = update_PID(&yaw_pid,   lsm6dsx_data.gyro_angle_z, rx_yaw*30);
 		float pitch_pid_response = update_PID(&pitch_pid, lsm6dsx_data.compl_pitch,  rx_pitch*30);
 		float roll_pid_response  = update_PID(&roll_pid,  lsm6dsx_data.compl_roll,   rx_roll*30);
 
@@ -259,10 +275,10 @@ int main(void){
 			d = 0;
 
 			//printf("%d,\t", s);
-			//printf("%d,\t", RX_USART_get_channels()->ELRS_THROTTLE);
-			//printf("%d,\t", RX_USART_get_channels()->ELRS_YAW);
-			//printf("%d,\t", RX_USART_get_channels()->ELRS_PITCH);
-			//printf("%d,\t", RX_USART_get_channels()->ELRS_ROLL);
+			printf("%d,\t", RX_USART_get_channels()->ch4);
+			printf("%d,\t", RX_USART_get_channels()->ch5);
+			printf("%d,\t", RX_USART_get_channels()->ch6);
+			printf("%d,\t", RX_USART_get_channels()->ch7);
 			/*printf("%f,\t", rx_throttle);
 			printf("%f,\t", rx_yaw);
 			printf("%f,\t", rx_pitch);
@@ -276,10 +292,14 @@ int main(void){
 			printf("%f,\t", filtered_motor_output[3]);*/
 			printf("%.2f,\t", 1.0f/(current_time - last_time));
 			printf("%.2f,\t", 1.0f/(current_time_2 - last_time_2));
+			printf("%d,\t", saved_pi_packet.camera_status);
 			printf("%d,\t", saved_pi_packet.lidar_reading[0]);
 			printf("%d,\t", saved_pi_packet.lidar_reading[1]);
 			printf("%d,\t", saved_pi_packet.lidar_reading[2]);
 			printf("%d,\t", saved_pi_packet.lidar_reading[3]);
+			printf("%f,\t", saved_pi_packet.command_yaw);
+			printf("%f,\t", saved_pi_packet.command_pitch);
+			printf("%f,\t", saved_pi_packet.command_roll);
 			printf("%d,\t", pwm_output.duty_cycle_ch0);
 			printf("%d,\t", pwm_output.duty_cycle_ch1);
 			printf("%d,\t", pwm_output.duty_cycle_ch2);
@@ -301,4 +321,102 @@ int main(void){
 
 		//printf("Enter your name: %d\r\n", 42069);
 	}
+}
+
+#define ARM_THROTTLE_MAX	0.1f
+#define ARM_YAW_MAX			0.1f
+#define ARM_PITCH_MAX		0.1f
+#define ARM_ROLL_MIN		0.9f
+
+#define ARM_CODE_BYTE_0 4
+#define ARM_CODE_BYTE_1 7
+#define ARM_CODE_BYTE_2 7
+#define ARM_CODE_BYTE_3 8
+
+//for security, use 4 bytes.. all must change to the arm code to arm the drone
+uint8_t ARMED[4] = {0, 0, 0, 0};
+
+uint8_t check_arm_code()
+{
+	if ((ARMED[0] == ARM_CODE_BYTE_0) &&
+		(ARMED[1] == ARM_CODE_BYTE_1) &&
+		(ARMED[2] == ARM_CODE_BYTE_2) &&
+		(ARMED[3] == ARM_CODE_BYTE_3))
+		return 1;
+	return 0;
+}
+
+void set_arm_code()
+{
+	ARMED[0] = ARM_CODE_BYTE_0;
+	ARMED[1] = ARM_CODE_BYTE_1;
+	ARMED[2] = ARM_CODE_BYTE_2;
+	ARMED[3] = ARM_CODE_BYTE_3;
+}
+
+void clear_arm_code()
+{
+	ARMED[0] = 0;
+	ARMED[1] = 0;
+	ARMED[2] = 0;
+	ARMED[3] = 0;
+}
+
+int safety_update_count;
+#define SAFETY_UPDATE_PERIOD 100
+
+uint8_t safety()
+{
+	//only actually do the sequence periodically, usually return the saved arm status
+	safety_update_count++;
+	if (safety_update_count > SAFETY_UPDATE_PERIOD)
+	{
+		safety_update_count = 0;
+	}
+	else
+	{
+		return check_arm_code();
+	}
+
+	//if the radio doesn't think it has a valid signal, abort
+	if (radio_signal_status() == 0)
+	{
+		clear_arm_code();
+		return 0;
+	}
+
+	//first check that all aux signals are at least at or above the min and below or at the max
+	uint8_t active_aux_signals = 0;
+
+	//check that signals are in range
+	if ((RX_USART_get_channels()->ELRS_SA >= ELRS_AUX_MIN) && (RX_USART_get_channels()->ELRS_SA <= ELRS_AUX_MAX)) active_aux_signals++;
+	if ((RX_USART_get_channels()->ELRS_SB >= ELRS_AUX_MIN) && (RX_USART_get_channels()->ELRS_SB <= ELRS_AUX_MAX)) active_aux_signals++;
+	if ((RX_USART_get_channels()->ELRS_SC >= ELRS_AUX_MIN) && (RX_USART_get_channels()->ELRS_SC <= ELRS_AUX_MAX)) active_aux_signals++;
+	if ((RX_USART_get_channels()->ELRS_SD >= ELRS_AUX_MIN) && (RX_USART_get_channels()->ELRS_SD <= ELRS_AUX_MAX)) active_aux_signals++;
+
+	//if all 4 aren't in range, abort
+	if (active_aux_signals != 4)
+	{
+		clear_arm_code();
+		return 0;
+	}
+
+	//check that arming aux switch is in armed position
+	if (RX_USART_get_channels()->ELRS_ARM_CHANNEL < ELRS_AUX_MAX)
+	{
+		clear_arm_code();
+		return 0;
+	}
+
+	//if not yet armed, check for arm condition (both sticks down and to the sides)
+	if (!check_arm_code())
+		if (RX_USART_get_channels()->ELRS_THROTTLE < ARM_THROTTLE_MAX)
+			if (RX_USART_get_channels()->ELRS_YAW < ARM_YAW_MAX)
+				if (RX_USART_get_channels()->ELRS_PITCH < ARM_PITCH_MAX)
+					if (RX_USART_get_channels()->ELRS_ROLL > ARM_ROLL_MIN)
+					{
+						set_arm_code();
+					}
+
+	return check_arm_code();
 }

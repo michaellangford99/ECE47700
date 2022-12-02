@@ -37,6 +37,49 @@ crsf_channels_t saved_channel_data;
 uint8_t rx_buffer[BUFFER_SIZE*2];
 uint8_t* rx_buffer_start = rx_buffer;
 
+#define ELRS_SIGNAL_TIMEOUT_MS	500
+
+int ms_timestamp;
+int inactive_signal_count;
+int active_signal_count;
+uint8_t radio_signal = 0;
+
+uint8_t radio_signal_status()
+{
+	uint8_t current_status = current_radio_signal_status();
+
+	if (current_status == 0)
+	{
+		active_signal_count = 0;
+		if (inactive_signal_count <= 5)
+			inactive_signal_count++;
+		if (inactive_signal_count > 5)
+			radio_signal = 0;
+	}
+	else
+	{
+		inactive_signal_count = 0;
+		if (active_signal_count <= 5)
+			active_signal_count++;
+		if (active_signal_count > 5)
+			radio_signal = 1;
+	}
+
+	return radio_signal;
+}
+
+uint8_t current_radio_signal_status()
+{
+	int time = millis();
+
+	if (time - ms_timestamp > ELRS_SIGNAL_TIMEOUT_MS)
+	{
+		return 0;
+	}
+
+	return 1;
+}
+
 void enable_rx_usart_interrupt()
 {
 	RX_USART->CR1 |= USART_CR1_RXNEIE;
@@ -131,6 +174,9 @@ void RX_USART_INTERRUPT_HANDLE(void)
 		if (parse_status)
 		{
 			crsf_channels_t* channel_data = &saved_channel_data;
+
+			//save timestamp
+			ms_timestamp = millis();
 
 			/*printf("%d,\t", channel_data->ch0);
 			printf("%d,\t", channel_data->ch1);
