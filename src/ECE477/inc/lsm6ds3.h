@@ -226,5 +226,6 @@ void init_LSM6DS3(void);
 void calibrate_LSM6DS3();
 void read_axes_LSM6DS3();
 void update_LSM6DS3(void);
+void clear_yaw();
 
 #endif /* __LSM6DS3_H__ */

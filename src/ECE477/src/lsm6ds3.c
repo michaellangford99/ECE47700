@@ -79,6 +79,8 @@ static float current_time;
 //first of all, systick needs to have high precision
 //not sure what the range on this is.
 
+float imp_response[] = {0.25f, 0.75f, 1, 1, 1, 1, 0.75f, 0.25f};
+
 void init_LSM6DS3(){
 	
 	//inital LSM6DSO parameters (see LSM6DSO reference manual (https://www.st.com/en/mems-and-sensors/lsm6dsl.html))
@@ -110,8 +112,8 @@ void init_LSM6DS3(){
 
 	total_acceleration_filter.circular_buffer = total_acceleration;
 	total_acceleration_filter.first_element = 0;
-	total_acceleration_filter.impulse_response = hanning_64;
-	total_acceleration_filter.length = 64;
+	total_acceleration_filter.impulse_response = imp_response;
+	total_acceleration_filter.length = 8;
 
 	current_time = ftime();
 	last_time = current_time;
@@ -181,6 +183,11 @@ void read_axes(){
 
 int d = 0;
 
+void clear_yaw()
+{
+	gyro_angle_z = 0;
+}
+
 void update_LSM6DS3(void){
    
 	read_axes();
@@ -207,17 +214,19 @@ void update_LSM6DS3(void){
 	//if (total_acceleration_decimation_index == TOTAL_ACC_DECIMATION)
 	//{
 	//	total_acceleration_decimation_index = 0;
-		//total_acceleration_filtered = update_filter(&total_acceleration_filter, sqrt(accel_x*accel_x + accel_y*accel_y + accel_z*accel_z));
-	//}
+		total_acceleration_filtered = update_filter(&total_acceleration_filter, sqrt(accel_x*accel_x + accel_y*accel_y + accel_z*accel_z));
+
+		total_acceleration_filtered *= ((total_acceleration_filter.length-1)/2.0f)/6.0f;
+		//}
 	//trust of the accel
-	#define ALPHA_0 0.06f//0.61f
+	#define ALPHA_0 0.002f//0.61f
 
-	//float alpha_correction = pow(total_acceleration_filtered-1.0f, 2.0f);
+	float alpha_correction = pow(total_acceleration_filtered-1.0f, 2.0f);
 	//bigger this is, less it should trust accel
-	//alpha_correction=-alpha_correction*10.0f;
-	//alpha_correction = (alpha_correction < -ALPHA_0) ? -ALPHA_0 : alpha_correction;
+	alpha_correction=-alpha_correction*2.0f;
+	alpha_correction = (alpha_correction < -ALPHA_0) ? -ALPHA_0 : alpha_correction;
 
-#define ALPHA (ALPHA_0/* + alpha_correction*/)
+#define ALPHA (ALPHA_0 + alpha_correction)
 
 
 	compl_pitch += (1.0f-ALPHA)*(-gyro_rate_y*2.0f)*(current_time - last_time) + ALPHA * (accel_pitch-compl_pitch);
@@ -238,6 +247,15 @@ void update_LSM6DS3(void){
 	if (d > 100)
 	{
 		d = 0;
+
+		printf("%.3f,\t", compl_pitch);
+		printf("%.3f,\t", compl_roll);
+		printf("%.3f,\t", gyro_angle_x);
+		printf("%.3f,\t", gyro_angle_y);
+		printf("%.3f,\t", accel_pitch);
+		printf("%.3f,\t", accel_roll);
+
+		printf("\n");
 
 		//printf("%f,\t%f,\t%f,\t%f,\n", accel_x, accel_y, accel_z, current_time - last_time);
 
