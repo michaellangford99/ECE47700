@@ -28,6 +28,7 @@
 #include "pid.h"
 #include "math.h"
 #include "fir.h"
+#include "safety.h"
 #include "SparkFun_TMF8801_Arduino_Library.h"
 #include "SparkFun_TMF8801_Constants.h"
 #include "SparkFun_TMF8801_IO.h"
@@ -36,12 +37,14 @@
 struct PID yaw_pid;
 struct PID pitch_pid;
 struct PID roll_pid;
+struct PID throttle_pid;
 
 float motor_buffer[4][256];
 struct fir_filter motor_filter[4];
 float filtered_motor_output[4];
 float motor_output[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 pwm_output_t pwm_output;
+
 TMF8801_t device_descrip;
 
 //timestamps
@@ -52,6 +55,9 @@ static float current_time;
 
 #define LED_PIN 13
 #define LED_GPIO GPIOC
+
+#define SAFE_FLASH_PERIOD  1000
+#define ARMED_FLASH_PERIOD 100
 
 int led_flash_count;
 int led_flash_period;
@@ -69,6 +75,7 @@ float min(float a, float b)
 }
 
 uint8_t safety();
+uint8_t check_arm_code();
 
 int main(void){
 
@@ -98,8 +105,8 @@ int main(void){
 	init_PWM();
 	//init_motors();
 
-	init_I2C();
-	init_TMF8801(&device_descrip);
+	//init_I2C();
+	//init_TMF8801(&device_descrip);
 
 	init_SPI1();
 	init_LSM6DS3();
@@ -118,6 +125,8 @@ int main(void){
 	set_PID_constants(&yaw_pid, 	0.0080f, 0.00f, 00.0f);
 	set_PID_constants(&pitch_pid, 	0.0030f, 0.00f, 00.2f);
 	set_PID_constants(&roll_pid, 	0.0030f, 0.00f, 00.2f);
+
+	set_PID_constants(&throttle_pid, 	0.0005f, 0.0001f, 00.0f);
 
 	for (int i = 0; i < 4; i++)
 	{
@@ -236,7 +245,9 @@ int main(void){
 			motor_output[3] += roll_pid_response;
 		}
 		else
-			lsm6dsx_data.gyro_angle_z = 0;
+		{
+			clear_yaw();
+		}
 
 		//clamp motor values
 
@@ -265,12 +276,24 @@ int main(void){
 				filtered_motor_output[i] = compute_filter(&(motor_filter[i]));
 			}
 
-			pwm_output.duty_cycle_ch0 = (uint16_t)(filtered_motor_output[0]*65535.0f);
-			pwm_output.duty_cycle_ch1 = (uint16_t)(filtered_motor_output[1]*65535.0f);
-			pwm_output.duty_cycle_ch2 = (uint16_t)(filtered_motor_output[2]*65535.0f);
-			pwm_output.duty_cycle_ch3 = (uint16_t)(filtered_motor_output[3]*65535.0f);
+			if (safety())
+			{
+				pwm_output.duty_cycle_ch0 = (uint16_t)(filtered_motor_output[0]*65535.0f);
+				pwm_output.duty_cycle_ch1 = (uint16_t)(filtered_motor_output[1]*65535.0f);
+				pwm_output.duty_cycle_ch2 = (uint16_t)(filtered_motor_output[2]*65535.0f);
+				pwm_output.duty_cycle_ch3 = (uint16_t)(filtered_motor_output[3]*65535.0f);
 
-			set_PWM_duty_cycle(pwm_output);
+				set_PWM_duty_cycle(pwm_output);
+			}
+			else
+			{
+				pwm_output.duty_cycle_ch0 = 0;
+				pwm_output.duty_cycle_ch1 = 0;
+				pwm_output.duty_cycle_ch2 = 0;
+				pwm_output.duty_cycle_ch3 = 0;
+
+				set_PWM_duty_cycle(pwm_output);
+			}
 		}
 
 		d++;
@@ -279,10 +302,10 @@ int main(void){
 			d = 0;
 
 			//printf("%d,\t", s);
-			printf("%d,\t", RX_USART_get_channels()->ch4);
-			printf("%d,\t", RX_USART_get_channels()->ch5);
-			printf("%d,\t", RX_USART_get_channels()->ch6);
-			printf("%d,\t", RX_USART_get_channels()->ch7);
+			//printf("%d,\t", RX_USART_get_channels()->ch4);
+			//printf("%d,\t", RX_USART_get_channels()->ch5);
+			//printf("%d,\t", RX_USART_get_channels()->ch6);
+			//printf("%d,\t", RX_USART_get_channels()->ch7);
 			/*printf("%f,\t", rx_throttle);
 			printf("%f,\t", rx_yaw);
 			printf("%f,\t", rx_pitch);
@@ -294,8 +317,9 @@ int main(void){
 			printf("%f,\t", filtered_motor_output[1]);
 			printf("%f,\t", filtered_motor_output[2]);
 			printf("%f,\t", filtered_motor_output[3]);*/
-			printf("%.2f,\t", 1.0f/(current_time - last_time));
+			/*printf("%.2f,\t", 1.0f/(current_time - last_time));
 			printf("%.2f,\t", 1.0f/(current_time_2 - last_time_2));
+			printf("%d,\t", check_arm_code());
 			printf("%d,\t", saved_pi_packet.camera_status);
 			printf("%d,\t", saved_pi_packet.lidar_reading[0]);
 			printf("%d,\t", saved_pi_packet.lidar_reading[1]);
@@ -307,14 +331,15 @@ int main(void){
 			printf("%d,\t", pwm_output.duty_cycle_ch0);
 			printf("%d,\t", pwm_output.duty_cycle_ch1);
 			printf("%d,\t", pwm_output.duty_cycle_ch2);
-			printf("%d,\t", pwm_output.duty_cycle_ch3);
-			printf("%.3f,\t", lsm6dsx_data.compl_pitch);
-			printf("%.3f,\t", lsm6dsx_data.compl_roll);
-			read_distance(&device_descrip);
+			printf("%d,\t", pwm_output.duty_cycle_ch3);*/
+			//printf("%.3f,\t", lsm6dsx_data.compl_pitch);
+			//printf("%.3f,\t", lsm6dsx_data.compl_roll);
+			//read_distance(&device_descrip);
 			//printf("%d,\t", RX_USART_get_channels()->ch4);
 			//printf("%d,\t", RX_USART_get_channels()->ch5);
 			//printf("%d,\t", RX_USART_get_channels()->ch6);
 			//printf("%d,\t", RX_USART_get_channels()->ch7);
+			//printf("\n");
 		}
 
 		last_time_2 = current_time_2;
@@ -356,6 +381,8 @@ void set_arm_code()
 	ARMED[1] = ARM_CODE_BYTE_1;
 	ARMED[2] = ARM_CODE_BYTE_2;
 	ARMED[3] = ARM_CODE_BYTE_3;
+
+	led_flash_period = ARMED_FLASH_PERIOD;
 }
 
 void clear_arm_code()
@@ -364,10 +391,12 @@ void clear_arm_code()
 	ARMED[1] = 0;
 	ARMED[2] = 0;
 	ARMED[3] = 0;
+
+	led_flash_period = SAFE_FLASH_PERIOD;
 }
 
 int safety_update_count;
-#define SAFETY_UPDATE_PERIOD 100
+#define SAFETY_UPDATE_PERIOD 10
 
 uint8_t safety()
 {
@@ -412,12 +441,17 @@ uint8_t safety()
 		return 0;
 	}
 
+	float rx_throttle = RX_USART_convert_channel_to_unit_range(RX_USART_get_channels()->ELRS_THROTTLE);
+	float rx_yaw = RX_USART_convert_channel_to_unit_range(RX_USART_get_channels()->ELRS_YAW);
+	float rx_pitch = RX_USART_convert_channel_to_unit_range(RX_USART_get_channels()->ELRS_PITCH);
+	float rx_roll = RX_USART_convert_channel_to_unit_range(RX_USART_get_channels()->ELRS_ROLL);
+
 	//if not yet armed, check for arm condition (both sticks down and to the sides)
 	if (!check_arm_code())
-		if (RX_USART_get_channels()->ELRS_THROTTLE < ARM_THROTTLE_MAX)
-			if (RX_USART_get_channels()->ELRS_YAW < ARM_YAW_MAX)
-				if (RX_USART_get_channels()->ELRS_PITCH < ARM_PITCH_MAX)
-					if (RX_USART_get_channels()->ELRS_ROLL > ARM_ROLL_MIN)
+		if (rx_throttle < ARM_THROTTLE_MAX)
+			if (rx_yaw < ARM_YAW_MAX)
+				if (rx_pitch < ARM_PITCH_MAX)
+					if (rx_roll > ARM_ROLL_MIN)
 					{
 						set_arm_code();
 					}
