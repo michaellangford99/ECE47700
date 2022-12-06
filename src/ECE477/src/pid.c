@@ -19,9 +19,9 @@ void init_PID(struct PID* pid)
 	pid->Output = 0.0f;
 	pid->Last_Output = 0.0f;
 	pid->Delta_Output = 0.0f;
-	pid->maxP = 0.1f;
-	pid->maxI = 0.1f;
-	pid->maxD = 0.1f;
+	pid->maxP = 0.2f;
+	pid->maxI = 0.2f;
+	pid->maxD = 0.2f;
 }
 
 float bound(float value, float abs_max)

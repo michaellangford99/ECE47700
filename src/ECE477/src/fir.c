@@ -4,6 +4,17 @@
 #include "math.h"
 #include "fir.h"
 
+const float hanning_8[8] = {
+	0,
+	0.1883,
+	0.6113,
+	0.9505,
+	0.9505,
+	0.6113,
+	0.1883,
+	0
+};
+
 const float hanning_64[64] = {
         0,
    0.0025,

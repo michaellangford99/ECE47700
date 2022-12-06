@@ -116,7 +116,10 @@ void init_TMF8801(TMF8801_t* dev);
 
 void read_distance(TMF8801_t* dev);
 
-//Initializes STM32F411 and TMF8801
+void update_TMF8801(TMF8801_t* dev);
+uint16_t get_distance_TMF8801(TMF8801_t* dev);
+
+//Initializes STM32F446 and TMF8801
 bool _TMF8801_init(TMF8801_t* dev);
 
 // Polls if TMF8801's CPU is ready

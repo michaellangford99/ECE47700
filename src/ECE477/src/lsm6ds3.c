@@ -248,14 +248,14 @@ void update_LSM6DS3(void){
 	{
 		d = 0;
 
-		printf("%.3f,\t", compl_pitch);
-		printf("%.3f,\t", compl_roll);
-		printf("%.3f,\t", gyro_angle_x);
-		printf("%.3f,\t", gyro_angle_y);
-		printf("%.3f,\t", accel_pitch);
-		printf("%.3f,\t", accel_roll);
+		//printf("%.3f,\t", compl_pitch);
+		//printf("%.3f,\t", compl_roll);
+		//printf("%.3f,\t", gyro_angle_x);
+		//printf("%.3f,\t", gyro_angle_y);
+		//printf("%.3f,\t", accel_pitch);
+		//printf("%.3f,\t", accel_roll);
 
-		printf("\n");
+		//printf("\n");
 
 		//printf("%f,\t%f,\t%f,\t%f,\n", accel_x, accel_y, accel_z, current_time - last_time);
 

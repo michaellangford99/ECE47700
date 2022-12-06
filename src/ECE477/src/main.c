@@ -39,6 +39,9 @@ struct PID pitch_pid;
 struct PID roll_pid;
 struct PID throttle_pid;
 
+float filt_pitch_command = 0;
+float filt_roll_command = 0;
+
 float motor_buffer[4][256];
 struct fir_filter motor_filter[4];
 float filtered_motor_output[4];
@@ -56,12 +59,6 @@ static float current_time;
 #define LED_PIN 13
 #define LED_GPIO GPIOC
 
-#define SAFE_FLASH_PERIOD  1000
-#define ARMED_FLASH_PERIOD 100
-
-int led_flash_count;
-int led_flash_period;
-
 float max(float a, float b)
 {
 	if (a > b) return a;
@@ -73,9 +70,6 @@ float min(float a, float b)
 	if (a < b) return a;
 	return b;
 }
-
-uint8_t safety();
-uint8_t check_arm_code();
 
 int main(void){
 
@@ -113,7 +107,7 @@ int main(void){
 	init_MPU6500();
 
 	//wait for foam to stabilize
-	wait(2.0f);
+	 wait(2.0f);
 
 	calibrate_LSM6DS3();
 	calibrate_MPU6500();
@@ -122,79 +116,26 @@ int main(void){
 	init_PID(&pitch_pid);
 	init_PID(&roll_pid);
 
-	set_PID_constants(&yaw_pid, 	0.0080f, 0.00f, 00.0f);
-	set_PID_constants(&pitch_pid, 	0.0030f, 0.00f, 00.2f);
-	set_PID_constants(&roll_pid, 	0.0030f, 0.00f, 00.2f);
+	set_PID_constants(&yaw_pid, 	0.0001f, 0.00f, 00.0f);
+	set_PID_constants(&pitch_pid, 	0.0010f, 0.00f, 02.6f);
+	set_PID_constants(&roll_pid, 	0.0010f, 0.00f, 02.6f);
 
 	set_PID_constants(&throttle_pid, 	0.0005f, 0.0001f, 00.0f);
 
 	for (int i = 0; i < 4; i++)
 	{
-		motor_filter[i].impulse_response = hanning_64;
-		motor_filter[i].length = 64;
+		motor_filter[i].impulse_response = hanning_8;
+		motor_filter[i].length = 8;
 		motor_filter[i].first_element = 0;
 		motor_filter[i].circular_buffer = motor_buffer[i];
 	}
 
-	//indicate waiting for ARM
-	led_flash_period = 1000;
-
 	//main loop:
-	for(;;)
-	{
-		break;
-		//On medium update rate
-			//radio updates via DMA
-			//grab channel values
-			//communicate IMU and other log data to PI, and read in any new commands
-			//update safety code with the unlocking and the motor stop channels
-			//monitor autonomous switch
-
-		//very slow update rate
-			//grab I2C LIDAR distance to ground.
-				//if we want to be fancy, generate distance to 
-				//ground as dot product of distance reading and 
-				//down vector (generated via pitch, roll unit vectors)
-		
-		//as fast as possible
-		//determine time delta
-		//	(you should find what the 
-		//	 system can do and then force it)
-		//read gyro and accelerometer
-		//(add magnetometer update later)
-			//estimate yaw from gyro and magnetometer
-		//lpf gyro and acc data if necessary
-		//compute atan2 of acc data to find yaw, pitch, roll
-		//compute complementary filter of gyro rate, time delta, and acc angles
-
-		//based on autonomous mode / radio control, select target yaw, pitch
-		// roll, and height above ground from either PI data or radio
-			//for throttle, it is either autonomously controlled via LIDAR and 
-			//a pi height setpoint - or it uses no PID and passes the throttle
-			//value from the radio directly to the motors
-
-		//pass yaw, pitch, roll, and throttle (if needed) to PID loops
-		//update PIDs
-
-		//translate PID outputs into motor values
-			//linear combination of the responses, coefficients based on the motor
-
-		//send updated motor commands to motors
-			//motor driver will internally do any necessary low pass filter
-
-		//medium update rate, or as needed
-			//dump log data out over USB
-	}
 	int d = 0;
 	int m = 0;
 	for(;;) {
 
-		led_flash_count++;
-		if (led_flash_count >= led_flash_period)
-		{
-			led_flash_count = 0;
-			LED_GPIO->ODR ^= 0x1 << LED_PIN;
-		}
+		safety_LED();
 
 		last_time = current_time;
 		current_time = ftime();
@@ -202,15 +143,19 @@ int main(void){
 		update_LSM6DS3();
 		update_MPU6500();
 		update_PI_USART();
+		//update_TMF8801(&device_descrip);
 
-		float rx_throttle = RX_USART_convert_channel_to_unit_range(RX_USART_get_channels()->ELRS_THROTTLE);
+		float rx_throttle = RX_USART_convert_channel_to_unit_ran+ge(RX_USART_get_channels()->ELRS_THROTTLE);
 		float rx_yaw 	  = RX_USART_convert_channel_to_unit_range(RX_USART_get_channels()->ELRS_YAW)   - 0.5f;
 		float rx_pitch 	  = RX_USART_convert_channel_to_unit_range(RX_USART_get_channels()->ELRS_PITCH) - 0.5f;
 		float rx_roll 	  = RX_USART_convert_channel_to_unit_range(RX_USART_get_channels()->ELRS_ROLL)  - 0.5f;
 
+		filt_pitch_command = 0.001f*rx_pitch + 0.999f*filt_pitch_command;
+		filt_roll_command  = 0.001f*rx_roll  + 0.999f*filt_roll_command;
+
 		float yaw_pid_response 	 = update_PID(&yaw_pid,   lsm6dsx_data.gyro_angle_z, rx_yaw*30);
-		float pitch_pid_response = update_PID(&pitch_pid, lsm6dsx_data.compl_pitch,  rx_pitch*30);
-		float roll_pid_response  = update_PID(&roll_pid,  lsm6dsx_data.compl_roll,   rx_roll*30);
+		float pitch_pid_response = update_PID(&pitch_pid, lsm6dsx_data.compl_pitch,  filt_pitch_command*30);
+		float roll_pid_response  = update_PID(&roll_pid,  lsm6dsx_data.compl_roll,   -filt_roll_command*30);
 
 		//clamp PID outputs (depending on throttle?)
 		float max_response = 0.2f;
@@ -227,7 +172,7 @@ int main(void){
 		motor_output[2] = rx_throttle;
 		motor_output[3] = rx_throttle;
 
-		if (rx_throttle > 0.05f)
+		if (rx_throttle > 0.01f)
 		{
 			motor_output[0] += yaw_pid_response;
 			motor_output[1] += -yaw_pid_response;
@@ -250,7 +195,6 @@ int main(void){
 		}
 
 		//clamp motor values
-
 		motor_output[0] = max(0.0f, motor_output[0]);
 		motor_output[1] = max(0.0f, motor_output[1]);
 		motor_output[2] = max(0.0f, motor_output[2]);
@@ -266,8 +210,10 @@ int main(void){
 			shift_filter(&(motor_filter[i]), &(motor_output[i]), 1);
 		}
 
+		//decimate and low pass motor values
+		//(FIR filter so able to move to output side of decimator)
 		m++;
-		if (m == 32)
+		if (m == 4)
 		{
 			m = 0;
 
@@ -278,10 +224,16 @@ int main(void){
 
 			if (safety())
 			{
-				pwm_output.duty_cycle_ch0 = (uint16_t)(filtered_motor_output[0]*65535.0f);
-				pwm_output.duty_cycle_ch1 = (uint16_t)(filtered_motor_output[1]*65535.0f);
-				pwm_output.duty_cycle_ch2 = (uint16_t)(filtered_motor_output[2]*65535.0f);
-				pwm_output.duty_cycle_ch3 = (uint16_t)(filtered_motor_output[3]*65535.0f);
+				uint32_t m0 = (uint32_t)(filtered_motor_output[0]*65535.0f);
+				uint32_t m1 = (uint32_t)(filtered_motor_output[1]*65535.0f);
+				uint32_t m2 = (uint32_t)(filtered_motor_output[2]*65535.0f);
+				uint32_t m3 = (uint32_t)(filtered_motor_output[3]*65535.0f);
+
+
+				pwm_output.duty_cycle_ch0 = m0>65535 ? 65535 : (uint16_t)m0;
+				pwm_output.duty_cycle_ch1 = m1>65535 ? 65535 : (uint16_t)m1;
+				pwm_output.duty_cycle_ch2 = m2>65535 ? 65535 : (uint16_t)m2;
+				pwm_output.duty_cycle_ch3 = m3>65535 ? 65535 : (uint16_t)m3;
 
 				set_PWM_duty_cycle(pwm_output);
 			}
@@ -317,7 +269,7 @@ int main(void){
 			printf("%f,\t", filtered_motor_output[1]);
 			printf("%f,\t", filtered_motor_output[2]);
 			printf("%f,\t", filtered_motor_output[3]);*/
-			/*printf("%.2f,\t", 1.0f/(current_time - last_time));
+			printf("%.2f,\t", 1.0f/(current_time - last_time));
 			printf("%.2f,\t", 1.0f/(current_time_2 - last_time_2));
 			printf("%d,\t", check_arm_code());
 			printf("%d,\t", saved_pi_packet.camera_status);
@@ -331,130 +283,68 @@ int main(void){
 			printf("%d,\t", pwm_output.duty_cycle_ch0);
 			printf("%d,\t", pwm_output.duty_cycle_ch1);
 			printf("%d,\t", pwm_output.duty_cycle_ch2);
-			printf("%d,\t", pwm_output.duty_cycle_ch3);*/
-			//printf("%.3f,\t", lsm6dsx_data.compl_pitch);
-			//printf("%.3f,\t", lsm6dsx_data.compl_roll);
+			printf("%d,\t", pwm_output.duty_cycle_ch3);
+			printf("%.3f,\t", lsm6dsx_data.compl_pitch);
+			printf("%.3f,\t", lsm6dsx_data.compl_roll);
+
+			printf("%.3f,\t", filt_pitch_command);
+			printf("%.3f,\t", filt_roll_command);
+
 			//read_distance(&device_descrip);
 			//printf("%d,\t", RX_USART_get_channels()->ch4);
 			//printf("%d,\t", RX_USART_get_channels()->ch5);
 			//printf("%d,\t", RX_USART_get_channels()->ch6);
 			//printf("%d,\t", RX_USART_get_channels()->ch7);
-			//printf("\n");
+			printf("\n");
 		}
 
 		last_time_2 = current_time_2;
 		current_time_2 = ftime();
-
-		//char chr = __io_getchar();
-		//printf("You entered %c.", chr);
-
-		//printf("Enter your name: %d\r\n", 42069);
-	}
-}
-
-#define ARM_THROTTLE_MAX	0.1f
-#define ARM_YAW_MAX			0.1f
-#define ARM_PITCH_MAX		0.1f
-#define ARM_ROLL_MIN		0.9f
-
-#define ARM_CODE_BYTE_0 4
-#define ARM_CODE_BYTE_1 7
-#define ARM_CODE_BYTE_2 7
-#define ARM_CODE_BYTE_3 8
-
-//for security, use 4 bytes.. all must change to the arm code to arm the drone
-uint8_t ARMED[4] = {0, 0, 0, 0};
-
-uint8_t check_arm_code()
-{
-	if ((ARMED[0] == ARM_CODE_BYTE_0) &&
-		(ARMED[1] == ARM_CODE_BYTE_1) &&
-		(ARMED[2] == ARM_CODE_BYTE_2) &&
-		(ARMED[3] == ARM_CODE_BYTE_3))
-		return 1;
-	return 0;
-}
-
-void set_arm_code()
-{
-	ARMED[0] = ARM_CODE_BYTE_0;
-	ARMED[1] = ARM_CODE_BYTE_1;
-	ARMED[2] = ARM_CODE_BYTE_2;
-	ARMED[3] = ARM_CODE_BYTE_3;
-
-	led_flash_period = ARMED_FLASH_PERIOD;
-}
-
-void clear_arm_code()
-{
-	ARMED[0] = 0;
-	ARMED[1] = 0;
-	ARMED[2] = 0;
-	ARMED[3] = 0;
-
-	led_flash_period = SAFE_FLASH_PERIOD;
-}
-
-int safety_update_count;
-#define SAFETY_UPDATE_PERIOD 10
-
-uint8_t safety()
-{
-	//only actually do the sequence periodically, usually return the saved arm status
-	safety_update_count++;
-	if (safety_update_count > SAFETY_UPDATE_PERIOD)
-	{
-		safety_update_count = 0;
-	}
-	else
-	{
-		return check_arm_code();
 	}
 
-	//if the radio doesn't think it has a valid signal, abort
-	if (radio_signal_status() == 0)
-	{
-		clear_arm_code();
-		return 0;
-	}
+	for(;;)
+		{
+			break;
+			//On medium update rate
+				//radio updates via DMA
+				//grab channel values
+				//communicate IMU and other log data to PI, and read in any new commands
+				//update safety code with the unlocking and the motor stop channels
+				//monitor autonomous switch
 
-	//first check that all aux signals are at least at or above the min and below or at the max
-	uint8_t active_aux_signals = 0;
+			//very slow update rate
+				//grab I2C LIDAR distance to ground.
+					//if we want to be fancy, generate distance to
+					//ground as dot product of distance reading and
+					//down vector (generated via pitch, roll unit vectors)
 
-	//check that signals are in range
-	if ((RX_USART_get_channels()->ELRS_SA >= ELRS_AUX_MIN) && (RX_USART_get_channels()->ELRS_SA <= ELRS_AUX_MAX)) active_aux_signals++;
-	if ((RX_USART_get_channels()->ELRS_SB >= ELRS_AUX_MIN) && (RX_USART_get_channels()->ELRS_SB <= ELRS_AUX_MAX)) active_aux_signals++;
-	if ((RX_USART_get_channels()->ELRS_SC >= ELRS_AUX_MIN) && (RX_USART_get_channels()->ELRS_SC <= ELRS_AUX_MAX)) active_aux_signals++;
-	if ((RX_USART_get_channels()->ELRS_SD >= ELRS_AUX_MIN) && (RX_USART_get_channels()->ELRS_SD <= ELRS_AUX_MAX)) active_aux_signals++;
+			//as fast as possible
+			//determine time delta
+			//	(you should find what the
+			//	 system can do and then force it)
+			//read gyro and accelerometer
+			//(add magnetometer update later)
+				//estimate yaw from gyro and magnetometer
+			//lpf gyro and acc data if necessary
+			//compute atan2 of acc data to find yaw, pitch, roll
+			//compute complementary filter of gyro rate, time delta, and acc angles
 
-	//if all 4 aren't in range, abort
-	if (active_aux_signals != 4)
-	{
-		clear_arm_code();
-		return 0;
-	}
+			//based on autonomous mode / radio control, select target yaw, pitch
+			// roll, and height above ground from either PI data or radio
+				//for throttle, it is either autonomously controlled via LIDAR and
+				//a pi height setpoint - or it uses no PID and passes the throttle
+				//value from the radio directly to the motors
 
-	//check that arming aux switch is in armed position
-	if (RX_USART_get_channels()->ELRS_ARM_CHANNEL < ELRS_AUX_MAX)
-	{
-		clear_arm_code();
-		return 0;
-	}
+			//pass yaw, pitch, roll, and throttle (if needed) to PID loops
+			//update PIDs
 
-	float rx_throttle = RX_USART_convert_channel_to_unit_range(RX_USART_get_channels()->ELRS_THROTTLE);
-	float rx_yaw = RX_USART_convert_channel_to_unit_range(RX_USART_get_channels()->ELRS_YAW);
-	float rx_pitch = RX_USART_convert_channel_to_unit_range(RX_USART_get_channels()->ELRS_PITCH);
-	float rx_roll = RX_USART_convert_channel_to_unit_range(RX_USART_get_channels()->ELRS_ROLL);
+			//translate PID outputs into motor values
+				//linear combination of the responses, coefficients based on the motor
 
-	//if not yet armed, check for arm condition (both sticks down and to the sides)
-	if (!check_arm_code())
-		if (rx_throttle < ARM_THROTTLE_MAX)
-			if (rx_yaw < ARM_YAW_MAX)
-				if (rx_pitch < ARM_PITCH_MAX)
-					if (rx_roll > ARM_ROLL_MIN)
-					{
-						set_arm_code();
-					}
+			//send updated motor commands to motors
+				//motor driver will internally do any necessary low pass filter
 
-	return check_arm_code();
+			//medium update rate, or as needed
+				//dump log data out over USB
+		}
 }

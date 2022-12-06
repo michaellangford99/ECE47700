@@ -69,36 +69,36 @@ void init_TMF8801(TMF8801_t* dev)
 	nano_wait(10000);
 }
 
+uint16_t distance;
+#define UPDATE_PERIOD 500
+static int l;
+void update_TMF8801(TMF8801_t* dev)
+{
+	l++;
+	if (l > UPDATE_PERIOD)
+	{
+		l = 0;
+
+		read_distance(dev);
+
+		//prob. do some filtering here
+
+	}
+}
+
+uint16_t get_distance_TMF8801(TMF8801_t* dev)
+{
+	return distance;
+}
+
 void read_distance(TMF8801_t* dev) {
 	if(dataAvailable())
 	{
-		int distance = getDistance();
-		printf("%d\n", distance);
+		distance = getDistance();
 	}
-	nano_wait(100);
 }
 bool _TMF8801_init(TMF8801_t* dev) {
-	// Setting up the system clock to count the number of ticks
-	#define LED_GPIO GPIOA
-	#define LED_PIN 5
 
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
-
-	//PC13 is the LED on test board
-	//PA5 is the LED on the Nucleo
-	LED_GPIO->MODER |= 0x1 << (LED_PIN * 2);
-	LED_GPIO->MODER &= ~(0x2 << (LED_PIN * 2));
-
-	//LED_GPIO->ODR |= 0x1 << LED_PIN;
-
-	//SysTick->LOAD = 500 * (16000 - 1);
-	SysTick->LOAD = 10*(10000 - 1);
-	SysTick->VAL = 0;
-	SysTick->CTRL |= (1<<0);
-
-	SysTick->CTRL |= (SysTick_CTRL_TICKINT_Msk
-			| SysTick_CTRL_ENABLE_Msk |
-			SysTick_CTRL_CLKSOURCE_Msk);
 
 	activeDev = dev;
 	activeDev->address = 0x41;
@@ -205,17 +205,6 @@ void TMF8801_setDevice(TMF8801_t* device)
 }
 
 uint32_t ticksTMF = 0;
-/*void SysTick_Handler(void)
-{
-	ticksTMF++;
-	LED_GPIO->ODR ^= 0x1 << LED_PIN;
-	//LED_GPIO->ODR ^= 0x1 << LED_PIN;
-}
-
-uint32_t millis()
-{
-	return ticksTMF;
-}*/
 
 bool cpuReady()
 {

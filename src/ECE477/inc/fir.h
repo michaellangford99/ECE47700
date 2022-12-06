@@ -6,6 +6,7 @@
 #include "system.h"
 #include "math.h"
 
+extern const float hanning_8[8];
 extern const float hanning_64[64];
 extern const float hanning_256[256];
 
