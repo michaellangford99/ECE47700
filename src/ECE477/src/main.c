@@ -1,13 +1,11 @@
 /**
   ******************************************************************************
   * @file    main.c
-  * @author  Ac6
-  * @version V1.0
-  * @date    01-December-2013
-  * @brief   Default main function.
+  * @author  Michael Langford
+  * @date    06-December-2022
+  * @brief   Flight controller main control loop
   ******************************************************************************
 */
-
 
 #include "stm32f4xx.h"
 #include <stdio.h>
@@ -37,7 +35,11 @@
 struct PID yaw_pid;
 struct PID pitch_pid;
 struct PID roll_pid;
-struct PID throttle_pid;
+
+float auto_throttle_response;
+float auto_throttle_setpoint = 220.0f;
+float auto_throttle_center_point;
+struct PID auto_throttle_pid;
 
 float filt_pitch_command = 0;
 float filt_roll_command = 0;
@@ -99,8 +101,8 @@ int main(void){
 	init_PWM();
 	//init_motors();
 
-	//init_I2C();
-	//init_TMF8801(&device_descrip);
+	init_I2C();
+	init_TMF8801(&device_descrip);
 
 	init_SPI1();
 	init_LSM6DS3();
@@ -115,12 +117,15 @@ int main(void){
 	init_PID(&yaw_pid);
 	init_PID(&pitch_pid);
 	init_PID(&roll_pid);
+	init_PID(&auto_throttle_pid);
 
-	set_PID_constants(&yaw_pid, 	0.0001f, 0.00f, 00.0f);
-	set_PID_constants(&pitch_pid, 	0.0010f, 0.00f, 02.6f);
-	set_PID_constants(&roll_pid, 	0.0010f, 0.00f, 02.6f);
+	set_PID_constants(&yaw_pid, 	0.0015f, 0.00f, 00.0f);
+	set_PID_constants(&pitch_pid, 	0.0010f, 0.00f, 01.6f);
+	set_PID_constants(&roll_pid, 	0.0010f, 0.00f, 01.6f);
 
-	set_PID_constants(&throttle_pid, 	0.0005f, 0.0001f, 00.0f);
+	set_PID_constants(&auto_throttle_pid, 	0.0001f, 0.00000f, 0.0f);
+	auto_throttle_pid.maxP=0.1f;
+	auto_throttle_pid.maxI=0.05f;
 
 	for (int i = 0; i < 4; i++)
 	{
@@ -143,19 +148,44 @@ int main(void){
 		update_LSM6DS3();
 		update_MPU6500();
 		update_PI_USART();
-		//update_TMF8801(&device_descrip);
+		update_TMF8801(&device_descrip);
 
-		float rx_throttle = RX_USART_convert_channel_to_unit_ran+ge(RX_USART_get_channels()->ELRS_THROTTLE);
+		float rx_throttle = RX_USART_convert_channel_to_unit_range(RX_USART_get_channels()->ELRS_THROTTLE);
 		float rx_yaw 	  = RX_USART_convert_channel_to_unit_range(RX_USART_get_channels()->ELRS_YAW)   - 0.5f;
 		float rx_pitch 	  = RX_USART_convert_channel_to_unit_range(RX_USART_get_channels()->ELRS_PITCH) - 0.5f;
 		float rx_roll 	  = RX_USART_convert_channel_to_unit_range(RX_USART_get_channels()->ELRS_ROLL)  - 0.5f;
 
-		filt_pitch_command = 0.001f*rx_pitch + 0.999f*filt_pitch_command;
-		filt_roll_command  = 0.001f*rx_roll  + 0.999f*filt_roll_command;
+		if (RX_USART_get_channels()->ELRS_SD < ELRS_AUX_MAX)
+		{
+			rx_throttle *= 0.3f;
+		}
 
-		float yaw_pid_response 	 = update_PID(&yaw_pid,   lsm6dsx_data.gyro_angle_z, rx_yaw*30);
-		float pitch_pid_response = update_PID(&pitch_pid, lsm6dsx_data.compl_pitch,  filt_pitch_command*30);
-		float roll_pid_response  = update_PID(&roll_pid,  lsm6dsx_data.compl_roll,   -filt_roll_command*30);
+		filt_pitch_command = 0.002f*rx_pitch + 0.998f*filt_pitch_command;
+		filt_roll_command  = 0.002f*rx_roll  + 0.998f*filt_roll_command;
+
+		float yaw_pid_response 	 = update_PID(&yaw_pid,   lsm6dsx_data.gyro_angle_z, -rx_yaw*40);
+		float pitch_pid_response = update_PID(&pitch_pid, lsm6dsx_data.compl_pitch,  filt_pitch_command*40);
+		float roll_pid_response  = update_PID(&roll_pid,  lsm6dsx_data.compl_roll,   -filt_roll_command*40);
+
+		//check for autonomous mode (TODO: check LiDAR timeout)
+		if (RX_USART_get_channels()->ELRS_SC >= ELRS_AUX_MID)
+		{
+			//clearly can't use a D in this PID due to switching on and off
+			float dist_measurement = get_distance_TMF8801(&device_descrip);
+			auto_throttle_response = update_PID(&auto_throttle_pid, (float)dist_measurement, auto_throttle_setpoint);
+
+			auto_throttle_response = min(0.05f, auto_throttle_response);
+			auto_throttle_response = max(-0.05f, auto_throttle_response);
+
+			rx_throttle = auto_throttle_center_point + auto_throttle_response;
+			rx_throttle = (rx_throttle < 0.05f) ? 0.05f : rx_throttle;
+		}
+		else
+		{
+			//save last manual-mode throttle
+			auto_throttle_center_point = rx_throttle;
+			auto_throttle_setpoint = get_distance_TMF8801(&device_descrip);
+		}
 
 		//clamp PID outputs (depending on throttle?)
 		float max_response = 0.2f;
@@ -248,6 +278,9 @@ int main(void){
 			}
 		}
 
+		//notify systick that main routine is still alive
+		systick_clear_watchdog();
+
 		d++;
 		if (d > 50)
 		{
@@ -269,23 +302,30 @@ int main(void){
 			printf("%f,\t", filtered_motor_output[1]);
 			printf("%f,\t", filtered_motor_output[2]);
 			printf("%f,\t", filtered_motor_output[3]);*/
-			printf("%.2f,\t", 1.0f/(current_time - last_time));
-			printf("%.2f,\t", 1.0f/(current_time_2 - last_time_2));
+			//printf("%.2f,\t", 1.0f/(current_time - last_time));
+			//printf("%.2f,\t", 1.0f/(current_time_2 - last_time_2));
 			printf("%d,\t", check_arm_code());
 			printf("%d,\t", saved_pi_packet.camera_status);
 			printf("%d,\t", saved_pi_packet.lidar_reading[0]);
 			printf("%d,\t", saved_pi_packet.lidar_reading[1]);
 			printf("%d,\t", saved_pi_packet.lidar_reading[2]);
 			printf("%d,\t", saved_pi_packet.lidar_reading[3]);
-			printf("%f,\t", saved_pi_packet.command_yaw);
-			printf("%f,\t", saved_pi_packet.command_pitch);
-			printf("%f,\t", saved_pi_packet.command_roll);
+			printf("%.2f,\t", saved_pi_packet.command_yaw);
+			printf("%.2f,\t", saved_pi_packet.command_pitch);
+			printf("%.2f,\t", saved_pi_packet.command_roll);
 			printf("%d,\t", pwm_output.duty_cycle_ch0);
 			printf("%d,\t", pwm_output.duty_cycle_ch1);
 			printf("%d,\t", pwm_output.duty_cycle_ch2);
 			printf("%d,\t", pwm_output.duty_cycle_ch3);
-			printf("%.3f,\t", lsm6dsx_data.compl_pitch);
-			printf("%.3f,\t", lsm6dsx_data.compl_roll);
+			//printf("%.3f,\t", lsm6dsx_data.gyro_angle_z);
+			//printf("%.3f,\t", lsm6dsx_data.compl_pitch);
+			//printf("%.3f,\t", lsm6dsx_data.compl_roll);
+
+			//printf("%d,\t", get_distance_TMF8801(&device_descrip));
+
+			//printf("%.3f,\t", rx_throttle);
+			//printf("%.3f,\t", auto_throttle_center_point);
+			//printf("%.3f,\t", auto_throttle_response);
 
 			printf("%.3f,\t", filt_pitch_command);
 			printf("%.3f,\t", filt_roll_command);

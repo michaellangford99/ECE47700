@@ -90,6 +90,7 @@ void USB_USART_INTERRUPT_HANDLE(void)
 		if (fifo_full(&input_fifo))
 			fifo_remove(&input_fifo);
 		insert_echo_char(serfifo[seroffset]);
+		//pi_putchar(serfifo[seroffset]);
 		seroffset = (seroffset + 1) % sizeof serfifo;
 	}
 }

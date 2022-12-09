@@ -154,6 +154,8 @@ void PI_USART_INTERRUPT_HANDLE(void)
 			printf("%d\n", channel_data->ch7);*/
 		}
 		
+		//printf("%c", pi_serfifo[pi_seroffset]);
+
 		//putchar('0'+ pi_serfifo[pi_seroffset]);
 
 		//pi_putchar(pi_serfifo[pi_seroffset]);
@@ -227,11 +229,11 @@ int pi_update_count = 0;
 void update_PI_USART()
 {
 	pi_update_count++;
-	if (pi_update_count >= 300)
+	if (pi_update_count >= 50)
 	{
 		pi_update_count = 0;
 
-		sprintf(output_text, "IMU\t%.2f,\t%.2f,\t%.2f\n", lsm6dsx_data.gyro_angle_z, lsm6dsx_data.compl_pitch, lsm6dsx_data.compl_pitch);
+		sprintf(output_text, "IMU\t%.2f,\t%.2f,\t%.2f\n", lsm6dsx_data.gyro_angle_z, lsm6dsx_data.compl_pitch, lsm6dsx_data.compl_roll);
 		pi_puts(output_text);
 	}
 }

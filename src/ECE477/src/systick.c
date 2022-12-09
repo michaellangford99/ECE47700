@@ -3,6 +3,8 @@
 #include "string.h"
 #include "systick.h"
 #include "system.h"
+#include "safety.h"
+#include "pwm.h"
 
 #define AHB_CLOCK 		SystemCoreClock		//48 MHz
 #define AHB_CLOCK_DIV_8 (AHB_CLOCK/8)	//6 MHz
@@ -23,11 +25,41 @@ void init_SYSTICK()
 	printf("\tAHB_CLOCK_DIV_8:	%d\n", AHB_CLOCK_DIV_8);
 }
 
+uint8_t watchdog = 0;
+
 uint32_t ticks = 0;
 void SysTick_Handler(void)
 {
 	ticks++;
 	//GPIOC->ODR ^= 0x1 << 13;
+
+	if (check_arm_code())
+	{
+		if (watchdog > 50)
+		{
+			pwm_output_t zeros;
+			zeros.duty_cycle_ch0 = 0;
+			zeros.duty_cycle_ch1 = 0;
+			zeros.duty_cycle_ch2 = 0;
+			zeros.duty_cycle_ch3 = 0;
+
+			set_PWM_duty_cycle(zeros);
+		}
+		else
+		{
+			//that way watchdog won't rollover.
+			watchdog++;
+		}
+	}
+	else
+	{
+		watchdog = 0;
+	}
+}
+
+void systick_clear_watchdog()
+{
+	watchdog = 0;
 }
 
 uint32_t millis()

@@ -20,6 +20,8 @@
 #include "SparkFun_TMF8801_Arduino_Library.h"
 #include "SparkFun_TMF8801_IO.h"
 
+#include "fir.h"
+
 // Constants definitions
 
 const uint8_t DEFAULT_I2C_ADDR = 0x41;
@@ -40,10 +42,16 @@ const uint8_t CONTENT_CALIBRATION = 0x0a;
 // Values below were taken from AN000597, pp 22
 const uint8_t ALGO_STATE[11] = { 0xB1, 0xA9, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
+float lidar_buffer[24];
+struct fir_filter lidar_filter;
+uint16_t distance;
+float filtered_distance;
+
 void init_TMF8801(TMF8801_t* dev)
 {
 	bool devInit = _TMF8801_init(dev);
 	nano_wait(1000);
+
 	if(devInit == true)
 	{
 			enableInterrupt();
@@ -66,11 +74,15 @@ void init_TMF8801(TMF8801_t* dev)
 	{
 		wakeUpDevice();
 	}
-	nano_wait(10000);
+	nano_wait(1000);
+
+	lidar_filter.impulse_response = hanning_8;
+	lidar_filter.length = 8;
+	lidar_filter.first_element = 0;
+	lidar_filter.circular_buffer = lidar_buffer;
 }
 
-uint16_t distance;
-#define UPDATE_PERIOD 500
+#define UPDATE_PERIOD 100
 static int l;
 void update_TMF8801(TMF8801_t* dev)
 {
@@ -81,14 +93,16 @@ void update_TMF8801(TMF8801_t* dev)
 
 		read_distance(dev);
 
-		//prob. do some filtering here
-
+		//do some filtering here
+		float fdist = (float)distance;
+		shift_filter(&lidar_filter, &fdist, 1);
+		filtered_distance = compute_filter(&lidar_filter);
 	}
 }
 
 uint16_t get_distance_TMF8801(TMF8801_t* dev)
 {
-	return distance;
+	return distance;//filtered_distance;
 }
 
 void read_distance(TMF8801_t* dev) {
@@ -438,12 +452,15 @@ void doMeasurement()
 	activeDev->distancePeak = buffer[3];
 	activeDev->distancePeak = activeDev->distancePeak << 8;
 	activeDev->distancePeak += buffer[2];
+
+	if (activeDev->distancePeak == 0)
+		activeDev->distancePeak = 660;
 }
 
 int getDistance()
 {
 	// Returns interrupt pin to open drain
-	clearInterruptFlag();
+	//clearInterruptFlag();
 	// Reads measurement data
 	doMeasurement();
 	return activeDev->distancePeak;
