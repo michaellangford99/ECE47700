@@ -41,6 +41,7 @@ float auto_throttle_setpoint = 220.0f;
 float auto_throttle_center_point;
 struct PID auto_throttle_pid;
 
+float filt_yaw_command = 0;
 float filt_pitch_command = 0;
 float filt_roll_command = 0;
 
@@ -119,11 +120,11 @@ int main(void){
 	init_PID(&roll_pid);
 	init_PID(&auto_throttle_pid);
 
-	set_PID_constants(&yaw_pid, 	0.0015f, 0.00f, 00.0f);
-	set_PID_constants(&pitch_pid, 	0.0010f, 0.00f, 01.6f);
-	set_PID_constants(&roll_pid, 	0.0010f, 0.00f, 01.6f);
+	set_PID_constants(&yaw_pid, 	0.0015f, 0.00f, 01.3f);
+	set_PID_constants(&pitch_pid, 	0.0010f, 0.00f, 01.0);
+	set_PID_constants(&roll_pid, 	0.0010f, 0.00f, 01.0f);
 
-	set_PID_constants(&auto_throttle_pid, 	0.0001f, 0.00000f, 0.2f);
+	set_PID_constants(&auto_throttle_pid, 	0.00005f, 0.00000f, 0.1f);
 	auto_throttle_pid.maxP=0.1f;
 	auto_throttle_pid.maxI=0.05f;
 
@@ -189,10 +190,11 @@ int main(void){
 			auto_throttle_setpoint = get_distance_TMF8801(&device_descrip);
 		}
 
-		filt_pitch_command = 0.002f*rx_pitch + 0.998f*filt_pitch_command;
-		filt_roll_command  = 0.002f*rx_roll  + 0.998f*filt_roll_command;
+		filt_yaw_command  += -rx_yaw/40.0f;
+		filt_pitch_command = 0.003f*rx_pitch + 0.997f*filt_pitch_command;
+		filt_roll_command  = 0.003f*rx_roll  + 0.997f*filt_roll_command;
 
-		float yaw_pid_response 	 = update_PID(&yaw_pid,   lsm6dsx_data.gyro_angle_z, -rx_yaw*40);
+		float yaw_pid_response 	 = update_PID(&yaw_pid,   lsm6dsx_data.gyro_angle_z, filt_yaw_command);
 		float pitch_pid_response = update_PID(&pitch_pid, lsm6dsx_data.compl_pitch,  filt_pitch_command*40);
 		float roll_pid_response  = update_PID(&roll_pid,  lsm6dsx_data.compl_roll,   -filt_roll_command*40);
 
@@ -231,6 +233,7 @@ int main(void){
 		else
 		{
 			clear_yaw();
+			filt_yaw_command = 0.0f;
 		}
 
 		//clamp motor values
@@ -336,8 +339,9 @@ int main(void){
 			printf("%.3f,\t", auto_throttle_center_point);
 			printf("%.3f,\t", auto_throttle_response);
 
-			//printf("%.3f,\t", filt_pitch_command*40);
-			//printf("%.3f,\t", filt_roll_command*40);
+			printf("%.3f,\t", filt_yaw_command);
+			printf("%.3f,\t", filt_pitch_command*40);
+			printf("%.3f,\t", filt_roll_command*40);
 
 			//read_distance(&device_descrip);
 			//printf("%d,\t", RX_USART_get_channels()->ch4);
