@@ -1,0 +1,57 @@
+max responses for each type of P, I, D
+calibrate a second or so after reset because of foam
+charge batteries
+make a second board
+lock nuts onto props
+program spin direction on motors
+document spin direction and propeller CCW/CW
+#define that in code
+add printout for motor LPF cuttoff
+complete mpu6500 code so we can use it
+fix lsm6 and mpu code to use struct properly
+decrease cutoff freq. of internal gyro LPF
+safe startup sequence and arming!!
+only send motors zero until radio signal acquired
+send 0's in any mode if radio lost
+remove correctly parsed data rather than continually shifting across it
+CRC on pi steering commands
+reduce pi uart buffer
+increase serial uart baudrate
+hardware clock
+
+add command to lower set height
+
+tmf8801
+autonomous switch
+pid loop and lidar calculated throttle
+set center point when switch is made from manual to autonomous
+
+migrate safety code to its own file
+
+logging on the pi
+
+wiring for the lidar
+mounting the lidar
+connector from pi zero to pcb
+skid mount and battery clearance
+tmf8801 mounting and wiring harness
+test Pi Z to Pi 3 SD card transfer
+
+demonstrate pi can receive imu frames
+
+test Santiago's tmf8801 code and integrate
+transmit throttle or lidar elevation
+
+determine fc impulse response to a pitch and roll command
+
+add timeouts to I2C code
+
+
+
+
+HOW TO MAKE THIS FLY BETTER
+MPU6500
+filter gyro better
+make d term proportional to gyro rate
+filter d term
+increase p term
