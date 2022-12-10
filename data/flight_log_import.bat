@@ -1,0 +1,1 @@
+scp -r raspberrypi.local:flight_logs/ .
