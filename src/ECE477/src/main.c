@@ -123,7 +123,7 @@ int main(void){
 	set_PID_constants(&pitch_pid, 	0.0010f, 0.00f, 01.6f);
 	set_PID_constants(&roll_pid, 	0.0010f, 0.00f, 01.6f);
 
-	set_PID_constants(&auto_throttle_pid, 	0.0001f, 0.00000f, 0.0f);
+	set_PID_constants(&auto_throttle_pid, 	0.0001f, 0.00000f, 0.2f);
 	auto_throttle_pid.maxP=0.1f;
 	auto_throttle_pid.maxI=0.05f;
 
@@ -160,12 +160,6 @@ int main(void){
 			rx_throttle *= 0.3f;
 		}
 
-		filt_pitch_command = 0.002f*rx_pitch + 0.998f*filt_pitch_command;
-		filt_roll_command  = 0.002f*rx_roll  + 0.998f*filt_roll_command;
-
-		float yaw_pid_response 	 = update_PID(&yaw_pid,   lsm6dsx_data.gyro_angle_z, -rx_yaw*40);
-		float pitch_pid_response = update_PID(&pitch_pid, lsm6dsx_data.compl_pitch,  filt_pitch_command*40);
-		float roll_pid_response  = update_PID(&roll_pid,  lsm6dsx_data.compl_roll,   -filt_roll_command*40);
 
 		//check for autonomous mode (TODO: check LiDAR timeout)
 		if (RX_USART_get_channels()->ELRS_SC >= ELRS_AUX_MID)
@@ -179,6 +173,14 @@ int main(void){
 
 			rx_throttle = auto_throttle_center_point + auto_throttle_response;
 			rx_throttle = (rx_throttle < 0.05f) ? 0.05f : rx_throttle;
+
+			//if in FULLY auto mode, use the incoming pitch and roll commands from the Pi
+			if (RX_USART_get_channels()->ELRS_SC == ELRS_AUX_MAX)
+			{
+				rx_yaw	 = saved_pi_packet.command_yaw;
+				rx_pitch = saved_pi_packet.command_pitch;
+				rx_roll  = saved_pi_packet.command_roll;
+			}
 		}
 		else
 		{
@@ -186,6 +188,13 @@ int main(void){
 			auto_throttle_center_point = rx_throttle;
 			auto_throttle_setpoint = get_distance_TMF8801(&device_descrip);
 		}
+
+		filt_pitch_command = 0.002f*rx_pitch + 0.998f*filt_pitch_command;
+		filt_roll_command  = 0.002f*rx_roll  + 0.998f*filt_roll_command;
+
+		float yaw_pid_response 	 = update_PID(&yaw_pid,   lsm6dsx_data.gyro_angle_z, -rx_yaw*40);
+		float pitch_pid_response = update_PID(&pitch_pid, lsm6dsx_data.compl_pitch,  filt_pitch_command*40);
+		float roll_pid_response  = update_PID(&roll_pid,  lsm6dsx_data.compl_roll,   -filt_roll_command*40);
 
 		//clamp PID outputs (depending on throttle?)
 		float max_response = 0.2f;
@@ -304,7 +313,7 @@ int main(void){
 			printf("%f,\t", filtered_motor_output[3]);*/
 			//printf("%.2f,\t", 1.0f/(current_time - last_time));
 			//printf("%.2f,\t", 1.0f/(current_time_2 - last_time_2));
-			printf("%d,\t", check_arm_code());
+			/*printf("%d,\t", check_arm_code());
 			printf("%d,\t", saved_pi_packet.camera_status);
 			printf("%d,\t", saved_pi_packet.lidar_reading[0]);
 			printf("%d,\t", saved_pi_packet.lidar_reading[1]);
@@ -317,18 +326,18 @@ int main(void){
 			printf("%d,\t", pwm_output.duty_cycle_ch1);
 			printf("%d,\t", pwm_output.duty_cycle_ch2);
 			printf("%d,\t", pwm_output.duty_cycle_ch3);
-			//printf("%.3f,\t", lsm6dsx_data.gyro_angle_z);
-			//printf("%.3f,\t", lsm6dsx_data.compl_pitch);
-			//printf("%.3f,\t", lsm6dsx_data.compl_roll);
+			printf("%.3f,\t", lsm6dsx_data.gyro_angle_z);
+			printf("%.3f,\t", lsm6dsx_data.compl_pitch);
+			printf("%.3f,\t", lsm6dsx_data.compl_roll);*/
 
-			//printf("%d,\t", get_distance_TMF8801(&device_descrip));
+			printf("%.3f,\t", get_distance_TMF8801(&device_descrip));
 
-			//printf("%.3f,\t", rx_throttle);
-			//printf("%.3f,\t", auto_throttle_center_point);
-			//printf("%.3f,\t", auto_throttle_response);
+			printf("%.3f,\t", rx_throttle);
+			printf("%.3f,\t", auto_throttle_center_point);
+			printf("%.3f,\t", auto_throttle_response);
 
-			printf("%.3f,\t", filt_pitch_command);
-			printf("%.3f,\t", filt_roll_command);
+			//printf("%.3f,\t", filt_pitch_command*40);
+			//printf("%.3f,\t", filt_roll_command*40);
 
 			//read_distance(&device_descrip);
 			//printf("%d,\t", RX_USART_get_channels()->ch4);

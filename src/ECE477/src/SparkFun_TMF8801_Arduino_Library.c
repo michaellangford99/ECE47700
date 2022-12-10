@@ -76,10 +76,10 @@ void init_TMF8801(TMF8801_t* dev)
 	}
 	nano_wait(1000);
 
-	lidar_filter.impulse_response = hanning_8;
+	/*lidar_filter.impulse_response = hanning_8;
 	lidar_filter.length = 8;
 	lidar_filter.first_element = 0;
-	lidar_filter.circular_buffer = lidar_buffer;
+	lidar_filter.circular_buffer = lidar_buffer;*/
 }
 
 #define UPDATE_PERIOD 100
@@ -93,16 +93,19 @@ void update_TMF8801(TMF8801_t* dev)
 
 		read_distance(dev);
 
-		//do some filtering here
-		float fdist = (float)distance;
-		shift_filter(&lidar_filter, &fdist, 1);
-		filtered_distance = compute_filter(&lidar_filter);
+
+
 	}
+	//do some filtering here
+	float fdist = (float)distance;
+	/*shift_filter(&lidar_filter, &fdist, 1);
+	filtered_distance = compute_filter(&lidar_filter);*/
+	filtered_distance += 0.02*(fdist - filtered_distance);
 }
 
-uint16_t get_distance_TMF8801(TMF8801_t* dev)
+float get_distance_TMF8801(TMF8801_t* dev)
 {
-	return distance;//filtered_distance;
+	return filtered_distance;
 }
 
 void read_distance(TMF8801_t* dev) {
