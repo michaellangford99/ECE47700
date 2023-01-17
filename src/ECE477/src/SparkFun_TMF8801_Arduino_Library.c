@@ -92,14 +92,10 @@ void update_TMF8801(TMF8801_t* dev)
 		l = 0;
 
 		read_distance(dev);
-
-
-
 	}
+
 	//do some filtering here
 	float fdist = (float)distance;
-	/*shift_filter(&lidar_filter, &fdist, 1);
-	filtered_distance = compute_filter(&lidar_filter);*/
 	filtered_distance += 0.02*(fdist - filtered_distance);
 }
 

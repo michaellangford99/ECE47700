@@ -4,6 +4,8 @@
         "*.s": "arm",
         "stm32f4xx.h": "c",
         "stdint.h": "c",
-        "core_cm4.h": "c"
+        "core_cm4.h": "c",
+        "fifo.h": "c",
+        "rx_usart.h": "c"
     }
 }

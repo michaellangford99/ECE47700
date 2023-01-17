@@ -121,8 +121,8 @@ int main(void){
 	init_PID(&auto_throttle_pid);
 
 	set_PID_constants(&yaw_pid, 	0.0015f, 0.00f, 01.3f);
-	set_PID_constants(&pitch_pid, 	0.0010f, 0.00f, 01.0);
-	set_PID_constants(&roll_pid, 	0.0010f, 0.00f, 01.0f);
+	set_PID_constants(&pitch_pid, 	0.0009f, 0.00f, 01.0f);
+	set_PID_constants(&roll_pid, 	0.0009f, 0.00f, 01.0f);
 
 	set_PID_constants(&auto_throttle_pid, 	0.00005f, 0.00000f, 0.1f);
 	auto_throttle_pid.maxP=0.1f;
@@ -181,6 +181,12 @@ int main(void){
 				rx_yaw	 = saved_pi_packet.command_yaw;
 				rx_pitch = saved_pi_packet.command_pitch;
 				rx_roll  = saved_pi_packet.command_roll;
+
+				if (saved_pi_packet.camera_status == 49)
+				{
+					auto_throttle_center_point *= 0.9996f;
+					auto_throttle_setpoint *= 0.9996f;
+				}
 			}
 		}
 		else
@@ -316,25 +322,25 @@ int main(void){
 			printf("%f,\t", filtered_motor_output[3]);*/
 			//printf("%.2f,\t", 1.0f/(current_time - last_time));
 			//printf("%.2f,\t", 1.0f/(current_time_2 - last_time_2));
-			/*printf("%d,\t", check_arm_code());
-			printf("%d,\t", saved_pi_packet.camera_status);
+			//printf("%d,\t", check_arm_code());
+			/*printf("%d,\t", saved_pi_packet.camera_status);
 			printf("%d,\t", saved_pi_packet.lidar_reading[0]);
 			printf("%d,\t", saved_pi_packet.lidar_reading[1]);
 			printf("%d,\t", saved_pi_packet.lidar_reading[2]);
 			printf("%d,\t", saved_pi_packet.lidar_reading[3]);
 			printf("%.2f,\t", saved_pi_packet.command_yaw);
 			printf("%.2f,\t", saved_pi_packet.command_pitch);
-			printf("%.2f,\t", saved_pi_packet.command_roll);
+			printf("%.2f,\t", saved_pi_packet.command_roll);*/
 			printf("%d,\t", pwm_output.duty_cycle_ch0);
 			printf("%d,\t", pwm_output.duty_cycle_ch1);
 			printf("%d,\t", pwm_output.duty_cycle_ch2);
 			printf("%d,\t", pwm_output.duty_cycle_ch3);
-			printf("%.3f,\t", lsm6dsx_data.gyro_angle_z);
+			/*printf("%.3f,\t", lsm6dsx_data.gyro_angle_z);
 			printf("%.3f,\t", lsm6dsx_data.compl_pitch);
 			printf("%.3f,\t", lsm6dsx_data.compl_roll);*/
 
 			printf("%.3f,\t", get_distance_TMF8801(&device_descrip));
-
+/*
 			printf("%.3f,\t", rx_throttle);
 			printf("%.3f,\t", auto_throttle_center_point);
 			printf("%.3f,\t", auto_throttle_response);
@@ -342,7 +348,7 @@ int main(void){
 			printf("%.3f,\t", filt_yaw_command);
 			printf("%.3f,\t", filt_pitch_command*40);
 			printf("%.3f,\t", filt_roll_command*40);
-
+*/
 			//read_distance(&device_descrip);
 			//printf("%d,\t", RX_USART_get_channels()->ch4);
 			//printf("%d,\t", RX_USART_get_channels()->ch5);
