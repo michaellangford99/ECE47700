@@ -1,0 +1,192 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+This is an example weekly progress report document that team members can use to report their individual progress 
+of their ECE477 senior design projects. Weekly progress reports are expected to follow the general guidelines
+presented in the "Progress Report Policy" document, available online at https://engineering.purdue.edu/ece477/Course/Policies/policies.html
+
+Please create 4 copies of this example, renaming each copy to <PurdueID>.html, where <PurdueID> corresponds to
+the Purdue ITAP Career Account ID given by Purdue to each individual team member. If you have any questions,
+contact course staff.
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+<!--Reconfigurable base tag; used to modify the site root location for root-relative links-->
+<base href="../../" />
+
+<!--Content-->
+<title>ECE477 Course Documents</title>
+<meta name="keywords" content="" />
+<meta name="description" content="" />
+<meta name="author" content="George Hadley">
+<meta name = "format-detection" content = "telephone=no" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<!--CSS-->
+<link rel="stylesheet" href="css/default.css" type="text/css" media="all" />
+<link rel="stylesheet" href="css/responsive.css">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/content.css">
+<!--[if IE 6]>
+<link href="default_ie6.css" rel="stylesheet" type="text/css" />
+<![endif]-->
+
+</head>
+<body>
+<div id="wrapper_site">
+    <div id="wrapper_page">
+	<!-- Instantiate global site header.-->
+	<div id="header"></div>
+		<!-- Instantiate site global navigation bar.-->
+		<div id="menu"></div>
+	
+		<!-- Instantiate a page banner image. Page banner images should be 1100x350px and should be located within the local
+			img folder located at this directory level. -->
+		<div id="banner">
+			<img src="Files/img/BannerImgExample.jpg"></img>
+		</div>
+	
+		<!-- Instantiate "tools" needed for a page. Tools are premade functional blocks that can be used to build a page,
+			and include things such as a file lister (for listing out homework assignments or tutorials)
+		-->
+		<div id="content">
+            <h2>Progress Report for Jonathan Wosiak</h2>
+            
+            <h4>Week 1:</h4>
+            <b>Date:</b> -Enter today's date here-<br>
+            <b>Total hours:</b> -Enter the number of hours you worked this week here-<br>
+            <b>Description of design efforts:</b><br>
+            -Discuss your design efforts here. Remember to follow the guidelines presented in the Progress Report Policy, available <a href="https://engineering.purdue.edu/ece477/Course/Policies/">here</a>. This is a template entry; simply copy/paste this entry when doing progress reports each week.</br>
+
+            <br>
+
+            <h4>Week 2:</h4>
+            <b>Date:</b> -Enter today's date here-<br>
+            <b>Total hours:</b> -Enter the number of hours you worked this week here-<br>
+            <b>Description of design efforts:</b><br>
+            -Discuss your design efforts here. Remember to follow the guidelines presented in the Progress Report Policy, available <a href="https://engineering.purdue.edu/ece477/Course/Policies/">here</a>. This is a template entry; simply copy/paste this entry when doing progress reports each week.</br>
+                      
+            <h4>Week 3:</h4>
+            <b>Date:</b> 9/9/2022<br>
+            <b>Total hours:</b> 10 <br>
+            <b>Description of design efforts:</b><br>
+            This week I began working on research as to where we can use our drone on campus. I registered our drone on the FAA’s website, and read through the official Purdue procedure for operating drones: 
+https://www.purdue.edu/business/risk_mgmt/drone_UAS_procedure/unmanpolicy.html
+As a team we decided it would be best to test our drone indoors in the ECE building. Potentially if we needed more, space which I don’t anticipate, we could investigate using the hangar at the airport or the armory. We also need to get approval from the ECE building to make sure we can fly indoors. 
+
+Next, we transitioned the scope of our project from a fully autonomous drone that utilizes stereo vision to a drone that searches using a grid and uses lidar point sensors to avoid obstacles. I’ve looked into some lidar point sensors and I believe I’ve found a good option for the scope of our project. 
+https://www.pololu.com/product-info-merged/3415
+The output format will be I2C. 
+The medium ranging distance for this sensor I believe will suit our needs with a range of ~10 ft at 30 Hz and can reach around ~13 ft at 50 Hz when set to long distance. However, ambient light may prove to be an issue at these settings but if we need to we can set the sensors to short distance which will also increase the sampling and remove almost all interference with ambient light.  They also offer a version that outputs an 8x8 point cloud which would be great for our project. 
+
+Additionally, this week I’ve checked out a Pi and with the Pi cam we’ve already checked out I’m working on getting some software that can identify a basic object. At this point I’m going to be using a piece of paper with an orange circle on it, however in the future we may use a 3D object. I’m currently looking through the code from my final project for ECE 595 Computer Vision for Embedded Systems where we identified hand signals as a bit of a refresher. </br>
+                      
+        </div>
+	
+            <h4>Week 4:</h4>
+            <b>Date:</b> 9/16/2022<br>
+            <b>Total hours:</b> 9 <br>
+            <b>Description of design efforts:</b><br>
+This week we’ve gone over some restructuring of the team and shifted our focus from the high-level software that will be needed at the end of the project to working on the evenly splitting the hardware necessary to get there first.  
+
+I am now taking the lead on I2C, and taking a secondary position under Michael for hardware where I will be working on our PCB design. This weekend I‘ll be meeting with Michael so he can bring me up to speed with all I need to know about our PCB design and hardware. In the meantime, I have gotten my STM32F411 Nucleo and written some code for I2C so I can do some testing on ToF sensors similar to what we will be using in our final hardware. Tomorrow I‘m looking to test the VL53L0 with its standard library once we get them soldered, in a high ambient light scenario to see their performance. In a meeting with our TA this week we learned about how we can put in some time now learning how to use the ROS wrapper and save a lot of time and complexity for ourselves in the long run.  </br>
+
+            <h4>Week 5:</h4>
+            <b>Date:</b> 9/23/2022<br>
+            <b>Total hours:</b> 12 <br>
+            <b>Description of design efforts:</b><br>
+This week began with Michael going over the current PCB design with me as I’m taking a secondary position on Hardware/PCB design. I am now comfortable with our current design and knowledgeable of the mistakes in Michael’s previous design which we are going to fix. Michael also taught me how to solder, so now if we need someone else to solder on the team, I can. The bulk of my time this week has been setting up my programming environment, I’ve run into issues at pretty much every step of the way, at the moment I am blocked as I can’t get the correct OpenOCD drivers on Linux. In the meantime I’ve gone through my code I wrote in ECE 362 for interfacing with I2C which I am taking the lead on, to refamiliarize myself with what I’ve done previously with I2C.
+<br>
+
+            <h4>Week 6:</h4>
+            <b>Date:</b> 9/30/2022<br>
+            <b>Total hours:</b> 11 <br>
+            <b>Description of design efforts:</b>
+This week I’ve been working on interfacing with I2C, and the software formalization document. I was able to get the initialization done for I2C by setting all relevant clocks, setting relevant pins to alternative function, resetting I2C, and setting all relevant registers. I was able to initialize DMA1 and set all relevant registers similar to I2C. I am currently working on getting reading/writing to and from DMA through I2C and anticipate finishing that very soon, however I am currently focused on working on the Software Formalization Document. <br>
+
+
+            <h4>Week 7:</h4>
+            <b>Date:</b> 10/7/2022<br>
+            <b>Total hours:</b> 8 <br>
+            <b>Description of design efforts:</b>
+This week Santiago and I worked on I2C debugging. At the start of this week, we weren’t getting the acknowledgement bit when we were writing. We figured out this was because we were using an 8-bit address in 7-bit address mode. I also found that we were using a slightly wrong clock value because the SDA and SCL fall times are the same on the STM32F411, although our current clock calculation does not account for that. However, I will still need to look more into that as changing the clock value based on the formula for that did not work. We still have some work to go with I2C, mainly now we need to be able to read, and figure out how to properly interface with the library. <br>
+	
+
+            <h4>Week 11:</h4>
+            <b>Date:</b> 11/4/2022<br>
+            <b>Total hours:</b> 10 <br>
+            <b>Description of design efforts:</b>
+This week I contacted the building manager for the ECE building to see if we could get a classroom to test our drone. I found that Dave Rowe (rowed@purdue.edu) was the building manager for the ECE building, but I do want to double check that with the course staff if possible. Also, this week I worked on our PID loop code; Michael had some C++ code from his last drone which I used to make a C version. Lastly, I’ve started some work on a CAD model to mount our PCB/Pi above the flight controller.</br>
+
+
+
+            <h4>Week 12:</h4>
+            <b>Date:</b> 11/11/2022<br>
+            <b>Total hours:</b> 11 <br>
+            <b>Description of design efforts:</b>
+This week I corrected who the building manager is for the ECE/MSEE buildings. I have also ported over our code for object detection from C++ to Python since it will be running on our Pi now. The code will be used on our downward facing camera to detect an orange circle. I am now working to figure out the exact metrics for the height that we are flying at exactly how much orange will be detected if we print out an orange circle on a typical sheet of paper, and successfully detecting it only when that paper is in view. I am also working on getting our mount for our hardware 3d printed.</br>
+
+            <h4>Week 13:</h4>
+            <b>Date:</b> 11/18/2022<br>
+            <b>Total hours:</b> 4 <br>
+            <b>Description of design efforts:</b>
+This week was a bit slow as we are waiting on hardware. I updated the code for object detection and collected the 3D print for our hardware mount. The 3D print did not have enough clearance for the motor wires and the flight controller. I started a new 3D print that has enough clearance. </br>
+
+
+            <h4>Week 15:</h4>
+            <b>Date:</b> 12/2/2022<br>
+            <b>Total hours:</b> 9 <br>
+            <b>Description of design efforts:</b>
+This week had a scary start! Among other things our team had issues registering for the spark challenge. I as well as another teammate received the email in Figure 1, stating my teammates were yet to register and the deadline was midnight. </br>
+<img src="img/img02" width="600" height="200">
+<b></b>
+Once we made sure everyone had in fact submitted their registration another teammate and I reached out to Angela Rainwater (Figure 2) who was able to make sure we were all registered correctly. </br>
+
+<img src="img/img03" width="600" height="200">
+
+<img src="img/img04" width="600" height="200">
+<b>Next, I will go into detail as to how we are doing object detection. From Figure 3 you can see the range of HSV (Hue Saturation Value) values which will detect our object (the printed orange circle). The parts of the image that are within that range make up the mask (seen in the middle), in this case what the object detection sees as our object. Now there is some noise which can also be seen in the image, the orange circle is being reflected on the yellow tape measure I am using the measure the height my camera is at to replicate the height we will be running our drone at. Now that we have data from the TMF8801, we have a rough idea of the height we will be running our drone at. We have decided it will be flying from 1 ft. to 1.5 ft. off the ground. So, we can’t just say if we see any HSV values within our threshold an object is detected. To figure out if we can see the object a certain “percentage” of the camera’s view will be in the mask.  I can now take the average value of the mask for our object detection at those heights and determine what “percentage” we should expect this to be. All the black in the mask represent zeros, and the white represents 255. At 1 ft. above the ground when the object is in view the average of the mask is roughly 49, and at 1.5 ft. above the ground the average is 27. This was a wider range than I had originally expected, thankfully through the data I collected we can adjust our threshold easily once we are completely set on how high we are flying, but lower would be better here in terms of object detection. Figure 4 shows my code detecting the object and printing to console that it is detected while I’m waiting for Owen to let me know how he wants me to send this signal to the navigation computer.
+</br>
+
+<img src="img/img05" width="600" height="200">
+<b>Next, I’ve been working on the models for to be 3D printed, the first of which is our landing gear. Originally the landing gear was suggested to just be legs which could be connected via glue. I decided skids would be more rigid and stable, however it turns out we are looking for the opposite of stability when on the ground so the drone can get a better angle at takeoff. It also turned out these skids were too flimsy although they were the max width of the frame’s arms, but this was before I learned we have a contingency that may potentially have the drone fall like a brick during flight if we lose signal. </br>
+
+
+<img src="img/img06" width="600" height="200">
+
+<img src="img/img07" width="600" height="200">
+
+<b>My next design attached directly to the existing mounting on the frame so that we would not have to glue. However, I later learned this conflicted with my teammates plan to use up all the slack on the battery by wrapping the slack around the battery.</br>
+
+
+
+
+<img src="img/img08" width="600" height="200">
+
+<b>Now, my newest design which also attaches to existing mounting on the frame can be seen in Figure 8. This design also matches the frame’s contours so it will not spin, and the screw is accessible through the cutout.</br>
+
+
+
+<img src="img/img09" width="600" height="200">
+
+<b>I have also begun the models for mounting the camera, and all 5 LiDAR sensors. I have measured everything out with calipers in lab and I believe I can accomplish that with two different models, one on the front which will mount the camera and forward facing LiDAR, the same model will be used on the back to mount the downward facing LiDAR and back facing LiDAR, and a separate model will be used to mount the left and right facing LiDAR. 
+</br>
+	<!-- Instantiate global footer. Any changes to the footer should be made through the top-level file "footer.html" -->
+		<div id="footer"></div>
+    </div>
+</div>
+
+<!--JS-->
+<script src="js/jquery.js"></script>
+<script src="js/jquery-migrate-1.1.1.js"></script>
+
+<script type="text/javascript">
+$(document).ready(function() {
+    $("#header").load("header.html");
+	$("#menu").load("navbar.html");
+	$("#footer").load("footer.html");
+});
+</script>
+</body>
+</html>

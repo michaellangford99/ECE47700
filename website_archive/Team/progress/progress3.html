@@ -1,0 +1,259 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+This is an example weekly progress report document that team members can use to report their individual progress 
+of their ECE477 senior design projects. Weekly progress reports are expected to follow the general guidelines
+presented in the "Progress Report Policy" document, available online at https://engineering.purdue.edu/ece477/Course/Policies/policies.html
+
+Please create 4 copies of this example, renaming each copy to <PurdueID>.html, where <PurdueID> corresponds to
+the Purdue ITAP Career Account ID given by Purdue to each individual team member. If you have any questions,
+contact course staff.
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+<!--Reconfigurable base tag; used to modify the site root location for root-relative links-->
+<base href="../../" />
+
+<!--Content-->
+<title>ECE477 Course Documents</title>
+<meta name="keywords" content="" />
+<meta name="description" content="" />
+<meta name="author" content="George Hadley">
+<meta name = "format-detection" content = "telephone=no" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<!--CSS-->
+<link rel="stylesheet" href="css/default.css" type="text/css" media="all" />
+<link rel="stylesheet" href="css/responsive.css">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/content.css">
+<!--[if IE 6]>
+<link href="default_ie6.css" rel="stylesheet" type="text/css" />
+<![endif]-->
+
+</head>
+<body>
+<div id="wrapper_site">
+    <div id="wrapper_page">
+	<!-- Instantiate global site header.-->
+	<div id="header"></div>
+		<!-- Instantiate site global navigation bar.-->
+		<div id="menu"></div>
+	
+		<!-- Instantiate a page banner image. Page banner images should be 1100x350px and should be located within the local
+			img folder located at this directory level. -->
+		<div id="banner">
+			<img src="Files/img/BannerImgExample.jpg"></img>
+		</div>
+	
+		<!-- Instantiate "tools" needed for a page. Tools are premade functional blocks that can be used to build a page,
+			and include things such as a file lister (for listing out homework assignments or tutorials)
+		-->
+		<div id="content">
+            <h2>Progress Report for Santiago J. Garcia Delgado</h2>
+            
+            <h4>Week 1:</h4>
+            <b>Date:</b> -Enter today's date here-<br>
+            <b>Total hours:</b> -Enter the number of hours you worked this week here-<br>
+            <b>Description of design efforts:</b><br>
+            -Discuss your design efforts here. Remember to follow the guidelines presented in the Progress Report Policy, available <a href="https://engineering.purdue.edu/ece477/Course/Policies/">here</a>. This is a template entry; simply copy/paste this entry when doing progress reports each week.</br>
+
+            <br>
+
+            <h4>Week 2:</h4>
+            <b>Date:</b> September 2, 2022<br>
+            <b>Total hours:</b> 5<br>
+            <b>Description of design efforts:</b><br>
+            As a team, we had focused on the design specification for Hermes and our team website. Specifically, I contributed to the theory of operation and the functional description. Our Hermes, drone will need to map it’s surrounding for it to be able to have a pathing algorithm. We’re only using cameras thus it was determined that the best mapping algorithm for us to use will be Stereo Slam. Thus as an Individual I spent my time familiarizing myself with Stereo SLAM (Simultaneous Localization and Mapping), and we decided it will our best preforming mapping algorithm.</br>
+			<br>Primarily using this link: https://shangzhouye.tech/featured-projects/stereo_slam/#overview. I will summarize It’s 6 major components: </br>
+			<br>Initialization: Here we focus on retrieving the depth information of its key points that can be detected in the frame. </br>
+			<br>Feature Detection/Matching: Detect important features of the image and add them into the map only if it’s within a reliable distance. </br>
+			<br>Motion Estimation: Estimate how useful a frame can be due to how much movement Is occurring and if there’s too much ignore this frame. </br>
+			<br>Map management: If a frame that’s selected has less than 80 inliers, experienced a large rotation and the motion estimation is valid then it will be selected to be a keyframe and its landmarks will be used to determine the map. </br>
+			<br>Bundle Adjustment:  It removes additional keyframes that have already had their landmarks on different keyframes minimizing the amount of information that needs to be stored. </br>
+			<br>Visualization Module: Helps us visualize the results.</br>
+			<br>Next week I will be focusing my efforts to make a Stereo SLAM that will function with our drone. </br>
+			
+			<br>
+
+			<h4>Week 3:</h4>
+            <b>Date:</b> September 9, 2022<br>
+            <b>Total hours:</b> 8<br>
+            <b>Description of design efforts:</b><br>
+            The team spent this week on determining which parts we’re going to be ordering. We also worked on our initial project proposal. Additionally, I worked on reading more about the mathematics about how Stereo SLAM could be implemented. I also stared to work on the color recognition code that will be used to identify the target that we will be searching for. To help us out in both endeavors we will be using OpenCV. OpenCV is an open-source computer vision library for C++.</br>
+			<br>This was my progress on Stereo SLAM: </br>
+			<p><img src="Team/progress/img/SantiagoPic/SLAM.png"></img></p>
+			<br>This picture is from: <href=https://www.cs.ait.ac.th/~mdailey/cvreadings/Lemaire-SLAM.pdf>https://www.cs.ait.ac.th/~mdailey/cvreadings/Lemaire-SLAM.pdf</href></br>
+			<br>The picture above summarizes how we will be implementing bearings only SLAM. Bearings Only SLAM, considers that one frame won’t give us information to locate the drone and map the area. It takes it builds a map out of multiple frames. It considers the importance, the closeness, and the reliability of each of the features that is dedicated. </br>
+			<br>Next Week I’ll be working on implementing the beginnings of Stereo SLAM using OpenCV. And also how to use OpenCV to use color recognition.</br>
+
+
+
+
+			<h4>Week 4:</h4>
+            <b>Date:</b> September 16, 2022<br>
+            <b>Total hours:</b> 10<br>
+            <b>Description of design efforts:</b><br>
+			<p>Individually, I spent this this week working on our Color recognition, Starting the setup to work on a Raspberry Pi camera for our drone and the STM32F411 microcontroller, specifically the PPM protocol that will be used for interfacing. As a team we worked on the assignments that were due the component analysis. </p>
+			<b>The following summarizes my progress with Color Recognition.</b>
+			<p>Our Color recognition will be used as an object that will be placed in a room for our autonomous drone to find. The color recognition software was made with the OpenCV library. The way it operates is by converting an image from RGB to HSV values. This is done because it is the best suited for identifying colors, however the Saturation and Value are dependent on the lighting conditions [1]. Then we generate a mask with only the selected HSV values we want to detect. Then if we determine that there are enough of the desired color values then we tell the user that the color was found. The code for this was based on sources [1], [3], [4]. </p> <br>
+			<p>To see an example, we will analyze one picture using this method. Figure 1, found at [2], is the original image and we’re only interested in the orange segments of the original image. Then we convert that image to HSV values, as in Figure 2. Afterwards we generate a mask in Figure 3. And then for figure 4, a combination of our original image and the mask. Although we’re only using one image it also works with videos. </p>
+			<b>Figure 1: Original image <br> <img src = "Team/progress/img/SantiagoPic/Orange.jpg" width = 400 height = 300></b><br>
+			<b>Figure 2: Orange in HSV instead of RGB <br> <img src = "Team/progress/img/SantiagoPic/OrangeHSV.png" width = 400 height = 300></b><br>
+			<b>Figure 3: Orange Mask <br><img src = "Team/progress/img/SantiagoPic/maskHSV.png" width = 400 height = 300></b><br>
+			<b>Figure 4: Final output mask <br><img src = "Team/progress/img/SantiagoPic/Final.png" width = 400 height = 300></b><br>
+			<b>Next Week:</b><br>
+			<p>We’re going to need to focus on getting the raspberry Pi Camera to work and using PPM protocol.</p><br>
+			<b>Sources: </b><br>
+			<b>[1] <a href=https://www.opencv-srf.com/2010/09/object-detection-using-color-seperation.html>https://www.opencv-srf.com/2010/09/object-detection-using-color-seperation.html</href></a></b><br>
+			<b>[2] <a href=https://en.wikipedia.org/wiki/File:Oranges_-_whole-halved-segment.jpg>https://en.wikipedia.org/wiki/File:Oranges_-_whole-halved-segment.jpg</href></a></b><br>
+			<b>[3] <a href=Https://docs.opencv.org/3.4/da/d97/tutorial_threshold_inRange.html>Https://docs.opencv.org/3.4/da/d97/tutorial_threshold_inRange.html</href></a></b><br>
+			<b>[4] <a href=https://www.youtube.com/watch?v=ddSo8Nb0mTw>https://www.youtube.com/watch?v=ddSo8Nb0mTw</href></a></b><br>
+
+			<h4>Week 5:</h4>
+			<b>Date:</b> September 23, 2022<br>
+			<b>Total hours:</b> 10<br>
+			<b>Description of design efforts:</b><br>
+			<p>spent this week primarily focusing on getting PWM and PPM to work with the STM32F411 microcontroller. I also spent time working on the Mechanical Overview and the Bill of Materials. </p> <br>
+			<b>Progress made with the PWM and PPM:</b>
+			<p>The PWM and PPM are both primarily used for radio receiver protocols. PWM stands for Pulse width modulation and PPM stands for Pulse Position Modulation. Both of these methods use pulses to send information between peripherals. The difference between them is that the information for PWM is encoded in the pulse width but, PPM is encoded with pulse position. </p>
+			<p>Here’s an image of the difference between them and an explanation [1]. </p>
+			<p><img src="Team/progress/img/SantiagoPic/PPMandPWm.png" width="400" height="300"></img></p>
+			<p>What I was able to do is make a PWM signal but, I haven’t yet it creates a PPM signal from the PWM signal. I should work on that during this weekend and next week.</p>
+			<b>Sources: </b><br>
+			<b>[1] <a href=https://oscarliang.com/pwm-ppm-difference-conversion/>https://oscarliang.com/pwm-ppm-difference-conversion/</a></b><br>
+
+			<h4>Week 6:</h4>
+			<b>Date:</b> September 30, 2022<br>
+			<b>Total hours:</b> 10<br>
+			<b>Description of design efforts:</b><br>
+			<p>This week I focused on working on our implementation of PWM to communicate with our motor controller. To communicate with the T-Motor Velox V2, our motor controller, we needed to operate with a period of 20 ms or 50Hz and have a varying duty cycle from 5% to 10% and be able to send the PWM over 4 different channels.  To do this we used the system workbench that we’ve previously used in ECE 36200. </p>
+			<p>Description of how the PWM is operating on our STM32F411RE:</p>
+			<p>The STM32F411RE has 3 timer that can communicate with the PWM that have 4 timers: timer 1, timer 3 and timer 4. Of these Timer 1 channels have operate over the pins PA8-PA11, Timers 3 channels operate over the pins PB6-PB9, and Timers 4 channels operate over the pins PC6-PC9. Whichever one we end up using the process for setting up the PWM will remain roughly the same. You first need to enable theh timer’s output. Then you need to set the PSC and ARR register values using the formula 1/period=f_clk/((PSC+1)(ARR+1)) [1]. Where in the formula f_clk stands for the frequency of the clock. Then you must set the CCMR1 and CCMR2 register for them to operate in channel 1 to 4.</p>
+			<p><img src="Team/progress/img/SantiagoPic/PinMap.jpg" width="400" height="300"></img></p>
+			<h5>Figure 1: Pin map for our dev board</h5>
+			<p>You’d always liked to choose a higher ARR value than a PSC register because it allows us to have a higher resolution for our PWM. Because for us to operate we must use our capture/compare register to control the pulse width. The capture/control register must be set using the formula Duty Cycle=(CCR/ARR)×100%[1]. </p>
+			<p>Next week I’ll be focusing my efforts on understanding how to make the STM32F411 output an I^2C signal. </p>
+			<p>Sources: </p>
+			<b>[1] <a href=https://www.st.com/resource/en/application_note/dm00236305-generalpurpose-timer-cookbook-for-stm32-microcontrollers-stmicroelectronics.pdf>https://www.st.com/resource/en/application_note/dm00236305-generalpurpose-timer-cookbook-for-stm32-microcontrollers-stmicroelectronics.pdf</a></b><br>
+			<b>[2] <a href=https://www.st.com/resource/en/datasheet/stm32f411ce.pdf>https://www.st.com/resource/en/datasheet/stm32f411ce.pdf</a></b><br>
+
+			<h4>Week 7:</h4>
+			<b>Date:</b> October 7, 2022<br>
+			<b>Total hours:</b> 10<br>
+			<b>Description of design efforts:</b><br>
+			<p>This week I worked on getting the I2C protocol to communicate with the VL53L1X, the time-of-flight sensor. NUCLEO-F411RE has three I2C BUS interfaces that can interfaces in standard mode or fast mode. The VL53L1X will be feeding us the distance between the drone and walls, and we will have to read from it.</p>
+			<p>Implementing I2C on NUCLEO-F411RE:</p>
+			<p>The I2C you need two wires, one for the serial clock and serial data. The serial data will have the ability to send information from the master device to the slave device and vice versa. The clock can usually range from 100kHz to 400kHz which dictates the information transfer rate. The first step is usually to specify which 7-bit or 10-bit address we want to communicate with, and specific if we want to write information or read information. Then specify which register we want to communicate with. If you’re in read mode once, you specify the register you will receive information from the device. If you’re in write mode you have to specify how much information you’re writing [1], every time you send 8 bits you will receive a acknowledge bit or not acknowledge bit. If not acknowledge bit is received the slave device has not received information. </p>
+			<p>	We didn’t have that many problems implementing the I2C in communicating with the VL53L1X, however there we’re a few noticeable problems. The first one was learning how different the I2C module in the stm32f4 library is from the stm32f0. Which meant we couldn’t use our old code for the stm32f0 from our ECE 36200 classes. Meaning we had to find alternative resources which could walk us through all the different registers, which we found at [2].</p>
+			<p><img src = "Team/progress/img/SantiagoPic/AK.jpeg" width="400" height="300"></p>
+			<p>Figure 1: the Master sending information but slave device not acknowledging. Waveform readout</p>
+			<p>Even with these resources we rand into a problem that we couldn’t receive an acknowledgement bit from the VL53L1X. First we check the wiring, We checked that power was connected, then we checked ground, both connected correctly, then we thought it could have been switching the clock and the data would resolve the problem, we still didn’t receive the acknowledgment bit and switched it. After checking all our wiring, we decided that our problem was with our code.</p>
+			<p>Our first guess was checking the documentation and, we realized that it would (by default) only respond to the x29 address, in our code it was set to 0x41, we changed and it still wasn’t receiving an acknowledgement bit. Our second guess was checking the configuration for our APB(advanced peripheral) clock [3]and setting everything again, we did it and we were still not receiving the acknowledgement bit. Finally, we thought about it for a bit and we noticed that we were setting our data driver register without shifting a bit to the left. Which could mean that our last bit was being used to determine if it was read or write and not being used for the address, we shifted over and finally we got an acknowledgment bit.</p>
+			<p><img src = "Team/progress/img/SantiagoPic/NAK.jpeg" width="400" height="300"></p>
+			<p>Figure 2: the Master sending information and slave device acknowledging. Waveform readout</p>
+			<p>Next Week, we have our midsemester progress report we have to work on. And as it pertains to this we also to work how to read and write to multiple different devices on the same I2C connection. </p>
+			<p>Sources: </p>
+			<b>[1] <a href=https://www.circuitbasics.com/basics-of-the-i2c-communication-protocol/> https://www.circuitbasics.com/basics-of-the-i2c-communication-protocol/</b> <br>
+			<b>[2] <a href=https://www.youtube.com/watch?v=usvAIEdp_I8> https://www.youtube.com/watch?v=usvAIEdp_I8</a></b> <br>
+			<b>[3] <a href=https://www.youtube.com/watch?v=GJ_LFAlOlSk> https://www.youtube.com/watch?v=GJ_LFAlOlSk</a></b> <br>
+
+			<h4>Week 9:</h4>
+			<b>Date:</b> October 21, 2022<br>
+			<b>Total hours:</b> 5<br>
+			<b>Description of design efforts:</b><br>
+			<p>This week I once again primarily focused on getting the NUCLEO-F411RE to communicate with the VL53L1X. Primarily on converting the VL53L1X Library primarily build Arduino code written in C++ to C. We have the basics of reading and writing in communication with the I2C however we’re still having difficulties with continuous reading from the VL53L1X. 	</p>
+			<p>We believe that the error is when we try to initialize the VL53L1X. To begin initializing we must read the model ID register which is supped to be equal to 0xEACC. Occasionally, we get this value but it’s not consistent. When we get the correct value we still run into an issue where our device doesn’t acknowledge or responds to any reading or writing to any of the registers. currently we believe it’s an issue with not giving enough time for our device the VL53L1X to update, it could also be the time we wait between device activation. We believe once we resolve this issue, we’ll be able to get a continuous read from our device. </p>
+
+			<h4>Week 10:</h4>
+			<b>Date:</b> October 28, 2022<br>
+			<b>Total hours:</b> 5<br>
+			<b>Description of design efforts:</b><br>
+			<p>This week we focused our efforts on trying to get the I2C lidar to work. Not much progress was made. The current problem revolves around the VL53L1X library we’re using has problem getting consistent reading from the VL53L1X lidar. We’re still unsure why it’s so inconsistent but we believe it has to do with setting and using the device timeout time. This problem likely came about because we translated the C++ library into C so we could also use it with our I2C library we created. Sadly, we haven’t been able to get around this, there are currently two possible solutions.</p><br>
+			<b>Possible Solutions: </b>
+			<p>One would be using the same VL53L1X and change libraries. Luckily, we’ve found another library that has been used but it only C uses, I’ll begin testing over the weekend. However, we’ve also had a very difficult time using this device due to the lack of documentation on this device. There is no remedy to this problem.</p>
+			<p>Our second solution would be to use a totally different sensor that is better documented, is more readily usable and can be more easily implemented. We’ve found another time-of-flight sensor, the TMF8801[1] looks like an ideal replacement. It has a couple of drawbacks that we believe wouldn’t harm the purpose of our drone. Firstly, the range is slightly shorter from 4 meters to 2.5 meters, and the other problem is the sampling range is slower from 50 Hz to 30 Hz. Luckily this is sensor is more commonly used and has better documentation. </p>
+			<p><img src =Team/progress/img/SantiagoPic/FileToSubmit.png width="400" height="300"></p>
+			<p>Figure 1: TMF8801 TOF sensor</p>
+			<p>We believe that the second option is the best route forward however we want to exhaust all the possibilities with the current sensor, VL53L1X. Over the weekend I shall work with our current ToF and make sure that we’ve been left with no possible alternative than to move on to the next one.</p><br>
+			<p>Source: </p>
+			<p>[1] <a href=https://www.robotshop.com/en/fermion-tmf8801-tof-distance-ranging-sensor-20-2500-mm.html?gclid=Cj0KCQjw--2aBhD5ARIsALiRlwA9l8OvKakawnNuGn_zSV4_H-M8hrRWY5b4Ut1ldAIKXDy035yXbzMaAmnxEALw_wcB>https://www.robotshop.com/en/fermion-tmf8801-tof-distance-ranging-sensor-20-2500-mm.html?gclid=Cj0KCQjw--2aBhD5ARIsALiRlwA9l8OvKakawnNuGn_zSV4_H-M8hrRWY5b4Ut1ldAIKXDy035yXbzMaAmnxEALw_wcB</a></p>
+			
+			<h4>Week 11:</h4>
+			<b>Date:</b> November 4, 2022<br>
+			<b>Total hours:</b> 5<br>
+			<b>Description of design efforts:</b><br>
+			<p>In this week we were able to get the VL53L1X to read out distance information. We were able to get the reading correctly, we found the issue was not giving enough time for the register updating to work correctly. However, after doing so we’ve decided to still implement the TMF8801 ToF sensor because it takes to much bandwidth to implement the VL53L1X directly communicating with the microcontroller. Thus, we’ve decided to use the pi Zero to use to process information from the VL53L1X from all four sides. And the TMF8801 will be the only sensor that we will be interacting through directly on our microcontroller. Now I’m converting an Arduino library that communicates with the TMF8801 and I’ll be working on it during the weekend to get it to work with the Arduino references and be able to send information between the microcontroller and the TMF8801. </p>
+			<p><img src =Team/progress/img/SantiagoPic/CurrWiring.jpeg width="400" height="300"></p>
+
+			<h4>Week 12:</h4>
+			<b>Date:</b> November 11, 2022<br>
+			<b>Total hours:</b> 15<br>
+			<b>Description of design efforts:</b><br>
+			<p>This week we worked on getting the TMF8801 to work. We were finally able to get it too work using the Sparkfun Arduino library, we had to make a few major modifications for it to work properly on STM32F4 chip, specifically we eliminated the parts that reference the Arduino library and implemented it using our I2C code that we had built previously and changed the C++ syntax to C syntax. Luckily the C++ syntax is relatively easy to convert to C. Luckily thanks to our experience using the VL53L1X we were able to make these changes relatively simply. </p>
+			<p><b>TMF8801 [1] Sensors implementation:</b></p>
+			<p>The TMF8801 library had three Important segments. The Input output functions that write and read information from specific registers. The constants that define registers inside of the TMF8801, important errors that can be from communication, CPU status and other information that is used for calibration. The last segment is the initialization function, connection functions, checks if the CPU is ready and reads the measurement data, and waking up the device. </p>
+			<p>The first step was converting the entire C++ library [2] to C and eliminating the references to the C library to our own I2C code for the SMT32F4. Luckily, we employed our old I2C communication to for reading and writing. There was some frustration converting C++ to C. Mainly surrounding eliminating the class and reforming it into a struct. </p>
+			<p>Then we wired up the NUCLEO-F411RE to the TMF8801, we used the same pins we had the for the VL53L1X to the TMF8801. There was an issue where I had mistakenly switched up the SDA and the SCL wires. However, after switching them back, it was operating correctly it. For future reference the TMF8801 Enable is like the VL53L1X’s XSHUT. </p>
+			<p>Finally, when running our code, we had a lot of issues that the data register wasn’t reading correctly. We finally figured out it was a timing issue, the timing issue can because when we stepped through our code it was able to run correctly giving us some good information that could be useful. We believe that this means that the I2C Arduino code is using a lot of wait functions. To fix it we added a wait function, and it worked as expected and gave us a proper read out. </p>
+			<p><img src = Team/progress/img/SantiagoPic/TMF8801Flight.jpeg width="400" height="300"></p>
+			<p>Figure 1: TMF8801 Sensor read out</p>
+			<p>As you can see no, we’re able to receive information. However, there is a problem that we can’t read beyond the 600mm. Bizarrely it’s advertised to have a range of 2.5m however after further reading it appears that we max out at 600mm. For the time being this is alright but, later on we might run into some issues. There is also an issue when the distance from the sensor is greater than the max range it goes to zero, we’ll have to find a work around. </p>
+			<p>Next I’m going to be working PCB, and I’ll need some training from Michael to get things going in on that department. </p>
+			<p><b>Sources: </b></p>
+			<p>[1] <a href="https://cdn.sparkfun.com/assets/c/6/2/0/d/TMF8801_Datasheet.pdf">https://cdn.sparkfun.com/assets/c/6/2/0/d/TMF8801_Datasheet.pdf</a></p>
+			<p>[2] <a href="https://github.com/sparkfun/SparkFun_TMF8801_Arduino_Library">https://github.com/sparkfun/SparkFun_TMF8801_Arduino_Library</a></p>
+			<h4>Week 13:</h4>
+			<b>Date:</b> November 11, 2022<br>
+			<b>Total hours:</b> 5<br>
+			<b>Description of design efforts:</b><br>
+			<p>After finishing the TMF8801 sensor last week originally, I mentioned that I was going to be working on the PCB, but this was not the case. So, this week I primarily focused on making our User Manual. Over the weekend I’m going to be working on working out a way to read out the voltage of the battery.</p>
+			<p><img src = Team/progress/img/SantiagoPic/UserManaul.png width="400" height="300"></p>
+			<p><b>Sources: </b></p>
+			<p>[1] <a href="https://fccid.io/2AD6LGC0324355/User-Manual/User-Manual-3977571">https://fccid.io/2AD6LGC0324355/User-Manual/User-Manual-3977571</a></p>
+
+			<h4>Week 15:</h4>
+			<b>Date:</b> December 2, 2022<br>
+			<b>Total hours:</b> 15<br>
+			<b>Description of design efforts:</b><br>
+			<p>This week I focused on getting the TMF8801 TOF LIDAR merged with Michael’s motor controller code. The TMF8801 TOF LIDAR sensor will be placed at the bottom of the drone where it will be used to give the distance from the ground. This LIDAR sensor is the only thing that will connected to the microcontroller, the other ones will be controlled through the Pi Zero. </p>
+			<p><b>Progress on the TOF TMF8801 sensor:</b></p>
+			<p> Originally, I thought this was going to be an easy process, however I was incorrect but mostly due to some easy error that could have been easily avoided. My first mistake was trying to use Michael’s code on the STM32F411 dev board however Michael’s is written for the STM32F446. This was a big problem because the system clock run at two totally frequencies mean we got caught in an error. We realized it after a few hours. We tried a few different things first like adapting the code to run on the STM32F411, but we rewired the setup from the TMF8801 TOF LIDAR from the STM32F411 to the STM32F446. We then moved all the files from the I2c TMF8801 file to Michael’s file. After editing we were able to have everything work together. </p>
+			<p><img src = Team/progress/img/SantiagoPic/finalUpdate.jpeg width="400" height="300"></p>
+			<p>Figure 1: Serial Plot read out of the TMF8801. </p>
+			<p>Since none of the other sensors are connected, we have a very odd readout in the serial port but otherwise it preforms as intended. Over the weekend I intend to make the PID loop and assist Michaels in other tasks regarding our integration of all of our systems.</p>
+
+			<h4>Week 16:</h4>
+			<b>Date:</b> December 12, 2022<br>
+			<b>Total hours:</b> 15<br>
+			<b>Description of design efforts:</b><br>
+			<p>Over the last week and a half there was two main concerns that I had to deal with the drone’s construction. First, the wiring for our downward facing LIDAR, i.e., the TMF8801 TOF sensor. Second, the wiring harness for our VL53L1X that would be connected to the PI Zero. </p>
+			<p><b>Progress on the TMF8801 sensor:</b></p>
+			<p>Michael already had a good idea on what he needed to get this done. He needed two pairs of female connectors, one with four wires that was connected to voltage in, ground, serial clock, serial data. The second one was connected to the Interrupt and the XSHUT pin. This part was easily accomplished. After Michael received this piece from me, he then connected them to the microcontroller, and mounted them to the drone. </p>
+			<p><img src = Team/progress/img/SantiagoPic/finalfinal.jpg width="400" height="300"></p>
+			<p><b>Progress on the VL53L1X wiring harness:</b></p>
+			<p>All the VL53L1X are connected on 1 I2C bus, that is connected to the pi Zero. To do this we soldered 4 female connectors with wire to the VL53L1X. Originally after this first step, we then soldered the Vin, Ground, the SCL and the SDA to all have their own wires that would then be connected to the VL53L1X. However, this proved to be ineffective mainly because there wasn’t enough space on the drone for this design. Then Michael put on a master class in soldering and connected all the Lidars in series. The Enable pins also had to be soldered to their own enable female connector to the pi Zero, apart from the connectors to the scl, sda, vin, ground. After doing this we tested on the PI 3 where everything according to the design however when we moved it to the PI zero, the Pi zero couldn’t read the I2C devices. In the end we couldn’t implement it for our final device showcase. </p>
+
+		</div>
+
+		
+	
+		<!-- Instantiate global footer. Any changes to the footer should be made through the top-level file "footer.html" -->
+		<div id="footer"></div>
+    </div>
+</div>
+
+<!--JS-->
+<script src="js/jquery.js"></script>
+<script src="js/jquery-migrate-1.1.1.js"></script>
+
+<script type="text/javascript">
+$(document).ready(function() {
+    $("#header").load("header.html");
+	$("#menu").load("navbar.html");
+	$("#footer").load("footer.html");
+});
+</script>
+</body>
+</html>

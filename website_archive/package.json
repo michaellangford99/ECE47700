@@ -1,0 +1,11 @@
+{
+  "name": "ece47700",
+  "version": "1.0.0",
+  "description": "ECE47700 course archive site",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Michael Langford",
+  "license": "GPL-2.0"
+}
